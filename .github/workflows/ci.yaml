@@ -52,7 +52,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 10
-    - run: npm ci
+    - run: npm install
     - run: npm run standard
     - run: |
         npm i -g better-npm-audit
@@ -83,7 +83,7 @@ jobs:
           - linux/arm/v6
           - linux/arm/v7
           - linux/arm64    
-        node: [ 16, 17, 16, 19,20 ]
+        node: [ 16, 17, 16, 19,20, 21 ]
     name: Node ${{ matrix.node }} Test
     steps:
     - uses: actions/checkout@v3
@@ -99,7 +99,7 @@ jobs:
         key: ${{ runner.os }}-controller-node_modules-${{ hashFiles('package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-controller-node_modules-
-    - run: npm ci
+    - run: npm install
     - run: npm run test -- junit
     - run: npm run postman_test
     - name: Publish Test Results
@@ -147,7 +147,7 @@ jobs:
       run: |
         sed -i.back "s|PAT|${PAT}|g" ./path/to/.npmrc
 
-    - run: npm ci
+    - run: npm install
 
     - name: npm version
       id: package-version
