@@ -1,4 +1,4 @@
-FROM node:hydrogen-buster AS builder
+FROM node:iron-bookworm AS builder
 
 ARG PKG_VERSION
 
@@ -16,7 +16,7 @@ RUN npm version $PKG_VERSION --allow-same-version --no-git-tag-version
 
 RUN npm pack
 
-FROM node:hydrogen-alpine3.17
+FROM node:iron-alpine3.19
 
 RUN apk add sudo logrotate g++ make
 
