@@ -24,6 +24,9 @@
     "type": "git",
     "url": "https://github.com/datasance/Controller"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/Datasance"
+  },
   "scripts": {
     "prestart": "npm run lint",
     "start": "node scripts/scripts-api.js start",
