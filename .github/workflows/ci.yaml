@@ -125,15 +125,7 @@ jobs:
       pull-requests: write
       repository-projects: write
       security-events: write
-      statuses: write
-    strategy:
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/386
-          - linux/arm/v6
-          - linux/arm/v7
-          - linux/arm64   
+      statuses: write 
     name: Publish Controller
     steps:
     - uses: actions/checkout@v3
@@ -165,7 +157,25 @@ jobs:
 
     - name: npm pack with version from package version
       run: |
+        npm pack
         npm publish --registry=https://npm.pkg.github.com/
+
+    - name: 'Get Previous tag'
+      id: previoustag
+      uses: "WyriHaximus/github-action-get-previous-tag@v1"
+      with:
+        fallback: 0.0.0
+    - name: Set image tag
+      shell: bash
+      id: tags
+      run: |
+        if [[ ${{ github.ref_name }} =~ ^v.* ]] ; then
+          VERSION=${{ github.ref_name }}
+          echo "VERSION=${VERSION:1}" >> "${GITHUB_OUTPUT}"
+        else
+            VERSION=${{ steps.previoustag.outputs.tag }}
+            echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
+        fi
 
     - name: Login to Github Container Registry
       uses: docker/login-action@v2
@@ -179,9 +189,8 @@ jobs:
       id: build_push_ghcr
       with:
         file: Dockerfile.dev
-        platforms: ${{ matrix.platforms }}
         push: true
-        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Proxy
+        outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Controller
         tags: |
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:latest
