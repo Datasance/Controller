@@ -19,7 +19,7 @@ RUN npm version $PKG_VERSION --allow-same-version
 
 RUN npm pack
 
-FROM node:hydrogen-alpine3.19
+FROM node:hydrogen-alpine3.17
 
 RUN apk add sudo logrotate g++ make
 
@@ -33,11 +33,11 @@ RUN pip3 install --no-cache --upgrade pip setuptools
 LABEL org.opencontainers.image.description controller
 LABEL org.opencontainers.image.source=https://github.com/datasance/controller
 LABEL org.opencontainers.image.licenses=EPL2.0
-COPY --from=builder /tmp/iofog-iofogcontroller-*.tgz /tmp/iofog-controller.tgz
+COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /tmp/iofog-controller.tgz
 
 RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
 
 
-CMD [ "node", "/usr/local/lib/node_modules/@iofog/iofogcontroller/src/server.js" ]
+CMD [ "node", "/usr/local/lib/node_modules/@datasance/iofogcontroller/src/server.js" ]
