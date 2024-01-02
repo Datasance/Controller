@@ -145,7 +145,7 @@ jobs:
       env: 
           PAT: ${{ secrets.PAT }}
       run: |
-        sed -i.back "s|PAT|${PAT}|g" ./path/to/.npmrc
+        sed -i.back "s|PAT|${PAT}|g" .npmrc
 
     - run: npm install
 
