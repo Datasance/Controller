@@ -165,8 +165,6 @@ jobs:
 
     - name: npm pack with version from package version
       run: |
-
-        npm pack
         npm publish --registry=https://npm.pkg.github.com/
 
     - name: Login to Github Container Registry
