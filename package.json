@@ -22,10 +22,10 @@
   "homepage": "https://www.datasance.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/datasance/Controller"
+    "url": "https://github.com/Datasance/Controller"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/Datasance"
+    "registry": "https://npm.pkg.github.com/"
   },
   "scripts": {
     "prestart": "npm run lint",
