@@ -165,9 +165,9 @@ jobs:
 
     - name: npm pack with version from package version
       run: |
-        npm login --scope=@NAMESPACE --auth-type=legacy --registry=https://npm.pkg.github.com -u ${{ github.actor }} -p ${{ secrets.PAT }}
+
         npm pack
-        npm publish
+        npm publish --registry=https://npm.pkg.github.com/
 
     - name: Login to Github Container Registry
       uses: docker/login-action@v2
