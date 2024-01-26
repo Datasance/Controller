@@ -47,7 +47,7 @@ module.exports = {
         type: Sequelize.STRING(100),
         field: 'subscription_key',
         defaultValue: ''
-      } 
+      }
     })
   },
   down: (queryInterface, Sequelize) => {

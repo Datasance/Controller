@@ -45,7 +45,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(100),
       field: 'subscription_key',
       defaultValue: ''
-    }    
+    }
   }, {
     tableName: 'Users',
     timestamps: false,
