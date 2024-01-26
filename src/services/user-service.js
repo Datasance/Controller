@@ -141,11 +141,13 @@ const updateUserDetails = async function (user, profileData, isCLI, transaction)
     ? {
       firstName: profileData.firstName,
       lastName: profileData.lastName,
-      password: password
+      password: password,
+      subscrtiption_key: profileData.subscrtiption_key
     }
     : {
       firstName: profileData.firstName,
-      lastName: profileData.lastName
+      lastName: profileData.lastName,
+      subscrtiption_key: profileData.subscrtiption_key
     }
 
   updateObject = AppHelper.deleteUndefinedFields(updateObject)
@@ -155,7 +157,8 @@ const updateUserDetails = async function (user, profileData, isCLI, transaction)
   return {
     firstName: updateObject.firstName,
     lastName: updateObject.lastName,
-    email: user.email
+    email: user.email,
+    subscrtiption_key: profileData.subscrtiption_key
   }
 }
 

@@ -5322,6 +5322,7 @@ components:
         - firstName
         - lastName
         - email
+        - subscription_key
         - emailActivated
       properties:
         userId:
@@ -5332,6 +5333,8 @@ components:
           type: string
         email:
           type: string
+        subscription_key:
+          type: string
         emailActivated:
           type: boolean
     UserProfileDetailsResponse:
@@ -5340,6 +5343,7 @@ components:
         - firstName
         - lastName
         - email
+        - subscription_key
       properties:
         firstName:
           type: string
@@ -5347,12 +5351,16 @@ components:
           type: string
         email:
           type: string
+        subscription_key:
+          type: string
     UserProfileUpdatesRequest:
       type: object
       properties:
         firstName:
           type: string
         lastName:
+          type: string
+        subscription_key:
           type: string
     UserActivateRequest:
       type: object
@@ -5392,6 +5400,7 @@ components:
         - lastName
         - email
         - password
+        - subscription_key
       properties:
         firstName:
           type: string
@@ -5400,6 +5409,8 @@ components:
         email:
           type: string
         password:
+          type: string
+        subscription_key:
           type: string
     VersionCommandResponse:
       type: object

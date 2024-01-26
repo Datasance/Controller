@@ -41,7 +41,12 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         field: 'email_activated',
         defaultValue: false
-      }
+      },
+      subscriptionKey: {
+        type: DataTypes.STRING(100),
+        field: 'subscription_key',
+        defaultValue: ''
+      } 
     })
   },
   down: (queryInterface, Sequelize) => {
