@@ -59,13 +59,8 @@ paths:
         - ioFog
       summary: Returns list of ioFog nodes
       operationId: getIOFogNodes
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -95,13 +90,8 @@ paths:
         - ioFog
       summary: Creates a new ioFog node
       operationId: createIOFogNode
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/UpdateIOFogNodeRequestBody"
       responses:
@@ -135,12 +125,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/UpdateIOFogNodeRequestBody"
       responses:
@@ -171,12 +157,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "202":
           description: Accepted
@@ -203,12 +185,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -240,12 +218,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "201":
           description: Success
@@ -271,12 +245,6 @@ paths:
       summary: Set change version command
       operationId: setVersionCommand
       parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: ioFog node id
@@ -292,6 +260,8 @@ paths:
             enum:
               - upgrade
               - rollback
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -315,18 +285,14 @@ paths:
       summary: remote reboot fog agent
       operationId: setRebootCommand
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: ioFog node id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -346,18 +312,14 @@ paths:
       summary: prune reboot fog agent
       operationId: setPruneCommand
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: ioFog node id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -383,12 +345,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -420,12 +378,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -450,13 +404,8 @@ paths:
         - Application
       summary: Lists all applications
       operationId: listApplication
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -481,13 +430,8 @@ paths:
       summary: Creates an application
       operationId: createApplication
       deprecated: true
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -518,13 +462,8 @@ paths:
         - Application
       summary: Creates an application using a YAML file
       operationId: createApplicationYAML
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -560,18 +499,14 @@ paths:
       deprecated: true
       operationId: updateApplication
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -598,18 +533,14 @@ paths:
       summary: Updates an application metadata
       operationId: patchApplication
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -643,18 +574,14 @@ paths:
       summary: Deletes an application
       operationId: deleteApplication
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -675,18 +602,14 @@ paths:
       summary: Gets an application details
       operationId: getApplication
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -712,18 +635,14 @@ paths:
       summary: Updates an application using a YAML file
       operationId: updateApplicationYAML
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -754,13 +673,8 @@ paths:
         - Application Template
       summary: Lists all application templates
       operationId: listApplicationTemplates
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -786,13 +700,8 @@ paths:
       summary: Creates an application template
       operationId: createApplicationTemplate
       deprecated: true
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
       responses:
@@ -817,13 +726,8 @@ paths:
         - Application Template
       summary: Creates an application template using a YAML file
       operationId: createApplicationTemplateYAML
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -858,18 +762,14 @@ paths:
       operationId: updateOrCreateApplicationTemplate
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application template name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
       responses:
@@ -894,18 +794,14 @@ paths:
       summary: Patches an application template
       operationId: patchApplicationTemplate
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application template name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -932,18 +828,14 @@ paths:
       summary: Deletes an application template
       operationId: deleteApplicationTemplate
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application template name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -964,18 +856,14 @@ paths:
       summary: Gets an application template
       operationId: getApplicationTemplate
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application template name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -1001,18 +889,14 @@ paths:
       summary: Updates or creates an application template
       operationId: updateOrCreateApplicationTemplateFromYaml
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Application template name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -1506,13 +1390,8 @@ paths:
         - ioFog
       summary: Retrieves HAL USB info
       operationId: getAgentHalUsbInfo
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -1679,13 +1558,8 @@ paths:
         - Catalog
       summary: Gets microservices catalog
       operationId: getMicroservicesCatalog
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -1707,13 +1581,8 @@ paths:
         - Catalog
       summary: Creates a new microservice catalog item
       operationId: createMicroserviceCatalogItem
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/CreateUpdateCatalogItemRequestBody"
       responses:
@@ -1746,18 +1615,14 @@ paths:
       summary: Gets microservice catalog item info
       operationId: getMicroserviceCatalogItem
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Catalog Item Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Catalog Item Info
@@ -1782,18 +1647,14 @@ paths:
       summary: Updates a microservice catalog item
       operationId: updateMicroserviceCatalogItem
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Catalog Item Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/CreateUpdateCatalogItemRequestBody"
       responses:
@@ -1820,18 +1681,14 @@ paths:
       summary: Deletes a microservice catalog item
       operationId: deleteMicroserviceCatalogItem
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Catalog Item Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -1853,13 +1710,8 @@ paths:
       summary: Gets list of flows
       deprecated: true
       operationId: getFlowsList
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -1882,13 +1734,8 @@ paths:
       summary: Creates a new flow
       deprecated: true
       operationId: createFlow
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/NewFlowRequest"
       responses:
@@ -1920,18 +1767,14 @@ paths:
       operationId: getFlowInfo
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Flow Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -1957,18 +1800,14 @@ paths:
       operationId: updateFlow
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Flow Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         $ref: "#/components/requestBodies/NewFlowRequest"
       responses:
@@ -1994,18 +1833,14 @@ paths:
       operationId: deleteFlow
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: id
           description: Flow Id
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -2027,12 +1862,6 @@ paths:
       summary: Gets list of microservices
       operationId: getMicroservicesList
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: query
           name: flowId
           deprecated: true
@@ -2046,6 +1875,8 @@ paths:
           required: false
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2068,13 +1899,8 @@ paths:
       summary: Creates a new microservice on an ioFog node
       operationId: createMicroservice
       deprecated: true
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2111,13 +1937,8 @@ paths:
         - Microservices
       summary: Creates a new microservice in an Application
       operationId: createMicroserviceYAML
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -2158,18 +1979,14 @@ paths:
       summary: Gets a microservice info
       operationId: getMicroserviceInfo
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2195,18 +2012,14 @@ paths:
       deprecated: true
       operationId: updateMicroservice
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2238,18 +2051,14 @@ paths:
       summary: Deletes a microservice
       operationId: deleteMicroservice
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -2273,18 +2082,14 @@ paths:
       summary: Updates a microservice
       operationId: updateMicroserviceYAML
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         required: true
         content:
@@ -2322,12 +2127,6 @@ paths:
       operationId: createMicroserviceRoute
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
@@ -2340,6 +2139,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Created
@@ -2363,12 +2164,6 @@ paths:
       operationId: deleteMicroserviceRoute
       deprecated: true
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
@@ -2381,6 +2176,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -2404,18 +2201,14 @@ paths:
       summary: Creates a port mapping for microservice
       operationId: createMicroservicePortMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2449,18 +2242,14 @@ paths:
       summary: Get a port mapping list for microservice
       operationId: getMicroservicePortMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Created
@@ -2486,12 +2275,6 @@ paths:
       summary: Deletes a port mapping for microservice
       operationId: deleteMicroservicePortMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
@@ -2504,6 +2287,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -2525,18 +2310,14 @@ paths:
       summary: Creates a volume mapping for microservice
       operationId: createMicroserviceVolumeMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2573,18 +2354,14 @@ paths:
       summary: Get a volume mapping list for microservice
       operationId: getMicroserviceVolumeMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2610,12 +2387,6 @@ paths:
       summary: Deletes a volume mapping for microservice
       operationId: deleteMicroserviceVolumeMapping
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice Uuid
@@ -2628,6 +2399,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -2651,18 +2424,14 @@ paths:
       summary: Send request to create image snapshot
       operationId: createImageSnapshot
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice UUID
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "201":
           description: Created
@@ -2690,18 +2459,14 @@ paths:
       summary: Download image snapshot
       operationId: downloadImageSnapshot
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice UUID
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2728,18 +2493,14 @@ paths:
       summary: Enables Microservice Strace Option
       operationId: enableMicroserviceStrace
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice UUID
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2772,12 +2533,6 @@ paths:
       summary: Gets Strace Data for Microservice
       operationId: getMicroserviceStrace
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: uuid
           description: Microservice UUID
@@ -2792,6 +2547,8 @@ paths:
             enum:
               - file
               - string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2825,12 +2582,8 @@ paths:
           description: Microservice UUID
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2866,12 +2619,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2906,12 +2655,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -2936,13 +2681,8 @@ paths:
         - Registries
       summary: Creates new registry
       operationId: createRegistry
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -2967,13 +2707,8 @@ paths:
         - Registries
       summary: Gets list of registries
       operationId: getRegistryList
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3003,12 +2738,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Deleted
@@ -3035,12 +2766,8 @@ paths:
           required: true
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3097,13 +2824,8 @@ paths:
         - User
       summary: Logout
       operationId: logout
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -3199,13 +2921,8 @@ paths:
         - User
       summary: Get current user profile data
       operationId: getUserProfile
-      parameters:
-        - in: header
-          name: Authorization
-          description: User token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3227,13 +2944,8 @@ paths:
         - User
       summary: Update user profile
       operationId: updateUserProfile
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3264,13 +2976,8 @@ paths:
         - User
       summary: Delete account
       operationId: deleteAccount
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3295,13 +3002,8 @@ paths:
         - User
       summary: change password
       operationId: changePassword
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3353,13 +3055,8 @@ paths:
         - Routing
       summary: Get routes
       operationId: getRoutes
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3381,13 +3078,8 @@ paths:
         - Routing
       summary: Creates a new route
       operationId: createRoute
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3425,18 +3117,14 @@ paths:
       summary: Gets a route info
       operationId: getRoute
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Route name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Route Info
@@ -3461,18 +3149,14 @@ paths:
       summary: Updates a route
       operationId: updateRoute
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Route name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3504,18 +3188,14 @@ paths:
       summary: Deletes a route
       operationId: deleteRoute
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Route name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -3536,13 +3216,8 @@ paths:
         - Edge Resource
       summary: Get Edge Resources
       operationId: getEdgeResources
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3566,12 +3241,6 @@ paths:
       summary: Get Specific Edge Resource
       operationId: getEdgeResourceDetail
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource name
@@ -3584,6 +3253,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3606,12 +3277,6 @@ paths:
       summary: Update/Create Specific Edge Resource
       operationId: putEdgeResource
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource name
@@ -3624,6 +3289,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3653,12 +3320,6 @@ paths:
       summary: Deletes an Edge Resource
       operationId: deleteEdgeResource
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource name
@@ -3671,6 +3332,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "204":
           description: Success
@@ -3692,18 +3355,14 @@ paths:
       summary: Get Specific Edge Resource versions
       operationId: getEdgeResourceVersions
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource name
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       responses:
         "200":
           description: Success
@@ -3726,13 +3385,8 @@ paths:
         - Edge Resource
       summary: Create Specific Edge Resource
       operationId: postEdgeResource
-      parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3763,12 +3417,6 @@ paths:
       summary: Attach Edge Resource to Agent
       operationId: postEdgeResourceLink
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource Name
@@ -3781,6 +3429,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3808,12 +3458,6 @@ paths:
       summary: Detach Edge Resource from Agent
       operationId: deleteEdgeResourceLink
       parameters:
-        - in: header
-          name: Authorization
-          description: User Token
-          required: true
-          schema:
-            type: string
         - in: path
           name: name
           description: Edge Resource Name
@@ -3826,6 +3470,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - tokenHeader: []
       requestBody:
         content:
           application/json:
@@ -3878,6 +3524,11 @@ servers:
   - url: http://localhost:51121/api/v3
   - url: https://localhost:51121/api/v3
 components:
+  securitySchemes:
+    tokenHeader:
+      type: apiKey
+      in: header
+      name: Authorization
   requestBodies:
     UpdateIOFogNodeRequestBody:
       content:
