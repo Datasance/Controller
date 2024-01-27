@@ -42,10 +42,10 @@ module.exports = {
         field: 'email_activated',
         defaultValue: false
       },
-      SubscriptionKey: {
+      subscriptionKey: {
         /* eslint-disable new-cap */
         type: Sequelize.STRING(100),
-        field: 'subscription_key',
+        field: 'subscriptionKey',
         defaultValue: ''
       }
     })

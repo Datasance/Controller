@@ -23,9 +23,9 @@ const signUp = {
       '\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$'
     },
     'password': { 'type': 'string', 'minLength': 8 },
-    'subscription_key': { 'type': 'string', 'minLength': 15 }
+    'subscriptionKey': { 'type': 'string', 'minLength': 15 }
   },
-  'required': ['email', 'password', 'firstName', 'lastName', 'subscription_key'],
+  'required': ['email', 'password', 'firstName', 'lastName'],
   'additionalProperties': true
 }
 
@@ -84,7 +84,7 @@ const updateUserProfile = {
   'properties': {
     'firstName': { 'type': 'string', 'minLength': 3 },
     'lastName': { 'type': 'string', 'minLength': 3 },
-    'subscription_key': { 'type': 'string', 'minLength': 15 }
+    'subscriptionKey': { 'type': 'string', 'minLength': 15 }
   },
   'required': [],
   'additionalProperties': true
@@ -97,7 +97,7 @@ const updateUserProfileCLI = {
     'firstName': { 'type': 'string', 'minLength': 3 },
     'lastName': { 'type': 'string', 'minLength': 3 },
     'password': { 'type': 'string', 'minLength': 8 },
-    'subscription_key': { 'type': 'string', 'minLength': 15 }
+    'subscriptionKey': { 'type': 'string', 'minLength': 15 }
   },
   'required': [],
   'additionalProperties': true

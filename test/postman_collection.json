@@ -20,7 +20,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscription_key && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -36,7 +36,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n  \"subscription-key\": \"xxxx-xxxx-xxxx-xxxx\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n  \"subscriptionKey\": \"xxxx-xxxx-xxxx-xxxx\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -282,7 +282,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.firstName && data.lastName && data.email && data.subscription_key;"
+									"tests[\"Response validation passed\"] = data.firstName && data.lastName && data.email && data.subscriptionKey;"
 								],
 								"type": "text/javascript"
 							}
@@ -362,7 +362,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.firstName && data.lastName && data.email && data.subscription_key;"
+									"tests[\"Response validation passed\"] = data.firstName && data.lastName && data.email && data.subscriptionKey;"
 								],
 								"type": "text/javascript"
 							}
@@ -382,7 +382,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"Saeid\",\n  \"lastName\": \"Rezaei\"\n}"
+							"raw": "{\n  \"firstName\": \"Saeid\",\n  \"lastName\": \"Rezaei\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/profile",
@@ -700,7 +700,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -716,7 +716,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -1907,7 +1907,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -1923,7 +1923,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -3343,7 +3343,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -3359,7 +3359,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n }"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -4398,7 +4398,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -4414,7 +4414,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -5530,7 +5530,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -5546,7 +5546,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -5965,7 +5965,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -5981,7 +5981,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -7792,7 +7792,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -7808,7 +7808,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -8192,7 +8192,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -8208,7 +8208,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -8682,7 +8682,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -8698,7 +8698,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -10513,7 +10513,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -10529,7 +10529,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -11401,7 +11401,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -11417,7 +11417,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -12351,7 +12351,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -12367,7 +12367,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",
@@ -12698,7 +12698,7 @@
 									"",
 									"var data = JSON.parse(responseBody);",
 									"",
-									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.hasOwnProperty('emailActivated');"
+									"tests[\"Response validation passed\"] = data.hasOwnProperty('userId') && data.firstName && data.lastName && data.email && data.subscriptionKey && data.hasOwnProperty('emailActivated');"
 								],
 								"type": "text/javascript"
 							}
@@ -12714,7 +12714,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
+							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
 							"raw": "{{host}}/api/v3/user/signup",

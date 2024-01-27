@@ -1,4 +1,4 @@
-swagger: "3.0.0"
+openapi: "3.0.0"
 info:
   version: 3.0.0
   title: ioFog Controller
@@ -5322,7 +5322,7 @@ components:
         - firstName
         - lastName
         - email
-        - subscription_key
+        - subscriptionKey
         - emailActivated
       properties:
         userId:
@@ -5333,7 +5333,7 @@ components:
           type: string
         email:
           type: string
-        subscription_key:
+        subscriptionKey:
           type: string
         emailActivated:
           type: boolean
@@ -5343,7 +5343,7 @@ components:
         - firstName
         - lastName
         - email
-        - subscription_key
+        - subscriptionKey
       properties:
         firstName:
           type: string
@@ -5351,7 +5351,7 @@ components:
           type: string
         email:
           type: string
-        subscription_key:
+        subscriptionKey:
           type: string
     UserProfileUpdatesRequest:
       type: object
@@ -5360,7 +5360,7 @@ components:
           type: string
         lastName:
           type: string
-        subscription_key:
+        subscriptionKey:
           type: string
     UserActivateRequest:
       type: object
@@ -5400,7 +5400,7 @@ components:
         - lastName
         - email
         - password
-        - subscription_key
+        - subscriptionKey
       properties:
         firstName:
           type: string
@@ -5410,7 +5410,7 @@ components:
           type: string
         password:
           type: string
-        subscription_key:
+        subscriptionKey:
           type: string
     VersionCommandResponse:
       type: object

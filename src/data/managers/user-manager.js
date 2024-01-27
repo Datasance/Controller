@@ -78,14 +78,6 @@ class UserManager extends BaseManager {
     }, transaction)
   }
 
-  updateSubscriptionKey (userId, newSubscriptionKey, transaction) {
-    return this.update({
-      id: userId
-    }, {
-      subscription_key: newSubscriptionKey
-    }, transaction)
-  }
-
   updateTempPassword (userId, tempPassword, transaction) {
     return this.update({
       id: userId

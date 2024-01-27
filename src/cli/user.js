@@ -61,10 +61,10 @@ class User extends BaseCLIHandler {
         group: [constants.CMD_ADD, constants.CMD_UPDATE]
       },
       {
-        name: 'subscription_key',
+        name: 'subscriptionKey',
         alias: 's',
         type: String,
-        description: 'User\'s susbcription_key',
+        description: 'User\'s subscriptionKey',
         group: [constants.CMD_ADD, constants.CMD_UPDATE]
       },
       {

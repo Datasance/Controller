@@ -28,7 +28,7 @@ const userSignupEndPoint = async function (req) {
     lastName: user.lastName,
     email: user.email,
     password: encryptedPassword,
-    subscription_key: user.subscription_key
+    subscriptionKey: user.subscriptionKey
   }
   return UserService.signUp(newUser, false)
 }
@@ -66,7 +66,7 @@ const getUserProfileEndPoint = async function (req, user) {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
-    subscription_key: user.subscription_key
+    subscriptionKey: user.subscriptionKey
   }
 }
 
