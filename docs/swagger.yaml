@@ -60,7 +60,7 @@ paths:
       summary: Returns list of ioFog nodes
       operationId: getIOFogNodes
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -91,7 +91,7 @@ paths:
       summary: Creates a new ioFog node
       operationId: createIOFogNode
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/UpdateIOFogNodeRequestBody"
       responses:
@@ -126,7 +126,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/UpdateIOFogNodeRequestBody"
       responses:
@@ -158,7 +158,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "202":
           description: Accepted
@@ -186,7 +186,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -219,7 +219,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "201":
           description: Success
@@ -261,7 +261,7 @@ paths:
               - upgrade
               - rollback
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -292,7 +292,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -319,7 +319,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -346,7 +346,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -379,7 +379,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -405,7 +405,7 @@ paths:
       summary: Lists all applications
       operationId: listApplication
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -431,7 +431,7 @@ paths:
       operationId: createApplication
       deprecated: true
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -463,7 +463,7 @@ paths:
       summary: Creates an application using a YAML file
       operationId: createApplicationYAML
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -506,7 +506,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -540,7 +540,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -581,7 +581,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -609,7 +609,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -642,7 +642,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -674,7 +674,7 @@ paths:
       summary: Lists all application templates
       operationId: listApplicationTemplates
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -701,7 +701,7 @@ paths:
       operationId: createApplicationTemplate
       deprecated: true
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
       responses:
@@ -727,7 +727,7 @@ paths:
       summary: Creates an application template using a YAML file
       operationId: createApplicationTemplateYAML
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -769,7 +769,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
       responses:
@@ -801,7 +801,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -835,7 +835,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -863,7 +863,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -896,7 +896,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -988,13 +988,8 @@ paths:
         - Agent
       summary: Get an ioFog node configuration
       operationId: getIOFogNodeConfig
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1016,13 +1011,8 @@ paths:
         - Agent
       summary: Updates an ioFog node configuration
       operationId: updateIOFogNodeConfig
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1049,13 +1039,8 @@ paths:
         - Agent
       summary: Gets ioFog node changes
       operationId: getIOFogNodeChanges
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1079,13 +1064,8 @@ paths:
         - Agent
       summary: Resets ioFog node changes list
       operationId: resetIOFogNodeChanges
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1106,13 +1086,8 @@ paths:
         - Agent
       summary: Posts agent status to ioFog node
       operationId: postAgentStatus
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1139,13 +1114,8 @@ paths:
         - Agent
       summary: Gets microservices running on an ioFog node
       operationId: getAgentMicroservicesList
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1175,12 +1145,8 @@ paths:
           description: Microservice UUID
           schema:
             type: string
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1205,13 +1171,8 @@ paths:
         - Agent
       summary: Gets list of Docker registries
       operationId: getRegistriesList
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1234,13 +1195,8 @@ paths:
         - Agent
       summary: Get an ioFog node tunnel configuration
       operationId: getIOFogNodeTunnelConfig
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1265,13 +1221,8 @@ paths:
         - Agent
       summary: Get an ioFog node strace info
       operationId: getIOFogNodeStraceInfo
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1295,13 +1246,8 @@ paths:
         - Agent
       summary: Posts agent strace to ioFog node
       operationId: postIOFogNodeStraceBuffer
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1330,13 +1276,8 @@ paths:
         - Agent
       summary: Get change version command
       operationId: getChangeVersion
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1361,13 +1302,8 @@ paths:
         - Agent
       summary: Updates HAL hardware info
       operationId: putHalHardwareInfo
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         $ref: "#/components/requestBodies/HalInfo"
       responses:
@@ -1391,7 +1327,7 @@ paths:
       summary: Retrieves HAL USB info
       operationId: getAgentHalUsbInfo
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -1415,13 +1351,8 @@ paths:
         - Agent
       summary: Updates HAL USB info
       operationId: putHalUsbInfo
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         $ref: "#/components/requestBodies/HalInfo"
       responses:
@@ -1444,13 +1375,8 @@ paths:
         - Agent
       summary: Deletes an ioFog node
       operationId: deleteAgentNode
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "204":
           description: No Content
@@ -1469,13 +1395,8 @@ paths:
         - Agent
       summary: Get image snapshot info
       operationId: getImageSnapshot
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       responses:
         "200":
           description: Success
@@ -1499,13 +1420,8 @@ paths:
         - Agent
       summary: Put image snapshot info on controller
       operationId: putImageSnapshot
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1532,13 +1448,8 @@ paths:
         - Agent
       summary: Post tracking info
       operationId: postTracking
-      parameters:
-        - in: header
-          name: Authorization
-          description: Agent Token
-          required: true
-          schema:
-            type: string
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1559,7 +1470,7 @@ paths:
       summary: Gets microservices catalog
       operationId: getMicroservicesCatalog
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -1582,7 +1493,7 @@ paths:
       summary: Creates a new microservice catalog item
       operationId: createMicroserviceCatalogItem
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/CreateUpdateCatalogItemRequestBody"
       responses:
@@ -1622,7 +1533,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Catalog Item Info
@@ -1654,7 +1565,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/CreateUpdateCatalogItemRequestBody"
       responses:
@@ -1688,7 +1599,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -1711,7 +1622,7 @@ paths:
       deprecated: true
       operationId: getFlowsList
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -1735,7 +1646,7 @@ paths:
       deprecated: true
       operationId: createFlow
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/NewFlowRequest"
       responses:
@@ -1774,7 +1685,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -1807,7 +1718,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         $ref: "#/components/requestBodies/NewFlowRequest"
       responses:
@@ -1840,7 +1751,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -1876,7 +1787,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -1900,7 +1811,7 @@ paths:
       operationId: createMicroservice
       deprecated: true
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -1938,7 +1849,7 @@ paths:
       summary: Creates a new microservice in an Application
       operationId: createMicroserviceYAML
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -1986,7 +1897,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2019,7 +1930,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2058,7 +1969,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -2089,7 +2000,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         required: true
         content:
@@ -2140,7 +2051,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Created
@@ -2177,7 +2088,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -2208,7 +2119,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2249,7 +2160,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Created
@@ -2288,7 +2199,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -2317,7 +2228,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2361,7 +2272,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2400,7 +2311,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -2431,7 +2342,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "201":
           description: Created
@@ -2466,7 +2377,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2500,7 +2411,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2548,7 +2459,7 @@ paths:
               - file
               - string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2583,7 +2494,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2620,7 +2531,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2656,7 +2567,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2682,7 +2593,7 @@ paths:
       summary: Creates new registry
       operationId: createRegistry
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2708,7 +2619,7 @@ paths:
       summary: Gets list of registries
       operationId: getRegistryList
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2739,7 +2650,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Deleted
@@ -2767,7 +2678,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2825,7 +2736,7 @@ paths:
       summary: Logout
       operationId: logout
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -2922,7 +2833,7 @@ paths:
       summary: Get current user profile data
       operationId: getUserProfile
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -2945,7 +2856,7 @@ paths:
       summary: Update user profile
       operationId: updateUserProfile
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -2977,7 +2888,7 @@ paths:
       summary: Delete account
       operationId: deleteAccount
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3003,7 +2914,7 @@ paths:
       summary: change password
       operationId: changePassword
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3056,7 +2967,7 @@ paths:
       summary: Get routes
       operationId: getRoutes
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -3079,7 +2990,7 @@ paths:
       summary: Creates a new route
       operationId: createRoute
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3124,7 +3035,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Route Info
@@ -3156,7 +3067,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3195,7 +3106,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -3217,7 +3128,7 @@ paths:
       summary: Get Edge Resources
       operationId: getEdgeResources
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -3254,7 +3165,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -3290,7 +3201,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3333,7 +3244,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "204":
           description: Success
@@ -3362,7 +3273,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       responses:
         "200":
           description: Success
@@ -3386,7 +3297,7 @@ paths:
       summary: Create Specific Edge Resource
       operationId: postEdgeResource
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3430,7 +3341,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3471,7 +3382,7 @@ paths:
           schema:
             type: string
       security:
-        - tokenHeader: []
+        - userToken: []
       requestBody:
         content:
           application/json:
@@ -3525,7 +3436,11 @@ servers:
   - url: https://localhost:51121/api/v3
 components:
   securitySchemes:
-    tokenHeader:
+    userToken:
+      type: apiKey
+      in: header
+      name: Authorization
+    agentToken:
       type: apiKey
       in: header
       name: Authorization
