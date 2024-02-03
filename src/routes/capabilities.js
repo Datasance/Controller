@@ -15,7 +15,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'head',
-    path: '/api/v3/capabilities/edgeResources',
+    path: '/api/v1/capabilities/edgeResources',
     middleware: async (req, res) => {
       logger.apiReq(req)
       res.sendStatus(204)
@@ -23,7 +23,7 @@ module.exports = [
   },
   {
     method: 'head',
-    path: '/api/v3/capabilities/applicationTemplates',
+    path: '/api/v1/capabilities/applicationTemplates',
     middleware: async (req, res) => {
       logger.apiReq(req)
       res.sendStatus(204)

@@ -40,6 +40,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       field: 'email_activated',
       defaultValue: false
+    },
+    subscriptionKey: {
+      type: DataTypes.STRING(100),
+      field: 'subscriptionKey',
+      defaultValue: ''
     }
   }, {
     tableName: 'Users',

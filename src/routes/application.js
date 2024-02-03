@@ -19,7 +19,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/application',
+    path: '/api/v1/application',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -43,7 +43,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/application',
+    path: '/api/v1/application',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -72,7 +72,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/application/yaml',
+    path: '/api/v1/application/yaml',
     fileInput: 'application',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -101,7 +101,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/application/:name',
+    path: '/api/v1/application/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -130,7 +130,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/application/:name',
+    path: '/api/v1/application/:name',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -163,7 +163,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/application/yaml/:name',
+    path: '/api/v1/application/yaml/:name',
     fileInput: 'application',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -196,7 +196,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/application/:name',
+    path: '/api/v1/application/:name',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -229,7 +229,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/application/:name',
+    path: '/api/v1/application/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

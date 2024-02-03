@@ -19,7 +19,7 @@ const Errors = require('../helpers/errors')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/edgeResources',
+    path: '/api/v1/edgeResources',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -42,7 +42,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/edgeResource/:name/:version',
+    path: '/api/v1/edgeResource/:name/:version',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -70,7 +70,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/edgeResource/:name',
+    path: '/api/v1/edgeResource/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -98,7 +98,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/edgeResource/:name/:version',
+    path: '/api/v1/edgeResource/:name/:version',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -130,7 +130,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/edgeResource/:name/:version',
+    path: '/api/v1/edgeResource/:name/:version',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -161,7 +161,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/edgeResource',
+    path: '/api/v1/edgeResource',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -189,7 +189,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/edgeResource/:name/:version/link',
+    path: '/api/v1/edgeResource/:name/:version/link',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -216,7 +216,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/edgeResource/:name/:version/link',
+    path: '/api/v1/edgeResource/:name/:version/link',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

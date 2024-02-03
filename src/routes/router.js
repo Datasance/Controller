@@ -19,7 +19,7 @@ const Errors = require('../helpers/errors')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/router',
+    path: '/api/v1/router',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -46,7 +46,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/router',
+    path: '/api/v1/router',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)

@@ -41,6 +41,12 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         field: 'email_activated',
         defaultValue: false
+      },
+      subscriptionKey: {
+        /* eslint-disable new-cap */
+        type: Sequelize.STRING(100),
+        field: 'subscriptionKey',
+        defaultValue: ''
       }
     })
   },

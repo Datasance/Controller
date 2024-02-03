@@ -26,12 +26,12 @@ module.exports = {
       {
         catalog_item_id: 3,
         fog_type_id: 1,
-        container_image: 'iofog/hal'
+        container_image: 'ghcr.io/datasance/hal'
       },
       {
         catalog_item_id: 3,
         fog_type_id: 2,
-        container_image: 'iofog/hal-arm'
+        container_image: 'ghcr.io/datasance/hal-arm'
       },
       {
         catalog_item_id: 4,

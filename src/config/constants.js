@@ -19,7 +19,7 @@ module.exports = {
   'Server:DevMode': false,
 
   'Email:ActivationEnabled': false,
-  'Email:HomeUrl': 'https://iofog.org',
+  'Email:HomeUrl': 'https://datasance.com',
 
   'Service:LogsDirectory': '/var/log/iofog-controller',
   'Service:LogsFileSize': 10485760,

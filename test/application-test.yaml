@@ -1,5 +1,5 @@
 kind: Application
-apiVersion: iofog.org/v3
+apiVersion: datasance.com/v1
 metadata:
   name: "healthcare-wearable-flow"
 spec:
