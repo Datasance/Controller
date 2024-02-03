@@ -19,7 +19,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/catalog/microservices',
+    path: '/api/v1/catalog/microservices',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -47,7 +47,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/catalog/microservices',
+    path: '/api/v1/catalog/microservices',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -84,7 +84,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/catalog/microservices/:id',
+    path: '/api/v1/catalog/microservices/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -116,7 +116,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/catalog/microservices/:id',
+    path: '/api/v1/catalog/microservices/:id',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -157,7 +157,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/catalog/microservices/:id',
+    path: '/api/v1/catalog/microservices/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

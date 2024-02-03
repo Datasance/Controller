@@ -19,7 +19,7 @@ const Errors = require('../helpers/errors')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/config',
+    path: '/api/v1/config',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -42,7 +42,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/config/:key',
+    path: '/api/v1/config/:key',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -70,7 +70,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/config',
+    path: '/api/v1/config',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)

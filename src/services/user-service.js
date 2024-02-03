@@ -141,11 +141,13 @@ const updateUserDetails = async function (user, profileData, isCLI, transaction)
     ? {
       firstName: profileData.firstName,
       lastName: profileData.lastName,
-      password: password
+      password: password,
+      subscriptionKey: profileData.subscriptionKey
     }
     : {
       firstName: profileData.firstName,
-      lastName: profileData.lastName
+      lastName: profileData.lastName,
+      subscriptionKey: profileData.subscriptionKey
     }
 
   updateObject = AppHelper.deleteUndefinedFields(updateObject)
@@ -155,7 +157,8 @@ const updateUserDetails = async function (user, profileData, isCLI, transaction)
   return {
     firstName: updateObject.firstName,
     lastName: updateObject.lastName,
-    email: user.email
+    email: user.email,
+    subscriptionKey: profileData.subscriptionKey
   }
 }
 
@@ -309,6 +312,7 @@ async function _handleCreateUser (user, isEmailActivationEnabled, transaction) {
     firstName: newUser.firstName,
     lastName: newUser.lastName,
     email: newUser.email,
+    subscriptionKey: newUser.subscriptionKey,
     emailActivated: user.emailActivated
   }
 }

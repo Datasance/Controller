@@ -61,6 +61,13 @@ class User extends BaseCLIHandler {
         group: [constants.CMD_ADD, constants.CMD_UPDATE]
       },
       {
+        name: 'subscriptionKey',
+        alias: 's',
+        type: String,
+        description: 'User\'s subscriptionKey',
+        group: [constants.CMD_ADD, constants.CMD_UPDATE]
+      },
+      {
         name: 'force',
         alias: 'F',
         type: Boolean,

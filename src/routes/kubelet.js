@@ -20,7 +20,7 @@ const ResponseDecorator = require('../decorators/response-decorator')
 module.exports = [
   {
     method: 'post',
-    path: '/api/v3/k8s/createPod',
+    path: '/api/v1/k8s/createPod',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -53,7 +53,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v3/k8s/updatePod',
+    path: '/api/v1/k8s/updatePod',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -86,7 +86,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/k8s/deletePod',
+    path: '/api/v1/k8s/deletePod',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -119,7 +119,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/getPod',
+    path: '/api/v1/k8s/getPod',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -152,7 +152,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/getContainerLogs',
+    path: '/api/v1/k8s/getContainerLogs',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -185,7 +185,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/getPodStatus',
+    path: '/api/v1/k8s/getPodStatus',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -218,7 +218,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/getPods',
+    path: '/api/v1/k8s/getPods',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -251,7 +251,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/capacity',
+    path: '/api/v1/k8s/capacity',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -284,7 +284,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/allocatable',
+    path: '/api/v1/k8s/allocatable',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -317,7 +317,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/nodeConditions',
+    path: '/api/v1/k8s/nodeConditions',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -350,7 +350,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/nodeAddresses',
+    path: '/api/v1/k8s/nodeAddresses',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -383,7 +383,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/vk-token',
+    path: '/api/v1/k8s/vk-token',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -408,7 +408,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/k8s/scheduler-token',
+    path: '/api/v1/k8s/scheduler-token',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
