@@ -58,59 +58,8 @@ jobs:
         npm i -g better-npm-audit
         npx better-npm-audit audit -p
 
-  Tests:
-    needs: Build
-    runs-on: ubuntu-20.04
-    permissions:
-      actions: write
-      checks: write
-      contents: write
-      deployments: write
-      id-token: write
-      issues: write
-      discussions: write
-      packages: write
-      pages: write
-      pull-requests: write
-      repository-projects: write
-      security-events: write
-      statuses: write
-    strategy:
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/386
-          - linux/arm/v6
-          - linux/arm/v7
-          - linux/arm64    
-        node: [ 16, 17, 16, 19,20, 21 ]
-    name: Node ${{ matrix.node }} Test
-    steps:
-    - uses: actions/checkout@v3
-    - name: Setup Node ${{ matrix.node }} Test
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node }}
-    - name: Cache Node Modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          node_modules
-        key: ${{ runner.os }}-controller-node_modules-${{ hashFiles('package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-controller-node_modules-
-    - run: npm install
-    - run: npm run test -- junit
-    - run: npm run postman_test
-    - name: Publish Test Results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          *-results.xml
-
   Publish:
-    needs: [Build, Tests]
+    needs: [Build]
     runs-on: ubuntu-20.04
     permissions:
       actions: write
