@@ -39,13 +39,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n  \"subscriptionKey\": \"xxxx-xxxx-xxxx-xxxx\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -83,13 +83,13 @@
 							"raw": "{\n  \"activationCode\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/activate",
+							"raw": "{{host}}/api/v1/user/activate",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"activate"
 							]
@@ -131,13 +131,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -171,13 +171,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/logout",
+							"raw": "{{host}}/api/v1/user/logout",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"logout"
 							]
@@ -219,13 +219,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -250,13 +250,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup/resend-activation?email=user@domain.com",
+							"raw": "{{host}}/api/v1/user/signup/resend-activation?email=user@domain.com",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup",
 								"resend-activation"
@@ -297,13 +297,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -337,13 +337,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/password",
+							"raw": "{{host}}/api/v1/user/password",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"password"
 							]
@@ -385,13 +385,13 @@
 							"raw": "{\n  \"firstName\": \"Saeid\",\n  \"lastName\": \"Rezaei\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -429,13 +429,13 @@
 							"raw": "{\n  \"oldPassword\": \"#Bugs4Fun\",\n  \"newPassword\": \"#Bugs4Fun2\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/password",
+							"raw": "{{host}}/api/v1/user/password",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"password"
 							]
@@ -477,13 +477,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun2\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -521,13 +521,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -582,13 +582,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/status",
+							"raw": "{{host}}/api/v1/status",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"status"
 							]
 						}
@@ -616,13 +616,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/email-activation",
+							"raw": "{{host}}/api/v1/email-activation",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"email-activation"
 							]
 						}
@@ -650,13 +650,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/fog-types",
+							"raw": "{{host}}/api/v1/fog-types",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"fog-types"
 							]
 						}
@@ -719,13 +719,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -767,13 +767,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -819,13 +819,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -870,13 +870,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -917,13 +917,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/provisioning-key",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/provisioning-key",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"provisioning-key"
@@ -964,13 +964,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"{{provisioning-key}}\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/provision",
+							"raw": "{{host}}/api/v1/agent/provision",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"provision"
 							]
@@ -1014,13 +1014,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/config",
+							"raw": "{{host}}/api/v1/agent/config",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"config"
 							]
@@ -1059,13 +1059,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/image-snapshot",
+							"raw": "{{host}}/api/v1/agent/image-snapshot",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"image-snapshot"
 							]
@@ -1104,13 +1104,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/microservices/abcedf",
+							"raw": "{{host}}/api/v1/agent/microservices/abcedf",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"microservices",
 								"abcedf"
@@ -1147,13 +1147,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/strace",
+							"raw": "{{host}}/api/v1/agent/strace",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"strace"
 							]
@@ -1193,13 +1193,13 @@
 							"raw": "{\r\n  \"info\": \"testData\"\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/hal/hw",
+							"raw": "{{host}}/api/v1/agent/hal/hw",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"hal",
 								"hw"
@@ -1240,13 +1240,13 @@
 							"raw": "{\r\n  \"info\": \"testData2\"\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/hal/usb",
+							"raw": "{{host}}/api/v1/agent/hal/usb",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"hal",
 								"usb"
@@ -1290,13 +1290,13 @@
 							"raw": "{\r\n  \"straceData\": [\r\n    {\r\n      \"microserviceUuid\": \"abcdef\",\r\n      \"buffer\": \"test\"\r\n    }\r\n  ]\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/strace",
+							"raw": "{{host}}/api/v1/agent/strace",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"strace"
 							]
@@ -1336,13 +1336,13 @@
 							"raw": "{\r\n  \"daemonStatus\": \"RUNNING\",\r\n  \"daemonOperatingDuration\": 15,\r\n  \"daemonLastStart\": 25,\r\n  \"memoryUsage\": 16,\r\n  \"diskUsage\": 14,\r\n  \"cpuUsage\": 17,\r\n  \"memoryViolation\": true,\r\n  \"diskViolation\": true,\r\n  \"cpuViolation\": true,\r\n  \"microserviceStatus\": \"[]\",\r\n  \"repositoryCount\": 5,\r\n  \"repositoryStatus\": \"RUNNING\",\r\n  \"systemTime\": 155,\r\n  \"lastStatusTime\": 166,\r\n  \"ipAddress\": \"192.168.0.1\",\r\n  \"processedMessages\": 255,\r\n  \"microserviceMessageCounts\": \"counts\",\r\n  \"messageSpeed\": 52,\r\n  \"lastCommandTime\": 57,\r\n  \"tunnelStatus\": \"on\",\r\n  \"version\": \"1\",\r\n  \"isReadyToUpgrade\": true,\r\n  \"isReadyToRollback\": true\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/status",
+							"raw": "{{host}}/api/v1/agent/status",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"status"
 							]
@@ -1385,13 +1385,13 @@
 							"raw": "{\r\n  \"info\": \"testData2\"\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/image-snapshot",
+							"raw": "{{host}}/api/v1/agent/image-snapshot",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"image-snapshot"
 							]
@@ -1438,13 +1438,13 @@
 							"raw": "{\n    \"name\": \"application-msvc-name\",\n    \"isSystem\": false,\n    \"description\": \"Description\",\n    \"isActivated\": true,\n    \"microservices\": [\n        {\n            \"name\": \"msvc-1\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [{\n                \"internal\": 81,\n                \"external\": 5001\n            }, {\n                \"internal\": 80,\n                \"external\": 5002,\n                \"protocol\": \"udp\"\n            }],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-2\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-3\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        }\n    ],\n    \"routes\": [\n        {\n            \"from\": \"msvc-1\",\n            \"to\": \"msvc-2\",\n            \"name\": \"m1-2\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -1483,13 +1483,13 @@
 							"raw": "{\r\n  \"networkInterface\": \"wlan0\",\r\n  \"dockerUrl\": \"http://google.com\",\r\n  \"diskLimit\": 15,\r\n  \"diskDirectory\": \"testDirectoryPath\",\r\n  \"memoryLimit\": 150,\r\n  \"cpuLimit\": 17,\r\n  \"logLimit\": 16,\r\n  \"logDirectory\": \"testLogPath\",\r\n  \"logFileCount\": 7,\r\n  \"statusFrequency\": 35,\r\n  \"changeFrequency\": 36,\r\n  \"deviceScanFrequency\": 37,\r\n  \"watchdogEnabled\": true,\r\n  \"latitude\": 22,\r\n  \"longitude\": 66,\r\n  \"gpsMode\": \"manual\",\r\n \"dockerPruningFrequency\": 35,\r\n  \"availableDiskThreshold\": 95,\r\n  \"logLevel\": \"INFO\"\r\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/config",
+							"raw": "{{host}}/api/v1/agent/config",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"config"
 							]
@@ -1531,13 +1531,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/config/changes",
+							"raw": "{{host}}/api/v1/agent/config/changes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"config",
 								"changes"
@@ -1577,13 +1577,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/tunnel",
+							"raw": "{{host}}/api/v1/agent/tunnel",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"tunnel"
 							]
@@ -1622,13 +1622,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/registries",
+							"raw": "{{host}}/api/v1/agent/registries",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"registries"
 							]
@@ -1667,13 +1667,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/version",
+							"raw": "{{host}}/api/v1/agent/version",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"version"
 							]
@@ -1720,13 +1720,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/microservices",
+							"raw": "{{host}}/api/v1/agent/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"microservices"
 							]
@@ -1766,13 +1766,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -1812,13 +1812,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -1856,13 +1856,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -1926,13 +1926,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -1974,13 +1974,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -2026,13 +2026,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -2077,13 +2077,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -2127,13 +2127,13 @@
 							"raw": "{\n  \"name\": \"application-name\",\n \"isSystem\": false,\n \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -2179,13 +2179,13 @@
 							"raw": "{\n    \"name\": \"application-msvc-name\",\n    \"isSystem\": false,\n    \"description\": \"Description\",\n    \"isActivated\": true,\n    \"microservices\": [\n        {\n            \"name\": \"msvc-1\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-2\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-3\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        }\n    ],\n    \"routes\": [\n        {\n            \"from\": \"msvc-1\",\n            \"to\": \"msvc-2\",\n            \"name\": \"m1-2\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -2236,13 +2236,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/yaml",
+							"raw": "{{host}}/api/v1/application/yaml",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"yaml"
 							]
@@ -2282,13 +2282,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{application-msvc-name}}/{{application-route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{application-msvc-name}}/{{application-route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{application-msvc-name}}",
 								"{{application-route-name}}"
@@ -2330,13 +2330,13 @@
 							"raw": "{\n    \"routes\": [\n        {\n            \"from\": \"msvc-1\",\n            \"to\": \"msvc-3\",\n            \"name\": \"m1-2\"\n        },\n        {\n            \"from\": \"msvc-1\",\n            \"to\": \"msvc-1\",\n            \"name\": \"m1-1\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-msvc-name}}"
 							]
@@ -2377,13 +2377,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-msvc-name}}"
 							]
@@ -2423,13 +2423,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{application-msvc-name}}/{{application-route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{application-msvc-name}}/{{application-route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{application-msvc-name}}",
 								"{{application-route-name}}"
@@ -2479,13 +2479,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?application={{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/microservices?application={{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -2529,13 +2529,13 @@
 							"raw": "{\n    \"description\": \"Description\",\n    \"microservices\": [\n        {\n            \"name\": \"msvc-1\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-2\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"{{application-name-2}}\",\n            \"iofogUuid\": \"{{node-id}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-msvc-name}}"
 							]
@@ -2580,13 +2580,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/yaml/{{application-yaml-name}}",
+							"raw": "{{host}}/api/v1/application/yaml/{{application-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"yaml",
 								"{{application-yaml-name}}"
@@ -2645,13 +2645,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?application={{application-yaml-name}}",
+							"raw": "{{host}}/api/v1/microservices?application={{application-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -2705,13 +2705,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?application={{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/microservices?application={{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -2755,13 +2755,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -2799,13 +2799,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -2845,13 +2845,13 @@
 							"raw": "{\n  \"name\": \"application-name-22\",\n  \"isSystem\": true,\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -2890,13 +2890,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -2934,13 +2934,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -2979,13 +2979,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-msvc-name}}"
 							]
@@ -3024,13 +3024,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-yaml-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-yaml-name}}"
 							]
@@ -3069,13 +3069,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -3116,13 +3116,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -3156,13 +3156,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/route/{{application-route-name}}",
+							"raw": "{{host}}/api/v1/route/{{application-route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"route",
 								"{{application-route-name}}"
 							]
@@ -3202,13 +3202,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -3248,13 +3248,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -3292,13 +3292,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -3362,13 +3362,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n }"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -3410,13 +3410,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -3462,13 +3462,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -3513,13 +3513,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -3567,13 +3567,13 @@
 							"raw": "{\n    \"name\": \"application-template-name\",\n    \"variables\": [\n        {\n            \"key\": \"agent-1-name\",\n            \"description\": \"Agent name for msvc-1\"\n        },\n        {\n            \"key\": \"env-value-1\",\n            \"description\": \"ENV variable value for KEY1\"\n        },\n        {\n            \"key\": \"env-value-2\",\n            \"description\": \"ENV variable value for KEY2\",\n            \"defaultValue\": \"test42\"\n        }\n    ],\n    \"application\": {\n        \"microservices\": [\n            {\n                \"name\": \"msvc-1\",\n                \"config\": \"string\",\n                \"images\": [\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 1\n                    },\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 2\n                    }\n                ],\n                \"registryId\": 1,\n                \"agentName\": \"{{ agent-1-name }}\",\n                \"rootHostAccess\": true,\n                \"logSize\": 0,\n                \"volumeMappings\": [\n                    {\n                        \"hostDestination\": \"/var/dest\",\n                        \"containerDestination\": \"/var/dest\",\n                        \"accessMode\": \"rw\"\n                    }\n                ],\n                \"ports\": [],\n                \"routes\": [],\n                \"env\": [\n                    {\n                        \"key\": \"KEY1\",\n                        \"value\": \"{{ env-value-1 }}\"\n                    },\n                    {\n                        \"key\": \"KEY2\",\n                        \"value\": \"{{ env-value-2 }}\"\n                    }\n                ],\n                \"cmd\": [\n                    \"test\",\n                    \"--arg1\",\n                    \"--arg2\"\n                ]\n            },\n            {\n                \"name\": \"msvc-2\",\n                \"config\": \"string\",\n                \"images\": [\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 1\n                    },\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 2\n                    }\n                ],\n                \"registryId\": 1,\n                \"application\": \"{{application-name-2}}\",\n                \"iofogUuid\": \"{{node-id}}\",\n                \"rootHostAccess\": true,\n                \"logSize\": 0,\n                \"volumeMappings\": [\n                    {\n                        \"hostDestination\": \"/var/dest\",\n                        \"containerDestination\": \"/var/dest\",\n                        \"accessMode\": \"rw\"\n                    }\n                ],\n                \"ports\": [],\n                \"routes\": [],\n                \"env\": [\n                    {\n                        \"key\": \"KEY1\",\n                        \"value\": \"value1\"\n                    },\n                    {\n                        \"key\": \"KEY2\",\n                        \"value\": \"value2\"\n                    }\n                ],\n                \"cmd\": [\n                    \"test\",\n                    \"--arg1\",\n                    \"--arg2\"\n                ]\n            },\n            {\n                \"name\": \"msvc-3\",\n                \"config\": \"string\",\n                \"images\": [\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 1\n                    },\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 2\n                    }\n                ],\n                \"registryId\": 1,\n                \"application\": \"{{application-name-2}}\",\n                \"iofogUuid\": \"{{node-id}}\",\n                \"rootHostAccess\": true,\n                \"logSize\": 0,\n                \"volumeMappings\": [\n                    {\n                        \"hostDestination\": \"/var/dest\",\n                        \"containerDestination\": \"/var/dest\",\n                        \"accessMode\": \"rw\"\n                    }\n                ],\n                \"ports\": [],\n                \"routes\": [],\n                \"env\": [\n                    {\n                        \"key\": \"KEY1\",\n                        \"value\": \"value1\"\n                    },\n                    {\n                        \"key\": \"KEY2\",\n                        \"value\": \"value2\"\n                    }\n                ],\n                \"cmd\": [\n                    \"test\",\n                    \"--arg1\",\n                    \"--arg2\"\n                ]\n            }\n        ],\n        \"routes\": [\n            {\n                \"from\": \"msvc-1\",\n                \"to\": \"msvc-2\",\n                \"name\": \"m1-2\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate",
+							"raw": "{{host}}/api/v1/applicationTemplate",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate"
 							]
 						}
@@ -3627,13 +3627,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/yaml",
+							"raw": "{{host}}/api/v1/applicationTemplate/yaml",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"yaml"
 							]
@@ -3673,13 +3673,13 @@
 							"raw": "{\n    \"variables\": [\n        {\n            \"key\": \"agent-1-name\",\n            \"description\": \"Agent name for msvc-1\"\n        },\n        {\n            \"key\": \"env-value-1\",\n            \"description\": \"ENV variable value for KEY1\"\n        },\n        {\n            \"key\": \"env-value-2\",\n            \"description\": \"ENV variable value for KEY2\",\n            \"defaultValue\": \"test42\"\n        }\n    ],\n    \"application\": {\n        \"microservices\": [\n            {\n                \"name\": \"msvc-1\",\n                \"config\": \"string\",\n                \"images\": [\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 1\n                    },\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 2\n                    }\n                ],\n                \"registryId\": 1,\n                \"agentName\": \"{{ agent-1-name }}\",\n                \"rootHostAccess\": true,\n                \"logSize\": 0,\n                \"volumeMappings\": [\n                    {\n                        \"hostDestination\": \"/var/dest\",\n                        \"containerDestination\": \"/var/dest\",\n                        \"accessMode\": \"rw\"\n                    }\n                ],\n                \"ports\": [],\n                \"routes\": [],\n                \"env\": [\n                    {\n                        \"key\": \"KEY1\",\n                        \"value\": \"{{ env-value-1 }}\"\n                    },\n                    {\n                        \"key\": \"KEY2\",\n                        \"value\": \"{{ env-value-2 }}\"\n                    }\n                ],\n                \"cmd\": [\n                    \"test\",\n                    \"--arg1\",\n                    \"--arg2\"\n                ]\n            },\n            {\n                \"name\": \"msvc-2\",\n                \"config\": \"string\",\n                \"images\": [\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 1\n                    },\n                    {\n                        \"containerImage\": \"hello-world\",\n                        \"fogTypeId\": 2\n                    }\n                ],\n                \"registryId\": 1,\n                \"application\": \"{{application-name-2}}\",\n                \"iofogUuid\": \"{{node-id}}\",\n                \"rootHostAccess\": true,\n                \"logSize\": 0,\n                \"volumeMappings\": [\n                    {\n                        \"hostDestination\": \"/var/dest\",\n                        \"containerDestination\": \"/var/dest\",\n                        \"accessMode\": \"rw\"\n                    }\n                ],\n                \"ports\": [],\n                \"routes\": [],\n                \"env\": [\n                    {\n                        \"key\": \"KEY1\",\n                        \"value\": \"value1\"\n                    },\n                    {\n                        \"key\": \"KEY2\",\n                        \"value\": \"value2\"\n                    }\n                ],\n                \"cmd\": [\n                    \"test\",\n                    \"--arg1\",\n                    \"--arg2\"\n                ]\n            }\n        ],\n        \"routes\": [\n            {\n                \"from\": \"msvc-1\",\n                \"to\": \"msvc-2\",\n                \"name\": \"m1-2\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-name}}"
 							]
@@ -3725,13 +3725,13 @@
 							]
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/yaml/{{application-template-from-yaml-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/yaml/{{application-template-from-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"yaml",
 								"{{application-template-from-yaml-name}}"
@@ -3774,13 +3774,13 @@
 							"raw": "{\n  \"name\": \"application-template-22\",\n  \"description\": \"Description\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-name}}"
 							]
@@ -3822,13 +3822,13 @@
 							"raw": "{\n  \"name\": \"application-template-from-yaml-22\",\n  \"description\": \"Description\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-from-yaml-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-from-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-from-yaml-name}}"
 							]
@@ -3867,13 +3867,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplates",
+							"raw": "{{host}}/api/v1/applicationTemplates",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplates"
 							]
 						}
@@ -3920,13 +3920,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-from-yaml-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-from-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-from-yaml-name}}"
 							]
@@ -3975,13 +3975,13 @@
 							"raw": "{\n    \"name\": \"application-name-2\",\n    \"template\": {\n        \"name\": \"{{application-template-from-yaml-name}}\",\n        \"variables\": [\n            {\n                \"key\": \"agent-1-name\",\n                \"value\": \"string\"\n            },\n            {\n                \"key\": \"env-value-1\",\n                \"value\": \"12345\"\n            },\n            {\n                \"key\": \"agent-2-name\",\n                \"value\": \"string\"\n            }\n        ]\n    },\n    \"isSystem\": false,\n    \"isActivated\": true,\n    \"description\": \"new application from template\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -4025,13 +4025,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -4076,13 +4076,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{application-msvc-uuid}}",
+							"raw": "{{host}}/api/v1/microservices/{{application-msvc-uuid}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{application-msvc-uuid}}"
 							]
@@ -4121,13 +4121,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -4166,13 +4166,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-name}}"
 							]
@@ -4211,13 +4211,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/applicationTemplate/{{application-template-from-yaml-name}}",
+							"raw": "{{host}}/api/v1/applicationTemplate/{{application-template-from-yaml-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"applicationTemplate",
 								"{{application-template-from-yaml-name}}"
 							]
@@ -4257,13 +4257,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -4303,13 +4303,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -4347,13 +4347,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -4417,13 +4417,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -4465,13 +4465,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -4517,13 +4517,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -4568,13 +4568,13 @@
 							"raw": "{\n  \"name\": \"node1\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -4619,13 +4619,13 @@
 							"raw": "{\n  \"name\": \"node2\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1,\n  \"host\": \"1.2.3.5\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -4673,13 +4673,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door\",\n    \"version\": \"0.0.1\",\n    \"description\": \"Orange Smart Door\",\n    \"display\": {\n        \"name\": \"Smart Door\",\n        \"icon\": \"help\",\n        \"color\": \"#ff0000\"\n    },\n    \"interfaceProtocol\": \"https\",\n    \"interface\": {\n        \"endpoints\": [\n            {\n                \"name\": \"liveness\",\n                \"url\": \"https://localhost:91121\",\n                \"method\": \"GET\"\n            },\n            {\n                \"name\": \"version\",\n                \"url\": \"https://localhost:91121/version\",\n                \"method\": \"GET\"\n            }\n        ]\n    },\n    \"orchestrationTags\": [\n        \"orange\",\n        \"smart-door\"\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource",
+							"raw": "{{host}}/api/v1/edgeResource",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource"
 							]
 						}
@@ -4723,13 +4723,13 @@
 							"raw": "{\n    \"name\": \"application-name-1\",\n    \"isSystem\": false,\n    \"description\": \"Description\",\n    \"isActivated\": true,\n    \"microservices\": [\n        {\n            \"name\": \"redistest\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"redis\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"redis\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"application-name-1\",\n            \"iofogUuid\": \"{{node-id-1}}\",\n            \"rootHostAccess\": false,\n            \"logSize\": 0,\n            \"volumeMappings\": [],\n            \"ports\": [\n                 {\n                    \"internal\": 6379,\n                    \"external\": 6379,\n                    \"publicMode\": false\n                }\n            ]\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -4776,13 +4776,13 @@
 							"raw": "{\n    \"name\": \"application-msvc-name\",\n    \"isSystem\": false,\n    \"description\": \"Description\",\n    \"isActivated\": true,\n    \"microservices\": [\n        {\n            \"name\": \"msvc-1\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"application-msvc-name\",\n            \"iofogUuid\": \"{{node-id-2}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [\n                {\n                    \"internal\": 1881,\n                    \"external\": 1882\n                }\n            ],\n            \"routes\": [],\n            \"env\": [\n                { \n                    \"key\": \"selfname\",\n                    \"value\": \"{{ self.name | upcase }}\"\n                },\n                {\n                    \"key\": \"sharedToken\",\n                    \"value\": \"sekrittoken\"\n                },\n                {\n                    \"key\": \"http_proxy\",\n                    \"value\": \"http://myproxy:8080/\"\n                },\n                {\n                    \"key\": \"https_proxy\",\n                    \"value\": \"{{ self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first | map: \\\"env\\\" | first | where: \\\"key\\\" , \\\"http_proxy\\\" | first | map: \\\"value\\\" | first }}\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-2\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"application-msvc-name\",\n            \"iofogUuid\": \"{{node-id-2}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                { \n                    \"key\": \"selfname\",\n                    \"value\": \"{{ self.name | upcase }}\"\n                },\n                {\n                    \"key\": \"sharedToken\",\n                    \"value\": \"{{ self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first | map: \\\"env\\\" | first | where: \\\"key\\\", \\\"sharedToken\\\" | first | map: \\\"value\\\" | first }}\"\n                },\n                {\n                    \"key\": \"http_proxy\",\n                    \"value\": \"{{ self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first | map: \\\"env\\\" | first | where: \\\"key\\\" , \\\"http_proxy\\\" | first | map: \\\"value\\\" | first }}\"\n                },\n                {\n                    \"key\": \"https_proxy\",\n                    \"value\": \"{{ self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first | map: \\\"env\\\" | first | where: \\\"key\\\" , \\\"http_proxy\\\" | first | map: \\\"value\\\" | first }}\"\n                },\n                {\n                    \"key\": \"rulesengineHOST\",\n                    \"value\": \"{%  assign curmsvc= self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first %}{{ curmsvc | findMicroserviceAgent | map: \\\"host\\\" | first }}\"\n                },\n                {\n                    \"key\": \"rulesenginePORT\",\n                    \"value\": \"{{ self.microservices | where: \\\"name\\\", \\\"msvc-1\\\" | first | map: \\\"ports\\\" | first | map: \\\"external\\\" | first | toString }}\"\n                },\n                {\n                    \"key\": \"redisHost\",\n                    \"value\": \"{% assign redisApp = \\\"application-name-1\\\" | findApplication %}{% assign redismsvc =  redisApp.microservices | where: \\\"name\\\", \\\"redistest\\\" | first %}{{ redismsvc | findMicroserviceAgent | map: \\\"host\\\"}}:{{ redismsvc | map: \\\"ports\\\" | first | first | map: \\\"external\\\" | first | toString }}\"\n                },\n                {\n                    \"key\": \"edgeResLiveness\",\n                    \"value\": \"{{ \\\"com.orange.smart-door\\\" | findEdgeResource: \\\"0.0.1\\\" | map: \\\"interface\\\" | map: \\\"endpoints\\\" | first  | where: \\\"name\\\", \\\"liveness\\\" | first | map: \\\"url\\\" | first }}\"\n                },\n                {\n                    \"key\": \"edgeResVersion\",\n                    \"value\": \"{{ \\\"com.orange.smart-door\\\" | findEdgeResource            | map: \\\"interface\\\" | map: \\\"endpoints\\\" | first  | where: \\\"name\\\", \\\"version\\\" | first | map: \\\"url\\\" | first }}\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        },\n        {\n            \"name\": \"msvc-3\",\n            \"config\": \"string\",\n            \"images\": [\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 1\n                },\n                {\n                    \"containerImage\": \"hello-world\",\n                    \"fogTypeId\": 2\n                }\n            ],\n            \"registryId\": 1,\n            \"application\": \"application-msvc-name\",\n            \"iofogUuid\": \"{{node-id-2}}\",\n            \"rootHostAccess\": true,\n            \"logSize\": 0,\n            \"volumeMappings\": [\n                {\n                    \"hostDestination\": \"/var/dest\",\n                    \"containerDestination\": \"/var/dest\",\n                    \"accessMode\": \"rw\"\n                }\n            ],\n            \"ports\": [],\n            \"routes\": [],\n            \"env\": [\n                {\n                    \"key\": \"KEY1\",\n                    \"value\": \"value1\"\n                },\n                {\n                    \"key\": \"KEY2\",\n                    \"value\": \"value2\"\n                }\n            ],\n            \"cmd\": [\n                \"test\",\n                \"--arg1\",\n                \"--arg2\"\n            ]\n        }\n    ],\n    \"routes\": [\n        {\n            \"from\": \"msvc-1\",\n            \"to\": \"msvc-2\",\n            \"name\": \"m1-2\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -4844,13 +4844,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?application={{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/microservices?application={{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -4894,13 +4894,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -4938,13 +4938,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name-2}}",
+							"raw": "{{host}}/api/v1/application/{{application-name-2}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name-2}}"
 							]
@@ -4984,13 +4984,13 @@
 							"raw": "{\n  \"name\": \"application-name-22\",\n  \"isSystem\": true,\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name-1}}",
+							"raw": "{{host}}/api/v1/application/{{application-name-1}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name-1}}"
 							]
@@ -5029,13 +5029,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -5073,13 +5073,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name-1}}",
+							"raw": "{{host}}/api/v1/application/{{application-name-1}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name-1}}"
 							]
@@ -5118,13 +5118,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-msvc-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-msvc-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-msvc-name}}"
 							]
@@ -5163,13 +5163,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -5210,13 +5210,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -5250,13 +5250,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/route/{{application-route-name}}",
+							"raw": "{{host}}/api/v1/route/{{application-route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"route",
 								"{{application-route-name}}"
 							]
@@ -5296,13 +5296,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -5343,13 +5343,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -5389,13 +5389,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id-2}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id-2}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id-2}}"
 							]
@@ -5435,13 +5435,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id-1}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id-1}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id-1}}"
 							]
@@ -5479,13 +5479,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -5549,13 +5549,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -5597,13 +5597,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -5648,13 +5648,13 @@
 							"raw": "{\n  \"name\": \"flow-name\",\n \"isSystem\": false,\n \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow",
+							"raw": "{{host}}/api/v1/flow",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow"
 							]
 						}
@@ -5692,13 +5692,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/flow",
+							"raw": "{{host}}/api/v1/flow",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow"
 							]
 						}
@@ -5736,13 +5736,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/flow/{{flow-id}}",
+							"raw": "{{host}}/api/v1/flow/{{flow-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow",
 								"{{flow-id}}"
 							]
@@ -5781,13 +5781,13 @@
 							"raw": "{\n  \"name\": \"flow-name-22\",\n  \"isSystem\": true,\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow/{{flow-id}}",
+							"raw": "{{host}}/api/v1/flow/{{flow-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow",
 								"{{flow-id}}"
 							]
@@ -5826,13 +5826,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/flow",
+							"raw": "{{host}}/api/v1/flow",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow"
 							]
 						}
@@ -5870,13 +5870,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow/{{flow-id}}",
+							"raw": "{{host}}/api/v1/flow/{{flow-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow",
 								"{{flow-id}}"
 							]
@@ -5914,13 +5914,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -5984,13 +5984,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -6032,13 +6032,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -6084,13 +6084,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -6135,13 +6135,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -6186,13 +6186,13 @@
 							"raw": "{\n  \"name\": \"flow-name\",\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow",
+							"raw": "{{host}}/api/v1/flow",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow"
 							]
 						}
@@ -6236,13 +6236,13 @@
 							"raw": "{\n  \"name\": \"flow-name-second\",\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow",
+							"raw": "{{host}}/api/v1/flow",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow"
 							]
 						}
@@ -6286,13 +6286,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"category\": \"string\",\n  \"images\": [\n    {\n      \"containerImage\": \"x86 docker image name\",\n      \"fogTypeId\": 1\n    },\n    {\n      \"containerImage\": \"ARM docker image name\",\n      \"fogTypeId\": 2\n    }\n  ],\n  \"publisher\": \"string\",\n  \"diskRequired\": 0,\n  \"ramRequired\": 0,\n  \"picture\": \"string\",\n  \"isPublic\": true,\n  \"registryId\": 1,\n  \"inputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"outputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"configExample\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices",
+							"raw": "{{host}}/api/v1/catalog/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices"
 							]
@@ -6337,13 +6337,13 @@
 							"raw": "{\n  \"name\": \"name2\",\n  \"config\": \"string\",\n  \"catalogItemId\": {{item-id}},\n  \"flowId\": {{flow-id}},\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [\n    {\n      \"internal\": 1,\n      \"external\": 1,\n      \"publicMode\": false\n    }\n  ],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -6385,13 +6385,13 @@
 							"raw": "{\n  \"name\": \"namesec\",\n  \"config\": \"string\",\n  \"images\": [{\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 1,\n \"flowId\": {{flow-id-2}},\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -6435,13 +6435,13 @@
 							"raw": "{\n  \"name\": \"name-without-catalog\",\n  \"config\": \"string\",\n  \"images\": [{\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 1,\n \"flowId\": {{flow-id}},\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [\n    {\n      \"internal\": 2,\n      \"external\": 2,\n      \"publicMode\": false\n    }\n  ],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -6485,13 +6485,13 @@
 							"raw": "{\n  \"name\": \"route-name\",\n \"sourceMicroserviceUuid\": \"{{ms-no-catalog-id}}\",\n \"destMicroserviceUuid\": \"{{ms-id}}\"\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes",
+							"raw": "{{host}}/api/v1/routes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes"
 							]
 						}
@@ -6531,13 +6531,13 @@
 							"raw": "{\n  \"name\": \"route-name-updated\",\n \"sourceMicroserviceUuid\": \"{{ms-no-catalog-id}}\",\n \"destMicroserviceUuid\": \"{{ms-id}}\"\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{flow-name}}/{{route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{flow-name}}/{{route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{flow-name}}",
 								"{{route-name}}"
@@ -6577,13 +6577,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{flow-name}}/{{route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{flow-name}}/{{route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{flow-name}}",
 								"{{route-name}}"
@@ -6629,13 +6629,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -6683,13 +6683,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?flowId={{flow-id}}",
+							"raw": "{{host}}/api/v1/microservices?flowId={{flow-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -6733,13 +6733,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							]
@@ -6778,13 +6778,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -6823,13 +6823,13 @@
 							"raw": "{\n  \"name\": \"name3\",\n  \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							]
@@ -6868,13 +6868,13 @@
 							"raw": "{\n    \"images\": [\n        {\n            \"containerImage\": \"hello-world-updated\",\n            \"fogTypeId\": 1\n        },\n        {\n            \"containerImage\": \"hello-world-updated\",\n            \"fogTypeId\": 2\n        }\n    ],\n    \"registryId\": 2,\n    \"config\": \"string\",\n    \"rebuild\": true,\n    \"iofogUuid\": \"{{node-id}}\",\n    \"rootHostAccess\": true,\n    \"logSize\": 0,\n    \"volumeMappings\": [\n        {\n            \"hostDestination\": \"/var/dest\",\n            \"containerDestination\": \"/var/dest\",\n            \"accessMode\": \"rw\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -6913,13 +6913,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -6958,13 +6958,13 @@
 							"raw": "{\n \"catalogItemId\": 14,\n \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -7003,13 +7003,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -7048,13 +7048,13 @@
 							"raw": "{\n    \"images\": [\n        {\n            \"containerImage\": \"hello-world-updated\",\n            \"fogTypeId\": 1\n        },\n        {\n            \"containerImage\": \"hello-world-updated\",\n            \"fogTypeId\": 2\n        }\n    ],\n    \"registryId\": 2,\n    \"catalogItemId\": null,\n    \"config\": \"string\",\n    \"rebuild\": true,\n    \"iofogUuid\": \"{{node-id}}\",\n    \"rootHostAccess\": true,\n    \"logSize\": 0,\n    \"volumeMappings\": [\n        {\n            \"hostDestination\": \"/var/dest\",\n            \"containerDestination\": \"/var/dest\",\n            \"accessMode\": \"rw\"\n        }\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -7093,13 +7093,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -7144,13 +7144,13 @@
 							"raw": "\n{\n\"sourceMicroserviceUuid\": \"{{ms-id}}\",\n \"destMicroserviceUuid\": \"{{ms-id}}\",\n \"name\": \"my-route\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes",
+							"raw": "{{host}}/api/v1/routes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes"
 							]
 						}
@@ -7188,13 +7188,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{flow-name}}/{{route-id}}",
+							"raw": "{{host}}/api/v1/routes/{{flow-name}}/{{route-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{flow-name}}",
 								"{{route-id}}"
@@ -7234,13 +7234,13 @@
 							"raw": "{\n  \"internal\": 15,\n  \"external\": 155,\n  \"publicMode\": false\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping"
@@ -7280,13 +7280,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping"
@@ -7326,13 +7326,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping/15",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping/15",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping",
@@ -7380,13 +7380,13 @@
 							"raw": " {\n     \"hostDestination\": \"/var/dest7\",\n     \"containerDestination\": \"/var/dest\",\n     \"accessMode\": \"rw\"\n }"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping"
@@ -7421,13 +7421,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping"
@@ -7466,13 +7466,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping/{{volume-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping/{{volume-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping",
@@ -7513,13 +7513,13 @@
 							"raw": "{\n\t\"withCleanup\": false\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							]
@@ -7558,13 +7558,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/flow/{{flow-id}}",
+							"raw": "{{host}}/api/v1/flow/{{flow-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"flow",
 								"{{flow-id}}"
 							]
@@ -7604,13 +7604,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -7651,13 +7651,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -7697,13 +7697,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -7741,13 +7741,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -7811,13 +7811,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -7859,13 +7859,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -7910,13 +7910,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"category\": \"string\",\n  \"images\": [\n    {\n      \"containerImage\": \"x86 docker image name\",\n      \"fogTypeId\": 1\n    },\n    {\n      \"containerImage\": \"ARM docker image name\",\n      \"fogTypeId\": 2\n    }\n  ],\n  \"publisher\": \"string\",\n  \"diskRequired\": 0,\n  \"ramRequired\": 0,\n  \"picture\": \"string\",\n  \"isPublic\": true,\n  \"registryId\": 1,\n  \"inputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"outputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"configExample\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices",
+							"raw": "{{host}}/api/v1/catalog/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices"
 							]
@@ -7955,13 +7955,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices",
+							"raw": "{{host}}/api/v1/catalog/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices"
 							]
@@ -8002,13 +8002,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -8049,13 +8049,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"category\": \"string\",\n  \"images\": [\n    {\n      \"containerImage\": \"x86 docker image name\",\n      \"fogTypeId\": 1\n    },\n    {\n      \"containerImage\": \"ARM docker image name\",\n      \"fogTypeId\": 2\n    }\n  ],\n  \"publisher\": \"string\",\n  \"diskRequired\": 0,\n  \"ramRequired\": 0,\n  \"picture\": \"string\",\n  \"isPublic\": true,\n  \"registryId\": 1,\n  \"inputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"outputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"configExample\": \"string\"\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -8096,13 +8096,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -8141,13 +8141,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -8211,13 +8211,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -8259,13 +8259,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -8311,13 +8311,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -8362,13 +8362,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1,\n  \"dockerPruningFrequency\": 35,\n  \"availableDiskThreshold\": 95,\n  \"logLevel\": \"INFO\"\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -8406,13 +8406,13 @@
 							"raw": "{\n  \"action\": \"open\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/tunnel",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/tunnel",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"tunnel"
@@ -8448,13 +8448,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/tunnel",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/tunnel",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"tunnel"
@@ -8494,13 +8494,13 @@
 							"raw": "{\n  \"action\": \"close\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/tunnel",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/tunnel",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"tunnel"
@@ -8541,13 +8541,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -8587,13 +8587,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -8631,13 +8631,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -8701,13 +8701,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -8749,13 +8749,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -8801,13 +8801,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -8852,13 +8852,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -8902,13 +8902,13 @@
 							"raw": "{\n  \"name\": \"application-name\",\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -8952,13 +8952,13 @@
 							"raw": "{\n  \"name\": \"application-name-second\",\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -9002,13 +9002,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"category\": \"string\",\n  \"images\": [\n    {\n      \"containerImage\": \"x86 docker image name\",\n      \"fogTypeId\": 1\n    },\n    {\n      \"containerImage\": \"ARM docker image name\",\n      \"fogTypeId\": 2\n    }\n  ],\n  \"publisher\": \"string\",\n  \"diskRequired\": 0,\n  \"ramRequired\": 0,\n  \"picture\": \"string\",\n  \"isPublic\": true,\n  \"registryId\": 1,\n  \"inputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"outputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"configExample\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices",
+							"raw": "{{host}}/api/v1/catalog/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices"
 							]
@@ -9054,13 +9054,13 @@
 							"raw": "{\n  \"name\": \"name2\",\n  \"config\": \"string\",\n  \"catalogItemId\": {{item-id}},\n  \"application\": \"{{application-name}}\",\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [\n    {\n      \"internal\": 1,\n      \"external\": 1,\n      \"publicMode\": false\n    }\n  ],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -9102,13 +9102,13 @@
 							"raw": "{\n  \"name\": \"namesec\",\n  \"config\": \"string\",\n  \"images\": [{\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 1,\n \"application\": \"{{application-name-2}}\",\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -9153,13 +9153,13 @@
 							"raw": "{\n  \"name\": \"name-without-catalog\",\n  \"config\": \"string\",\n  \"images\": [{\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 1,\n \"application\": \"{{application-name}}\",\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [\n    {\n      \"internal\": 2,\n      \"external\": 2,\n      \"publicMode\": false\n    }\n  ],\n  \"routes\": [\n  ],\n  \"env\": [\n    {\n      \"key\": \"KEY1\",\n      \"value\": \"value1\"\n    },\n    {\n      \"key\": \"KEY2\",\n      \"value\": \"value2\"\n    }\n  ],\n  \"cmd\": [\n  \t\"test\",\n  \t\"--arg1\",\n  \t\"--arg2\"\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -9203,13 +9203,13 @@
 							"raw": "{\n  \"name\": \"route-name\",\n \"from\": \"{{ms-no-catalog-name}}\",\n \"to\": \"{{ms-name}}\",\n \"application\": \"{{application-name}}\"\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes",
+							"raw": "{{host}}/api/v1/routes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes"
 							]
 						}
@@ -9249,13 +9249,13 @@
 							"raw": "{\n  \"name\": \"route-name-updated\",\n \"from\": \"{{ms-no-catalog-name}}\",\n \"to\": \"{{ms-name}}\",\n \"application\": \"{{application-name}}\"\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{application-name}}/{{route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{application-name}}/{{route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{application-name}}",
 								"{{route-name}}"
@@ -9295,13 +9295,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{application-name}}/{{route-name}}",
+							"raw": "{{host}}/api/v1/routes/{{application-name}}/{{route-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{application-name}}",
 								"{{route-name}}"
@@ -9347,13 +9347,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -9401,13 +9401,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices?application={{application-name}}",
+							"raw": "{{host}}/api/v1/microservices?application={{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							],
 							"query": [
@@ -9451,13 +9451,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							]
@@ -9496,13 +9496,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9541,13 +9541,13 @@
 							"raw": "{\n \"images\": [{\"containerImage\": \"hello-world-updated\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world-updated\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 2,\n \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9589,13 +9589,13 @@
 							"raw": "{\n  \"name\": \"name3\",\n  \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9634,13 +9634,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9679,13 +9679,13 @@
 							"raw": "{\n \"catalogItemId\": 14,\n \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9724,13 +9724,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9769,13 +9769,13 @@
 							"raw": "{\n \"images\": [{\"containerImage\": \"hello-world-updated\"\n,\"fogTypeId\": 1}, {\"containerImage\": \"hello-world-updated\"\n,\"fogTypeId\": 2}]\n, \"registryId\": 2,\n \"catalogItemId\": null,\n \"config\": \"string\",\n  \"rebuild\": true,\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9814,13 +9814,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-no-catalog-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-no-catalog-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-no-catalog-id}}"
 							]
@@ -9865,13 +9865,13 @@
 							"raw": "{\n\"from\": \"{{ms-name}}\",\n \"to\": \"{{ms-name}}\",\n \"name\": \"my-route\",\n \"application\": \"{{application-name}}\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes",
+							"raw": "{{host}}/api/v1/routes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes"
 							]
 						}
@@ -9909,13 +9909,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/routes/{{application-name}}/{{route-id}}",
+							"raw": "{{host}}/api/v1/routes/{{application-name}}/{{route-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"routes",
 								"{{application-name}}",
 								"{{route-id}}"
@@ -9955,13 +9955,13 @@
 							"raw": "{\n  \"internal\": 15,\n  \"external\": 155,\n  \"publicMode\": false\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping"
@@ -10001,13 +10001,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping"
@@ -10047,13 +10047,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/port-mapping/15",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/port-mapping/15",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"port-mapping",
@@ -10101,13 +10101,13 @@
 							"raw": " {\n     \"hostDestination\": \"/var/dest7\",\n     \"containerDestination\": \"/var/dest\",\n     \"accessMode\": \"rw\"\n }"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping"
@@ -10142,13 +10142,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping"
@@ -10187,13 +10187,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/volume-mapping/{{volume-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/volume-mapping/{{volume-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"volume-mapping",
@@ -10234,13 +10234,13 @@
 							"raw": "{\n\t\"withCleanup\": false\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							]
@@ -10279,13 +10279,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -10325,13 +10325,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -10372,13 +10372,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -10418,13 +10418,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -10462,13 +10462,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -10532,13 +10532,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -10580,13 +10580,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -10632,13 +10632,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -10683,13 +10683,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -10733,13 +10733,13 @@
 							"raw": "{\n  \"name\": \"application-name\",\n  \"description\": \"Description\",\n  \"isActivated\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application",
+							"raw": "{{host}}/api/v1/application",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application"
 							]
 						}
@@ -10783,13 +10783,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"description\": \"string\",\n  \"category\": \"string\",\n  \"images\": [\n    {\n      \"containerImage\": \"x86 docker image name\",\n      \"fogTypeId\": 1\n    },\n    {\n      \"containerImage\": \"ARM docker image name\",\n      \"fogTypeId\": 2\n    }\n  ],\n  \"publisher\": \"string\",\n  \"diskRequired\": 0,\n  \"ramRequired\": 0,\n  \"picture\": \"string\",\n  \"isPublic\": true,\n  \"registryId\": 1,\n  \"inputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"outputType\": {\n    \"infoType\": \"string\",\n    \"infoFormat\": \"string\"\n  },\n  \"configExample\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices",
+							"raw": "{{host}}/api/v1/catalog/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices"
 							]
@@ -10834,13 +10834,13 @@
 							"raw": "{\n  \"name\": \"name2\",\n  \"config\": \"string\",\n  \"catalogItemId\": {{item-id}},\n  \"application\": \"{{application-name}}\",\n  \"iofogUuid\": \"{{node-id}}\",\n  \"rootHostAccess\": true,\n  \"logSize\": 0,\n  \"volumeMappings\": [\n    {\n      \"hostDestination\": \"/var/dest\",\n      \"containerDestination\": \"/var/dest\",\n      \"accessMode\": \"rw\"\n    }\n  ],\n  \"ports\": [\n    {\n      \"internal\": 1,\n      \"external\": 1,\n      \"publicMode\": false\n    }\n  ],\n  \"routes\": [\n  ]\n}\n"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices",
+							"raw": "{{host}}/api/v1/microservices",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices"
 							]
 						}
@@ -10878,13 +10878,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/image-snapshot",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/image-snapshot",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"image-snapshot"
@@ -10924,13 +10924,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/image-snapshot",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/image-snapshot",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"image-snapshot"
@@ -10970,13 +10970,13 @@
 							"raw": "{\n  \"enable\": true\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/strace",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/strace",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"strace"
@@ -11016,13 +11016,13 @@
 							"raw": "{\n  \"ftpHost\": \"string\",\n  \"ftpPort\": 0,\n  \"ftpUser\": \"string\",\n  \"ftpPass\": \"string\",\n  \"ftpDestDir\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/strace",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/strace",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"strace"
@@ -11063,13 +11063,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}/strace?format=string",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}/strace?format=string",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}",
 								"strace"
@@ -11116,13 +11116,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/microservices/{{ms-id}}?withCleanUp=true",
+							"raw": "{{host}}/api/v1/microservices/{{ms-id}}?withCleanUp=true",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"microservices",
 								"{{ms-id}}"
 							],
@@ -11167,13 +11167,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/application/{{application-name}}",
+							"raw": "{{host}}/api/v1/application/{{application-name}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"application",
 								"{{application-name}}"
 							]
@@ -11213,13 +11213,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/catalog/microservices/{{item-id}}",
+							"raw": "{{host}}/api/v1/catalog/microservices/{{item-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"catalog",
 								"microservices",
 								"{{item-id}}"
@@ -11260,13 +11260,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -11306,13 +11306,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -11350,13 +11350,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -11420,13 +11420,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -11468,13 +11468,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -11520,13 +11520,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -11571,13 +11571,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -11618,13 +11618,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/provisioning-key",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/provisioning-key",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"provisioning-key"
@@ -11663,13 +11663,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog-list?filters[0][key]=uuid&filters[0][value]={{node-id}}&filters[0][condition]=equals",
+							"raw": "{{host}}/api/v1/iofog-list?filters[0][key]=uuid&filters[0][value]={{node-id}}&filters[0][condition]=equals",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog-list"
 							],
 							"query": [
@@ -11721,13 +11721,13 @@
 							"raw": "{\n  \"name\": \"string\",\n  \"isSystem\": false,\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -11765,13 +11765,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog-list?system=true",
+							"raw": "{{host}}/api/v1/iofog-list?system=true",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog-list"
 							],
 							"query": [
@@ -11830,13 +11830,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -11879,13 +11879,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/version/rollback",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/version/rollback",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"version",
@@ -11927,13 +11927,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/version/upgrade",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/version/upgrade",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"version",
@@ -11975,13 +11975,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/reboot",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/reboot",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"reboot"
@@ -12021,13 +12021,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/prune",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/prune",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"prune"
@@ -12063,13 +12063,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/hal/hw",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/hal/hw",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"hal",
@@ -12106,13 +12106,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/hal/usb",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/hal/usb",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"hal",
@@ -12154,13 +12154,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -12199,13 +12199,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -12243,13 +12243,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog-list?filters[0][key]=uuid&filters[0][value]={{node-id}}&filters[0][condition]=equals",
+							"raw": "{{host}}/api/v1/iofog-list?filters[0][key]=uuid&filters[0][value]={{node-id}}&filters[0][condition]=equals",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog-list"
 							],
 							"query": [
@@ -12300,13 +12300,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -12370,13 +12370,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -12418,13 +12418,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -12470,13 +12470,13 @@
 							"raw": "{\n  \"url\": \"string\",\n  \"isPublic\": true,\n  \"username\": \"string\",\n  \"password\": \"string\",\n  \"email\": \"test@gmail.com\",\n  \"requiresCert\": false,\n  \"certificate\": \"string\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/registries",
+							"raw": "{{host}}/api/v1/registries",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"registries"
 							]
 						}
@@ -12514,13 +12514,13 @@
 							"raw": "{\n  \"url\": \"string2\",\n  \"isPublic\": true,\n  \"username\": \"string3\",\n  \"password\": \"string4\",\n  \"email\": \"test2@gmail.com\",\n  \"requiresCert\": true,\n  \"certificate\": \"string6\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/registries/{{reg-id}}",
+							"raw": "{{host}}/api/v1/registries/{{reg-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"registries",
 								"{{reg-id}}"
 							]
@@ -12559,13 +12559,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/registries",
+							"raw": "{{host}}/api/v1/registries",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"registries"
 							]
 						}
@@ -12603,13 +12603,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/registries/{{reg-id}}",
+							"raw": "{{host}}/api/v1/registries/{{reg-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"registries",
 								"{{reg-id}}"
 							]
@@ -12647,13 +12647,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -12717,13 +12717,13 @@
 							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\",\n \"subscriptionKey\": \"XXXX-XXXX-XXXX-XXXX\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/signup",
+							"raw": "{{host}}/api/v1/user/signup",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"signup"
 							]
@@ -12765,13 +12765,13 @@
 							"raw": "{\n  \"email\": \"user@domain.com\",\n  \"password\": \"#Bugs4Fun\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/login",
+							"raw": "{{host}}/api/v1/user/login",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"login"
 							]
@@ -12817,13 +12817,13 @@
 							"raw": "{\n  \"name\": \"system node\",\n \"routerMode\": \"interior\",\n \"messagingPort\": 5672,\n \"edgeRouterPort\": 56722,\n  \"interRouterPort\": 56721,\n \"host\": \"localhost\",\n \"isSystem\": true,\n \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -12869,13 +12869,13 @@
 							"raw": "{\n  \"name\": \"string\",\n \"host\": \"1.2.3.4\",\n  \"location\": \"string\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"description\": \"string\",\n  \"dockerUrl\": \"string\",\n  \"diskLimit\": 0,\n  \"diskDirectory\": \"string\",\n  \"memoryLimit\": 0,\n  \"cpuLimit\": 0,\n  \"logLimit\": 0,\n  \"logDirectory\": \"string\",\n  \"logFileCount\": 0,\n  \"statusFrequency\": 0,\n  \"changeFrequency\": 0,\n  \"deviceScanFrequency\": 0,\n  \"bluetoothEnabled\": false,\n  \"watchdogEnabled\": true,\n  \"abstractedHardwareEnabled\": false,\n  \"fogType\": 1\n,\n  \"host\": \"1.2.3.4\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog",
+							"raw": "{{host}}/api/v1/iofog",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog"
 							]
 						}
@@ -12916,13 +12916,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}/provisioning-key",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}/provisioning-key",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}",
 								"provisioning-key"
@@ -12963,13 +12963,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"{{provisioning-key}}\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/agent/provision",
+							"raw": "{{host}}/api/v1/agent/provision",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"provision"
 							]
@@ -13018,13 +13018,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door\",\n    \"version\": \"0.0.1\",\n    \"description\": \"Orange Smart Door\",\n    \"display\": {\n        \"name\": \"Smart Door\",\n        \"icon\": \"help\",\n        \"color\": \"#ff0000\"\n    },\n    \"interfaceProtocol\": \"https\",\n    \"interface\": {\n        \"endpoints\": [\n            {\n                \"name\": \"liveness\",\n                \"url\": \"https://localhost:91121\",\n                \"method\": \"GET\"\n            }\n        ]\n    },\n    \"orchestrationTags\": [\n        \"orange\",\n        \"smart-door\"\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource",
+							"raw": "{{host}}/api/v1/edgeResource",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource"
 							]
 						}
@@ -13063,13 +13063,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door\",\n    \"version\": \"0.0.2\",\n    \"description\": \"Orange Smart Door\",\n    \"display\": {\n        \"name\": \"Smart Door\",\n        \"icon\": \"help\",\n        \"color\": \"#ff0000\"\n    },\n    \"interfaceProtocol\": \"https\",\n    \"interface\": {\n        \"endpoints\": [\n            {\n                \"name\": \"liveness\",\n                \"url\": \"https://localhost:91121\",\n                \"method\": \"GET\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -13113,13 +13113,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door2\",\n    \"version\": \"0.0.1\",\n    \"description\": \"Orange Smart Door\",\n    \"display\": {\n        \"name\": \"Smart Door\",\n        \"icon\": \"help\",\n        \"color\": \"#ff0000\"\n    },\n    \"interfaceProtocol\": \"https\",\n    \"interface\": {\n        \"endpoints\": [\n            {\n                \"name\": \"liveness\",\n                \"url\": \"https://localhost:91121\",\n                \"method\": \"GET\"\n            },\n            {\n                \"name\": \"version\",\n                \"url\": \"https://localhost:91121/version\",\n                \"method\": \"GET\"\n            }\n        ]\n    },\n    \"orchestrationTags\": [\n        \"orange\",\n        \"smart-door\",\n        \"smart-door-v0.0.1\"\n    ]\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -13164,13 +13164,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -13209,13 +13209,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -13256,13 +13256,13 @@
 							"raw": "{\n  \"uuid\": \"{{node-id}}\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}/link",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}/link",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}",
@@ -13303,13 +13303,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/config/changes",
+							"raw": "{{host}}/api/v1/agent/config/changes",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"config",
 								"changes"
@@ -13356,13 +13356,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/agent/edgeResources",
+							"raw": "{{host}}/api/v1/agent/edgeResources",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"agent",
 								"edgeResources"
 							]
@@ -13405,13 +13405,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -13451,13 +13451,13 @@
 							"raw": "{\n  \"uuid\": \"{{node-id}}\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}/link",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}/link",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}",
@@ -13496,13 +13496,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -13551,13 +13551,13 @@
 							"raw": "{\n    \"name\": \"com.orange.smart-door\",\n    \"version\": \"0.0.2\",\n    \"description\": \"Orange Smart Door\",\n    \"display\": {\n        \"name\": \"Smart Door\",\n        \"icon\": \"help\",\n        \"color\": \"#ff0000\"\n    },\n    \"interfaceProtocol\": \"https\",\n    \"interface\": {\n        \"endpoints\": [\n            {\n                \"name\": \"liveness\",\n                \"url\": \"https://localhost:91121\",\n                \"method\": \"GET\"\n            }\n        ]\n    }\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource",
+							"raw": "{{host}}/api/v1/edgeResource",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource"
 							]
 						}
@@ -13591,13 +13591,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResources",
+							"raw": "{{host}}/api/v1/edgeResources",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResources"
 							]
 						}
@@ -13638,13 +13638,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}?=",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}?=",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}"
 							],
@@ -13690,13 +13690,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version-2}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version-2}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version-2}}"
@@ -13737,13 +13737,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
+							"raw": "{{host}}/api/v1/edgeResource/{{edge-resource-name}}/{{edge-resource-version}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"edgeResource",
 								"{{edge-resource-name}}",
 								"{{edge-resource-version}}"
@@ -13784,13 +13784,13 @@
 							"raw": "{\n\t\"type\": 1,\n\t\"key\":\"testtesttest\"\n}"
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{system-node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{system-node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{system-node-id}}"
 							]
@@ -13829,13 +13829,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/iofog/{{node-id}}",
+							"raw": "{{host}}/api/v1/iofog/{{node-id}}",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"iofog",
 								"{{node-id}}"
 							]
@@ -13873,13 +13873,13 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "{{host}}/api/v3/user/profile",
+							"raw": "{{host}}/api/v1/user/profile",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"user",
 								"profile"
 							]
@@ -13909,13 +13909,13 @@
 						"method": "HEAD",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/capabilities/edgeResources",
+							"raw": "{{host}}/api/v1/capabilities/edgeResources",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"capabilities",
 								"edgeResources"
 							]
@@ -13940,13 +13940,13 @@
 						"method": "HEAD",
 						"header": [],
 						"url": {
-							"raw": "{{host}}/api/v3/capabilities/applicationTemplates",
+							"raw": "{{host}}/api/v1/capabilities/applicationTemplates",
 							"host": [
 								"{{host}}"
 							],
 							"path": [
 								"api",
-								"v3",
+								"v1",
 								"capabilities",
 								"applicationTemplates"
 							]

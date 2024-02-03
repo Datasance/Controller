@@ -22,9 +22,9 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'post',
-    path: '/api/v3/user/login',
+    path: '/api/v1/user/login',
     middleware: async (req, res) => {
-      logger.apiReq('POST /api/v3/user/login') // don't use req as arg, because password not encrypted
+      logger.apiReq('POST /api/v1/user/login') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_SUCCESS
       const errorCodes = [
@@ -45,13 +45,13 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes('POST /api/v3/user/login', { args: { statusCode: responseObject.code } })
+      logger.apiRes('POST /api/v1/user/login', { args: { statusCode: responseObject.code } })
       // don't use req and responseObject as args, because they have password and token
     }
   },
   {
     method: 'post',
-    path: '/api/v3/user/logout',
+    path: '/api/v1/user/logout',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -73,9 +73,9 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/user/signup',
+    path: '/api/v1/user/signup',
     middleware: async (req, res) => {
-      logger.apiReq('POST /api/v3/user/signup') // don't use req as arg, because password not encrypted
+      logger.apiReq('POST /api/v1/user/signup') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_CREATED
       const errorCodes = [
@@ -97,7 +97,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/user/signup/resend-activation',
+    path: '/api/v1/user/signup/resend-activation',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -122,7 +122,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/user/activate',
+    path: '/api/v1/user/activate',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -152,7 +152,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/user/profile',
+    path: '/api/v1/user/profile',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -176,7 +176,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/user/profile',
+    path: '/api/v1/user/profile',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -205,7 +205,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/user/profile',
+    path: '/api/v1/user/profile',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -230,9 +230,9 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/user/password',
+    path: '/api/v1/user/password',
     middleware: async (req, res) => {
-      logger.apiReq('PATCH /api/v3/user/password') // don't use req as arg, because password not encrypted
+      logger.apiReq('PATCH /api/v1/user/password') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_NO_CONTENT
       const errorCodes = [
@@ -259,7 +259,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/user/password',
+    path: '/api/v1/user/password',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

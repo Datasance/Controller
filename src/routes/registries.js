@@ -19,10 +19,10 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'post',
-    path: '/api/v3/registries',
+    path: '/api/v1/registries',
     supportSubstitution: true,
     middleware: async (req, res) => {
-      logger.apiReq('POST /api/v3/registries') // don't use req as arg, because password not encrypted
+      logger.apiReq('POST /api/v1/registries') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_CREATED
       const errorCodes = [
@@ -46,7 +46,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/registries',
+    path: '/api/v1/registries',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -72,7 +72,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/registries/:id',
+    path: '/api/v1/registries/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -102,10 +102,10 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/registries/:id',
+    path: '/api/v1/registries/:id',
     supportSubstitution: true,
     middleware: async (req, res) => {
-      logger.apiReq('PATCH /api/v3/registries') // don't use req as arg, because password not encrypted
+      logger.apiReq('PATCH /api/v1/registries') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_NO_CONTENT
       const errorCodes = [

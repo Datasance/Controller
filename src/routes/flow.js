@@ -19,7 +19,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/flow',
+    path: '/api/v1/flow',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -43,7 +43,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v3/flow',
+    path: '/api/v1/flow',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -71,7 +71,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/flow/:id',
+    path: '/api/v1/flow/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -99,7 +99,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/flow/:id',
+    path: '/api/v1/flow/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -131,7 +131,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/flow/:id',
+    path: '/api/v1/flow/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

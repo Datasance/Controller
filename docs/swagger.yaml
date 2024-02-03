@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
-  version: 3.0.0
-  title: ioFog Controller
+  version: 1.0.0
+  title: Datasance PoT-ioFog Controller
 paths:
   /status:
     get:
@@ -3432,8 +3432,8 @@ tags:
   - name: User
     description: Manage your users
 servers:
-  - url: http://localhost:51121/api/v3
-  - url: https://localhost:51121/api/v3
+  - url: http://localhost:51121/api/v1
+  - url: https://localhost:51121/api/v1
 components:
   securitySchemes:
     userToken:
