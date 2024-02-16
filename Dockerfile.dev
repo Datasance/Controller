@@ -1,6 +1,7 @@
 FROM node:hydrogen-bookworm AS builder
 
 ARG PKG_VERSION
+ARG GITHUB_TOKEN
 
 WORKDIR /tmp
 
@@ -9,6 +10,11 @@ RUN npm i -g npm
 COPY package.json .
 
 COPY . .
+
+# Set GitHub npm registry with authentication token
+RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
+
+RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i --build-from-source
 
@@ -31,6 +37,12 @@ RUN python3 -m ensurepip
 RUN pip3 install --no-cache --upgrade pip setuptools
 
 COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /tmp/iofog-controller.tgz
+ARG GITHUB_TOKEN
+
+# Set GitHub npm registry with authentication token
+RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
+
+RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
