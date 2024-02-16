@@ -37,13 +37,13 @@ RUN python3 -m ensurepip
 RUN pip3 install --no-cache --upgrade pip setuptools
 
 COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /tmp/iofog-controller.tgz
-ARG GITHUB_TOKEN
+#ARG GITHUB_TOKEN
 
-COPY --from=builder /tmp/.npmrc .
+#COPY --from=builder /tmp/.npmrc .
 # Set GitHub npm registry with authentication token
-RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
+#RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
 
-RUN npm config set @datasance:registry https://npm.pkg.github.com/
+#RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
