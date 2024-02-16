@@ -52,6 +52,12 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
+    - name: Replace values
+      shell: bash
+      env: 
+          PAT: ${{ secrets.PAT }}
+      run: |
+        sed -i.back "s|PAT|${PAT}|g" .npmrc
     - run: npm install
     - run: npm run standard
     - run: |
