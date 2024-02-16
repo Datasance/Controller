@@ -139,11 +139,7 @@ jobs:
         registry: "ghcr.io"
         username: ${{ github.actor }}
         password: ${{ secrets.PAT }}
-    - name: build -argument
-      shell: bash
-      run: |
-        echo "GITHUB_TOKEN=${{ secrets.PAT }}" >> "${GITHUB_OUTPUT}"
-
+        
     - name: Build and Push to ghcr
       uses: docker/build-push-action@v3
       id: build_push_ghcr
@@ -151,6 +147,7 @@ jobs:
         file: Dockerfile.dev
         push: true
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Controller
+        build-args: GITHUB_TOKEN=${{ secrets.PAT }}
         tags: |
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:latest
