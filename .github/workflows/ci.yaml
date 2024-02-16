@@ -58,6 +58,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
+    - run: npm config set @datasance:registry https://npm.pkg.github.com/    
     - run: npm install
     - run: npm run standard
     - run: |
@@ -93,7 +94,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
-
+    - run: npm config set @datasance:registry https://npm.pkg.github.com/ 
     - run: npm install
 
     - name: npm version
