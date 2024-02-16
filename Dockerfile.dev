@@ -12,7 +12,7 @@ COPY package.json .
 COPY . .
 
 # Set GitHub npm registry with authentication token
-RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
+RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
 
 RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
