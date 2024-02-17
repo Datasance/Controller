@@ -55,9 +55,9 @@ function _createDefaultPublicPortRange () {
   const [startStr, endStr] = defaultPortRangeStr.split('-')
   let start = parseInt(startStr)
   let end = parseInt(endStr)
-  if (!start || Number.isNaN(start)) { start = 6000 }
+  if (!start || Number.isNaN(start)) { start = 6001 }
   if (!end || Number.isNaN(end) || end < start) {
-    end = start + 1000
+    end = start + 1998
   }
   const size = end - start
   const availablePorts = new Array(size)
@@ -106,7 +106,7 @@ async function validatePortMapping (agent, mapping, availablePublicPortsByHost, 
       } else {
         // Assign next available public port
         const currentPublicPorts = (await MicroservicePublicPortManager.findAll({ hostId: host.uuid }, transaction)).map(p => p.publicPort)
-        // Default range 6000 -> 7000
+        // Default range 6001 -> 7999
         availablePublicPortsByHost[host.uuid] = availablePublicPortsByHost[host.uuid] || _createDefaultPublicPortRange()
         availablePublicPortsByHost[host.uuid] = availablePublicPortsByHost[host.uuid].filter(port => !currentPublicPorts.includes(port))
         if (availablePublicPortsByHost[host.uuid].length === 0) {

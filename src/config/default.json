@@ -32,7 +32,7 @@
     "DiagnosticDir": "diagnostic"
   },
   "PublicPorts": {
-    "Range": "6000-7000",
+    "Range": "6001-7999",
     "ProxyBrokerUrl": "http://localhost:3000",
     "ProxyBrokerToken": ""
   },
