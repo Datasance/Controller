@@ -1,5 +1,4 @@
 const Sequelize = require('sequelize')
-const mysql = require('mysql2')
 
 const config = require('../../config')
 const DatabaseProvider = require('./database-provider')
@@ -21,14 +20,11 @@ class MySqlDatabaseProvider extends DatabaseProvider {
     } else {
       this.sequelize = new Sequelize(mysqlConfig.databaseName, mysqlConfig.username, mysqlConfig.password, mysqlConfig)
     }
-    this.connection = mysql.createConnection({
-      host: mysqlConfig.host,
-      port: mysqlConfig.port,
-      user: mysqlConfig.username,
-      password: mysqlConfig.password,
-      database: mysqlConfig.databaseName
-    })
-    this.connection.connect()
+    sequelize.authenticate().then(() => {
+        console.log('Connection has been established successfully.');
+     }).catch((error) => {
+        console.error('Unable to connect to the database: ', error);
+     });
   }
 
   async initDB () {
