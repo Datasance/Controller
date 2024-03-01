@@ -57,7 +57,7 @@
         "port": "",
         "username": "",
         "password": "",
-        "databaseName": "dev_database.sql"
+        "databaseName": ""
       }
     }
   }  

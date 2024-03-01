@@ -15,14 +15,11 @@ class MySqlDatabaseProvider extends DatabaseProvider {
     mysqlConfig.username = process.env.DB_USERNAME || mysqlConfig.username
     mysqlConfig.password = process.env.DB_PASSWORD || mysqlConfig.password
     mysqlConfig.databaseName = process.env.DB_NAME || mysqlConfig.database
-    if (!mysqlConfig.databaseName.endsWith('.sql')) {
-        mysqlConfig.databaseName += '.sql'
-      }
 
     if (config.use_env_variable) {
       this.sequelize = new Sequelize(process.env[config.use_env_variable], mysqlConfig)
     } else {
-      this.sequelize = new Sequelize(mysqlConfig)
+      this.sequelize = new Sequelize(mysqlConfig.databaseName, mysqlConfig.username, mysqlConfig.password, mysqlConfig)
     }
     this.connection = mysql.createConnection({
       host: mysqlConfig.host,
@@ -35,7 +32,7 @@ class MySqlDatabaseProvider extends DatabaseProvider {
   }
 
   async initDB () {
-    
+    // Implement initialization logic here
   }
 }
 
