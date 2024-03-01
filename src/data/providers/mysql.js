@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize')
-const mysql = require('mysql')
+const mysql = require('mysql2')
 
 const config = require('../../config')
 const DatabaseProvider = require('./database-provider')
@@ -8,16 +8,17 @@ class MySqlDatabaseProvider extends DatabaseProvider {
   constructor () {
     super()
 
-    const mysqlConfig = config.get('Database:Config', {})
+    const mysqlConfig = config.get('Database:Config:mysql', {})
     mysqlConfig.dialect = 'mysql'
     mysqlConfig.host = process.env.DB_HOST || mysqlConfig.host
     mysqlConfig.port = process.env.DB_PORT || mysqlConfig.port
-    mysqlConfig.user = process.env.DB_USERNAME || mysqlConfig.user
+    mysqlConfig.username = process.env.DB_USERNAME || mysqlConfig.username
     mysqlConfig.password = process.env.DB_PASSWORD || mysqlConfig.password
     mysqlConfig.databaseName = process.env.DB_NAME || mysqlConfig.database
-    if (!mysqlConfig.database.endsWith('.sql')) {
-      mysqlConfig.database += '.sql'
-    }
+    if (!mysqlConfig.databaseName.endsWith('.sql')) {
+        mysqlConfig.databaseName += '.sql'
+      }
+
     if (config.use_env_variable) {
       this.sequelize = new Sequelize(process.env[config.use_env_variable], mysqlConfig)
     } else {
@@ -26,7 +27,7 @@ class MySqlDatabaseProvider extends DatabaseProvider {
     this.connection = mysql.createConnection({
       host: mysqlConfig.host,
       port: mysqlConfig.port,
-      user: mysqlConfig.user,
+      user: mysqlConfig.username,
       password: mysqlConfig.password,
       database: mysqlConfig.databaseName
     })
@@ -34,7 +35,7 @@ class MySqlDatabaseProvider extends DatabaseProvider {
   }
 
   async initDB () {
-    // Implement initialization logic here
+    
   }
 }
 

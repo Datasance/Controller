@@ -9,7 +9,7 @@ class SqliteDatabaseProvider extends DatabaseProvider {
   constructor () {
     super()
 
-    const sqliteConfig = config.get('Database:Config', {})
+    const sqliteConfig = config.get('Database:Config:sqlite', {})
     sqliteConfig.dialect = 'sqlite'
     sqliteConfig.databaseName = process.env.DB_NAME || sqliteConfig.databaseName
     if (!sqliteConfig.databaseName.endsWith('.sqlite')) {

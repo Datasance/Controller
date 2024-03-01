@@ -41,15 +41,24 @@
   "Database": {
     "Provider": "sqlite",
     "Config": {
-      "databaseName": "dev_database.sqlite",
-      "logging": false,
-      "transactionType": "IMMEDIATE",
-      "pool": {
-        "maxactive": 1,
-        "max": 1,
-        "min": 0,
-        "idle": 20000
+      "sqlite": { 
+        "databaseName": "dev_database.sqlite",
+        "logging": false,
+        "transactionType": "IMMEDIATE",
+        "pool": {
+          "maxactive": 1,
+          "max": 1,
+          "min": 0,
+          "idle": 20000
+        }
+      },
+      "mysql": {  
+        "host": "",
+        "port": "",
+        "username": "",
+        "password": "",
+        "databaseName": "dev_database.sql"
       }
     }
-  }
+  }  
 }
