@@ -1,4 +1,5 @@
 'use strict'
+
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.createTable('Config', {
@@ -8,10 +9,9 @@ module.exports = {
         autoIncrement: true,
         allowNull: false,
         field: 'id'
-
       },
       key: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(255),
         field: 'key',
         unique: true,
         allowNull: false

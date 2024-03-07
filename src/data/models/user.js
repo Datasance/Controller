@@ -80,6 +80,15 @@ module.exports = (sequelize, DataTypes) => {
       },
       as: 'microservice'
     })
+
+    User.belongsTo(models.ControlPlane, {
+      foreignKey: {
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
+      },
+      as: 'controlPlane',
+      onDelete: 'cascade'
+    })
   }
   return User
 }

@@ -3,7 +3,7 @@ const fs = require('fs')
 const Sequelize = require('sequelize')
 
 const config = require('../../config')
-const DatabaseProvider = require(`./database-provider`)
+const DatabaseProvider = require('./database-provider')
 
 class SqliteDatabaseProvider extends DatabaseProvider {
   constructor () {

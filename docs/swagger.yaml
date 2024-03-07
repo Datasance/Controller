@@ -3,6 +3,21 @@ info:
   version: 1.0.0
   title: Datasance PoT-ioFog Controller
 paths:
+  /controlplane/profile:
+    get:
+      tags:
+        - ControlPlane
+      summary: Returns Control Plane Profile 
+      operationId: getControlPlaneProfile
+      responses:
+        "200":
+          description: Control Plane Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ControlPlaneProfileResponse"
+        "500":
+          description: Internal Server Error
   /status:
     get:
       tags:

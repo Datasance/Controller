@@ -36,12 +36,12 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   })
   Application.associate = function (models) {
-    Application.belongsTo(models.User, {
+    Application.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user',
+      as: 'controlPlane',
       onDelete: 'cascade'
     })
 

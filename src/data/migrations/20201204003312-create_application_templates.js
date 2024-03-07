@@ -10,7 +10,7 @@ module.exports = {
         allowNull: false
       },
       name: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(255),
         field: 'name',
         defaultValue: 'new-application-template',
         unique: true

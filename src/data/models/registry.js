@@ -46,12 +46,13 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   })
   Registry.associate = function (models) {
-    Registry.belongsTo(models.User, {
+    Registry.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user'
+      as: 'controlPlane',
+      onDelete: 'cascade'
     })
   }
   return Registry

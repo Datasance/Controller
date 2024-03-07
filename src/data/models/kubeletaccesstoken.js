@@ -28,12 +28,12 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   })
   KubeletAccessToken.associate = function (models) {
-    KubeletAccessToken.belongsTo(models.User, {
+    KubeletAccessToken.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user',
+      as: 'controlPlane',
       onDelete: 'cascade'
     })
   }

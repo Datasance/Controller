@@ -1,9 +1,9 @@
 'use strict'
-
+//deleted
 module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.addColumn('Routings', 'name', {
-      type: Sequelize.TEXT,
+      type: Sequelize.STRING(255),
       allowNull: false,
       defaultValue: 'route'
     }).then(() => queryInterface.addIndex('Routings', ['name'], {

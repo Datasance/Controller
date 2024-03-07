@@ -1,5 +1,5 @@
 'use strict'
-
+// deleted
 module.exports = {
   up: (queryInterface, Sequelize) => {
     /*

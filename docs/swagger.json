@@ -8,6 +8,9 @@
     "name" : "Controller",
     "description" : "Manage your controller"
   }, {
+    "name" : "Control Plane",
+    "description" : "Manage your Control Plane"
+  }, {
     "name" : "ioFog",
     "description" : "Manage your agents"
   }, {
@@ -45,6 +48,22 @@
     "description" : "Manage your users"
   } ],
   "paths" : {
+    "/controlplane/profile" : {
+      "get" : {
+        "tags" : [ "ControlPlane" ],
+        "summary" : "Returns Control Plane Profile",
+        "operationId" : "getControlPlaneProfile",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Control Plane Profile"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
     "/status" : {
       "get" : {
         "tags" : [ "Controller" ],

@@ -45,7 +45,7 @@ module.exports = {
         onDelete: 'cascade'
       },
       FogUuid: {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING(255),
         field: 'fog_uuid',
         references: { model: 'Fogs', key: 'uuid' },
         onDelete: 'cascade'

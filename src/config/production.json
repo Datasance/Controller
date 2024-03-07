@@ -48,5 +48,17 @@
         "databaseName": ""
       }
     }
-  }  
-}
+  },
+  "ControlPlane": {
+    "Auth_Manager": "Keycloak",
+    "Realm": {
+      "url": "",
+      "realm-key": ""
+    },
+    "Config": {
+      "namespace": "",
+      "orgName": "",
+      "entitlementID": ""
+    }
+  }    
+}    

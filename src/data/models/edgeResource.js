@@ -28,13 +28,12 @@ module.exports = (sequelize, DataTypes) => {
     EdgeResource.belongsToMany(models.Fog, { through: 'AgentEdgeResources', as: 'agents' })
     EdgeResource.belongsToMany(models.Tags, { as: 'orchestrationTags', through: 'EdgeResourceOrchestrationTags' })
 
-    EdgeResource.belongsTo(models.User, {
+    EdgeResource.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user',
-      defaultValue: 0,
+      as: 'controlPlane',
       onDelete: 'cascade'
     })
   }

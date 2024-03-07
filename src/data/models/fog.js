@@ -324,13 +324,12 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     })
 
-    Fog.belongsTo(models.User, {
+    Fog.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user',
-      defaultValue: 0,
+      as: 'controlPlane',
       onDelete: 'cascade'
     })
 

@@ -43,12 +43,12 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'cascade'
     })
 
-    MicroservicePort.belongsTo(models.User, {
+    MicroservicePort.belongsTo(models.ControlPlane, {
       foreignKey: {
-        name: 'userId',
-        field: 'user_id'
+        name: 'controlPlaneUuid',
+        field: 'controlPlane_uuid'
       },
-      as: 'user',
+      as: 'controlPlane',
       onDelete: 'cascade'
     })
 
