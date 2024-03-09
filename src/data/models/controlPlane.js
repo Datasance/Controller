@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'ControlPlane',
-    timestamps: false,
+    timestamps: true,
     underscored: true
   })
   ControlPlane.associate = function (models) {
