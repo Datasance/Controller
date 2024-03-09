@@ -47,6 +47,12 @@ module.exports = {
         type: Sequelize.STRING(100),
         field: 'subscriptionKey',
         defaultValue: ''
+      },
+      controlPlaneUuid: {
+        type: Sequelize.STRING(32),
+        field: 'controlPlane_uuid',
+        references: { model: 'ControlPlane', key: 'uuid' },
+        onDelete: 'cascade'
       }
     })
   },
