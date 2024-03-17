@@ -324,15 +324,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     })
 
-    Fog.belongsTo(models.ControlPlane, {
-      foreignKey: {
-        name: 'controlPlaneUuid',
-        field: 'controlPlane_uuid'
-      },
-      as: 'controlPlane',
-      onDelete: 'cascade'
-    })
-
     Fog.hasOne(models.FogAccessToken, {
       foreignKey: 'iofog_uuid',
       as: 'accessToken'

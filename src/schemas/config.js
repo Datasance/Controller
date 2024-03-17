@@ -12,34 +12,27 @@
  */
 
 const configUpdate = {
-  'id': '/configUpdate',
-  'type': 'object',
-  'properties': {
-    'port': { 'type': 'integer', 'minimum': 0, 'maximum': 65535 },
-    'sslCert': { 'type': 'string' },
-    'sslKey': { 'type': 'string' },
-    'intermediateCert': { 'type': 'string' },
-    'emailActivationOn': { 'type': 'boolean' },
-    'emailActivationOff': { 'type': 'boolean' },
-    'homeUrl': { 'type': 'string' },
-    'emailAddress': { 'type': 'string' },
-    'emailPassword': { 'type': 'string', 'minLength': 1 },
-    'emailService': { 'type': 'string' },
-    'logDir': { 'type': 'string' },
-    'logSize': { 'type': 'integer' },
-    'kubelet': { 'type': 'string' }
+  id: '/configUpdate',
+  type: 'object',
+  properties: {
+    port: { type: 'integer', minimum: 0, maximum: 65535 },
+    sslCert: { type: 'string' },
+    sslKey: { type: 'string' },
+    intermediateCert: { type: 'string' },
+    logDir: { type: 'string' },
+    logSize: { type: 'integer' }
   }
 }
 
 const configElement = {
-  'id': '/configElement',
-  'type': 'object',
-  'properties': {
-    'key': { 'type': 'string', 'minLength': 1 },
-    'value': { 'type': 'string' }
+  id: '/configElement',
+  type: 'object',
+  properties: {
+    key: { type: 'string', minLength: 1 },
+    value: { type: 'string' }
   },
-  'required': ['key', 'value'],
-  'additionalProperties': true
+  required: ['key', 'value'],
+  additionalProperties: true
 }
 
 module.exports = {

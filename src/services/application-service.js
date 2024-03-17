@@ -56,14 +56,13 @@ const createApplicationEndPoint = async function (applicationData, user, isCLI, 
   }
   await Validator.validate(applicationData, Validator.schemas.applicationCreate)
 
-  await _checkForDuplicateName(applicationData.name, null, user.id, transaction)
+  await _checkForDuplicateName(applicationData.name, null, transaction)
 
   const applicationToCreate = {
     name: applicationData.name,
     description: applicationData.description,
     isActivated: !!applicationData.isActivated,
-    isSystem: !!applicationData.isSystem,
-    userId: user.id
+    isSystem: !!applicationData.isSystem
   }
 
   const applicationDataCreate = AppHelper.deleteUndefinedFields(applicationToCreate)
@@ -96,8 +95,7 @@ const createApplicationEndPoint = async function (applicationData, user, isCLI, 
 
 const deleteApplicationEndPoint = async function (conditions, user, isCLI, transaction) {
   const whereObj = {
-    ...conditions,
-    userId: user.id
+    ...conditions
   }
   const where = AppHelper.deleteUndefinedFields(whereObj)
 
@@ -110,13 +108,13 @@ const deleteApplicationEndPoint = async function (conditions, user, isCLI, trans
 const patchApplicationEndPoint = async function (applicationData, conditions, user, isCLI, transaction) {
   await Validator.validate(applicationData, Validator.schemas.applicationPatch)
 
-  const oldApplication = await ApplicationManager.findOne({ ...conditions, userId: user.id }, transaction)
+  const oldApplication = await ApplicationManager.findOne({ ...conditions }, transaction)
 
   if (!oldApplication) {
     throw new Errors.NotFoundError(ErrorMessages.INVALID_FLOW_ID)
   }
   if (applicationData.name) {
-    await _checkForDuplicateName(applicationData.name, oldApplication.id, user.id || oldApplication.userId, transaction)
+    await _checkForDuplicateName(applicationData.name, oldApplication.id, transaction)
   }
 
   const application = {
@@ -130,7 +128,7 @@ const patchApplicationEndPoint = async function (applicationData, conditions, us
 
   const where = isCLI
     ? { id: oldApplication.id }
-    : { id: oldApplication.id, userId: user.id }
+    : { id: oldApplication.id }
   await ApplicationManager.update(where, updateApplicationData, transaction)
 
   if (oldApplication.isActivated !== applicationData.isActivated) {
@@ -167,13 +165,13 @@ const updateApplicationEndPoint = async function (applicationData, name, user, i
 
   await Validator.validate(applicationData, Validator.schemas.applicationUpdate)
 
-  const oldApplication = await ApplicationManager.findOne({ name, userId: user.id }, transaction)
+  const oldApplication = await ApplicationManager.findOne({ name }, transaction)
 
   if (!oldApplication) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
   }
   if (applicationData.name) {
-    await _checkForDuplicateName(applicationData.name, oldApplication.id, user.id || oldApplication.userId, transaction)
+    await _checkForDuplicateName(applicationData.name, oldApplication.id, transaction)
   }
 
   const application = {
@@ -186,7 +184,7 @@ const updateApplicationEndPoint = async function (applicationData, name, user, i
   const updateApplicationData = AppHelper.deleteUndefinedFields(application)
   const where = isCLI
     ? { id: oldApplication.id }
-    : { id: oldApplication.id, userId: user.id }
+    : { id: oldApplication.id }
   await ApplicationManager.update(where, updateApplicationData, transaction)
 
   if (applicationData.microservices) {
@@ -274,7 +272,6 @@ const _updateMicroservices = async function (application, microservices, user, i
 
 const getUserApplicationsEndPoint = async function (user, isCLI, transaction) {
   const application = {
-    userId: user.id,
     isSystem: false
   }
 
@@ -306,7 +303,7 @@ async function _buildApplicationObject (application, transaction) {
 async function getApplication (conditions, user, isCLI, transaction) {
   const where = isCLI
     ? { ...conditions }
-    : { ...conditions, userId: user.id }
+    : { ...conditions }
   const attributes = { exclude: ['created_at', 'updated_at'] }
 
   const applicationRaw = await ApplicationManager.findOnePopulated(where, attributes, transaction)
@@ -322,11 +319,11 @@ const getApplicationEndPoint = async function (conditions, user, isCLI, transact
   return application
 }
 
-const _checkForDuplicateName = async function (name, applicationId, userId, transaction) {
+const _checkForDuplicateName = async function (name, applicationId, transaction) {
   if (name) {
     const where = applicationId
-      ? { name: name, userId: userId, id: { [Op.ne]: applicationId } }
-      : { name: name, userId: userId }
+      ? { name: name, id: { [Op.ne]: applicationId } }
+      : { name: name }
 
     const result = await ApplicationManager.findOne(where, transaction)
     if (result) {

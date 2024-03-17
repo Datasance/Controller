@@ -5,9 +5,6 @@
   "Viewer": {
     "Port": 80
   },
-  "Kubelet": {
-    "Uri": "http://localhost:1234"
-  },
   "Server": {
     "Port": 51121,
     "DevMode": true
@@ -22,7 +19,6 @@
     "LogsFileCount": 10
   },
   "Settings": {
-    "UserTokenExpirationIntervalSeconds": 360000,
     "FogTokenExpirationIntervalSeconds": 3600000,
     "FogStatusUpdateIntervalSeconds": 30,
     "FogStatusUpdateTolerance": 3
@@ -60,17 +56,5 @@
         "databaseName": ""
       }
     }
-  },
-  "ControlPlane": {
-    "Auth_Manager": "Keycloak",
-    "Realm": {
-      "url": "",
-      "realm-key": ""
-    },
-    "Config": {
-      "namespace": "",
-      "orgName": "",
-      "entitlementID": ""
-    }
-  }    
+  } 
 }

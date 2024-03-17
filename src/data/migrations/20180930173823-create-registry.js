@@ -40,12 +40,6 @@ module.exports = {
       userEmail: {
         type: Sequelize.TEXT,
         field: 'user_email'
-      },
-      userId: {
-        type: Sequelize.INTEGER,
-        field: 'user_id',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'cascade'
       }
     })
   },

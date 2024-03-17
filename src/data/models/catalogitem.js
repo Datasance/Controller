@@ -76,15 +76,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 1
     })
 
-    CatalogItem.belongsTo(models.ControlPlane, {
-      foreignKey: {
-        name: 'controlPlaneUuid',
-        field: 'controlPlane_uuid'
-      },
-      as: 'controlPlane',
-      onDelete: 'cascade'
-    })
-
     CatalogItem.hasMany(models.CatalogItemImage, {
       foreignKey: 'catalog_item_id',
       as: 'images'

@@ -34,6 +34,9 @@ const multerMemStorage = multer.memoryStorage()
 const uploadFile = (fileName) => multer({
   storage: multerMemStorage
 }).single(fileName)
+const keycloak = require('./config/keycloak.js').initKeycloak()
+const session = require('express-session')
+const memoryStore = require('./config/keycloak.js').getMemoryStore()
 
 const viewerApp = express()
 
@@ -46,7 +49,13 @@ app.use(xss())
 
 // express logs
 // app.use(morgan('combined'));
-
+app.use(session({
+  secret: 'pot-controller',
+  resave: false,
+  saveUninitialized: true,
+  store: memoryStore
+}))
+app.use(keycloak.middleware())
 app.use(bodyParser.urlencoded({
   extended: true
 }))
@@ -75,7 +84,7 @@ app.use((req, res, next) => {
 global.appRoot = path.resolve(__dirname)
 
 const registerRoute = (route) => {
-  const middlewares = [route.middleware]
+  const middlewares = [keycloak.middleware(), route.middleware]
   if (route.supportSubstitution) {
     middlewares.unshift(substitutionMiddleware)
   }

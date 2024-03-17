@@ -31,13 +31,12 @@ const createApplicationTemplateEndPoint = async function (applicationTemplateDat
   // Remove name before storing
   delete applicationTemplateData.application.name
 
-  await _checkForDuplicateName(applicationTemplateData.name, null, user.id, transaction)
+  await _checkForDuplicateName(applicationTemplateData.name, null, transaction)
 
   const applicationTemplateToCreate = {
     name: applicationTemplateData.name,
     description: applicationTemplateData.description,
-    applicationJSON: JSON.stringify(applicationTemplateData.application),
-    userId: user.id
+    applicationJSON: JSON.stringify(applicationTemplateData.application)
   }
 
   const applicationTemplateDataCreate = AppHelper.deleteUndefinedFields(applicationTemplateToCreate)
@@ -64,8 +63,7 @@ const createApplicationTemplateEndPoint = async function (applicationTemplateDat
 
 const deleteApplicationTemplateEndPoint = async function (conditions, user, isCLI, transaction) {
   const whereObj = {
-    ...conditions,
-    userId: user.id
+    ...conditions
   }
   const where = AppHelper.deleteUndefinedFields(whereObj)
 
@@ -75,13 +73,13 @@ const deleteApplicationTemplateEndPoint = async function (conditions, user, isCL
 const patchApplicationTemplateEndPoint = async function (applicationTemplateData, conditions, user, isCLI, transaction) {
   await Validator.validate(applicationTemplateData, Validator.schemas.applicationTemplatePatch)
 
-  const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ ...conditions, userId: user.id }, transaction)
+  const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ ...conditions }, transaction)
 
   if (!oldApplicationTemplate) {
     throw new Errors.NotFoundError(ErrorMessages.INVALID_FLOW_ID)
   }
   if (applicationTemplateData.name) {
-    await _checkForDuplicateName(applicationTemplateData.name, oldApplicationTemplate.id, user.id || oldApplicationTemplate.userId, transaction)
+    await _checkForDuplicateName(applicationTemplateData.name, oldApplicationTemplate.id, transaction)
   }
 
   const applicationTemplate = {
@@ -93,7 +91,7 @@ const patchApplicationTemplateEndPoint = async function (applicationTemplateData
 
   const where = isCLI
     ? { id: oldApplicationTemplate.id }
-    : { id: oldApplicationTemplate.id, userId: user.id }
+    : { id: oldApplicationTemplate.id }
   await ApplicationTemplateManager.update(where, updateApplicationTemplateData, transaction)
 }
 
@@ -104,13 +102,13 @@ const updateApplicationTemplateEndPoint = async function (applicationTemplateDat
   // Remove name before storing
   delete applicationTemplateData.application.name
 
-  const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ name, userId: user.id }, transaction)
+  const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ name }, transaction)
 
   if (!oldApplicationTemplate) {
     return createApplicationTemplateEndPoint({ ...applicationTemplateData, name }, user, isCLI, transaction)
   }
   if (applicationTemplateData.name) {
-    await _checkForDuplicateName(applicationTemplateData.name, oldApplicationTemplate.id, user.id || oldApplicationTemplate.userId, transaction)
+    await _checkForDuplicateName(applicationTemplateData.name, oldApplicationTemplate.id, transaction)
   }
 
   const applicationTemplateDBModel = {
@@ -122,7 +120,7 @@ const updateApplicationTemplateEndPoint = async function (applicationTemplateDat
   const updateApplicationTemplateData = AppHelper.deleteUndefinedFields(applicationTemplateDBModel)
   const where = isCLI
     ? { id: oldApplicationTemplate.id }
-    : { id: oldApplicationTemplate.id, userId: user.id }
+    : { id: oldApplicationTemplate.id }
   await ApplicationTemplateManager.update(where, updateApplicationTemplateData, transaction)
 
   if (applicationTemplateData.variables) {
@@ -157,7 +155,6 @@ const _updateVariables = async function (applicationTemplateId, variables, user,
 
 const getUserApplicationTemplatesEndPoint = async function (user, isCLI, transaction) {
   const application = {
-    userId: user.id
   }
 
   const attributes = { exclude: ['created_at', 'updated_at'] }
@@ -193,7 +190,7 @@ const getAllApplicationTemplatesEndPoint = async function (isCLI, transaction) {
 async function getApplicationTemplate (conditions, user, isCLI, transaction) {
   const where = isCLI
     ? { ...conditions }
-    : { ...conditions, userId: user.id }
+    : { ...conditions }
   const attributes = { exclude: ['created_at', 'updated_at'] }
 
   const application = await ApplicationTemplateManager.findOnePopulated(where, attributes, transaction)
@@ -210,7 +207,7 @@ const getApplicationTemplateEndPoint = async function (name, user, isCLI, transa
 const getApplicationDataFromTemplate = async function (deploymentData, user, isCLI, transaction) {
   await Validator.validate(deploymentData, Validator.schemas.applicationTemplateDeploy)
 
-  const applicationTemplateDBObject = await ApplicationTemplateManager.findOnePopulated({ name: deploymentData.name, userId: user.id }, transaction)
+  const applicationTemplateDBObject = await ApplicationTemplateManager.findOnePopulated({ name: deploymentData.name }, transaction)
   if (!applicationTemplateDBObject) {
     throw new Errors.NotFoundError(ErrorMessages.INVALID_APPLICATION_TEMPLATE_NAME, deploymentData.name)
   }
@@ -251,11 +248,11 @@ const getApplicationDataFromTemplate = async function (deploymentData, user, isC
   return newApplication
 }
 
-const _checkForDuplicateName = async function (name, applicationId, userId, transaction) {
+const _checkForDuplicateName = async function (name, applicationId, transaction) {
   if (name) {
     const where = applicationId
-      ? { name: name, userId: userId, id: { [Op.ne]: applicationId } }
-      : { name: name, userId: userId }
+      ? { name: name, id: { [Op.ne]: applicationId } }
+      : { name: name }
 
     const result = await ApplicationTemplateManager.findOne(where, transaction)
     if (result) {

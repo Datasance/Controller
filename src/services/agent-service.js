@@ -370,9 +370,6 @@ const getAgentRegistries = async function (fog, transaction) {
     [Op.or]:
       [
         {
-          userId: fog.userId
-        },
-        {
           isPublic: true
         }
       ]

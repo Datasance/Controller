@@ -11,8 +11,6 @@
  *
  */
 
-const request = require('request-promise')
-
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const AppHelper = require('../helpers/app-helper')
 const FogManager = require('../data/managers/iofog-manager')
@@ -29,7 +27,6 @@ const MicroserviceManager = require('../data/managers/microservice-manager')
 const TagsManager = require('../data/managers/tags-manager')
 const MicroserviceService = require('./microservices-service')
 const EdgeResourceService = require('./edge-resource-service')
-const config = require('../config')
 const RouterManager = require('../data/managers/router-manager')
 const MicroserviceExtraHostManager = require('../data/managers/microservice-extra-host-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
@@ -68,7 +65,6 @@ async function createFogEndPoint (fogData, user, isCLI, transaction) {
     dockerPruningFrequency: fogData.dockerPruningFrequency,
     availableDiskThreshold: fogData.availableDiskThreshold,
     isSystem: fogData.isSystem,
-    userId: user.id,
     host: fogData.host,
     routerId: null,
     timeZone: fogData.timeZone
@@ -89,11 +85,6 @@ async function createFogEndPoint (fogData, user, isCLI, transaction) {
   const existingFog = await FogManager.findOne({ name: createFogData.name }, transaction)
   if (existingFog) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_NAME, createFogData.name))
-  }
-
-  // Remove user if system fog
-  if (fogData.isSystem) {
-    fogData.userId = 0
   }
 
   let defaultRouter, upstreamRouters
@@ -118,7 +109,7 @@ async function createFogEndPoint (fogData, user, isCLI, transaction) {
       throw new Errors.ValidationError(ErrorMessages.HOST_IS_REQUIRED)
     }
 
-    await RouterService.createRouterForFog(fogData, fog.uuid, user.id, upstreamRouters)
+    await RouterService.createRouterForFog(fogData, fog.uuid, upstreamRouters)
   }
 
   const res = {
@@ -136,10 +127,6 @@ async function createFogEndPoint (fogData, user, isCLI, transaction) {
   }
 
   await ChangeTrackingService.update(createFogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
-
-  try {
-    await informKubelet(fog.uuid, 'POST')
-  } catch (e) {}
 
   return res
 }
@@ -203,24 +190,14 @@ async function updateFogEndPoint (fogData, user, isCLI, transaction) {
   await _setTags(oldFog, fogData.tags, transaction)
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!oldFog.isSystem && !isCLI && oldFog.userId !== user.id) {
+  if (!oldFog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
-  // Set userId if moving fog from system to classic or from classic to system
-  if (!oldFog.isSystem && updateFogData.isSystem) {
-    updateFogData.userId = 0
-    if (await FogManager.findOne({ isSystem: true }, transaction)) {
-      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_SYSTEM_FOG))
-    }
-  } else if (updateFogData.isSystem === false) {
-    updateFogData.userId = user.id
   }
 
   if (updateFogData.name) {
     const conflictQuery = isCLI
       ? { name: updateFogData.name, uuid: { [Op.not]: fogData.uuid } }
-      : { name: updateFogData.name, uuid: { [Op.not]: fogData.uuid }, userId: user.id }
+      : { name: updateFogData.name, uuid: { [Op.not]: fogData.uuid } }
     const conflict = await FogManager.findOne(conflictQuery, transaction)
     if (conflict) {
       throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_NAME, updateFogData.name))
@@ -252,19 +229,19 @@ async function updateFogEndPoint (fogData, user, isCLI, transaction) {
     // Only delete previous router if there is a network router
     if (router) {
       // New router mode is none, delete existing router
-      await _deleteFogRouter(fogData, user.id, transaction)
+      await _deleteFogRouter(fogData, transaction)
     }
   } else {
     const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
     const upstreamRouters = await RouterService.validateAndReturnUpstreamRouters(upstreamRoutersIofogUuid, oldFog.isSystem, defaultRouter)
     if (!router) {
       // Router does not exist yet
-      networkRouter = await RouterService.createRouterForFog(fogData, oldFog.uuid, user.id, upstreamRouters)
+      networkRouter = await RouterService.createRouterForFog(fogData, oldFog.uuid, upstreamRouters)
     } else {
       // Update existing router
       networkRouter = await RouterService.updateRouter(router, {
         messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host
-      }, upstreamRouters, user.id)
+      }, upstreamRouters)
       await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
     }
   }
@@ -333,7 +310,7 @@ async function _updateProxyRouters (fogId, router, transaction) {
   }
 }
 
-async function _deleteFogRouter (fogData, userId, transaction) {
+async function _deleteFogRouter (fogData, transaction) {
   const router = await RouterManager.findOne({ iofogUuid: fogData.uuid }, transaction)
   const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
 
@@ -359,7 +336,7 @@ async function _deleteFogRouter (fogData, userId, transaction) {
         }
 
         // Update router config
-        await RouterService.updateConfig(router.id, userId, transaction)
+        await RouterService.updateConfig(router.id, transaction)
         // Set routerChanged flag
         await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.routerChanged, transaction)
       }
@@ -393,17 +370,13 @@ async function deleteFogEndPoint (fogData, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
-  await _deleteFogRouter(fogData, user.id, transaction)
+  await _deleteFogRouter(fogData, transaction)
 
   await _processDeleteCommand(fog, transaction)
-
-  try {
-    await informKubelet(fog.uuid, 'DELETE')
-  } catch (e) {}
 }
 
 function _getRouterUuid (router, defaultRouter) {
@@ -472,7 +445,7 @@ function _mapTags (fog) {
 async function getFog (fogData, user, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogGet)
 
-  const queryFogData = fogData.uuid ? { uuid: fogData.uuid } : { name: fogData.name, userId: user.id }
+  const queryFogData = fogData.uuid ? { uuid: fogData.uuid } : { name: fogData.name }
 
   const fog = await FogManager.findOneWithTags(queryFogData, transaction)
   if (!fog) {
@@ -480,7 +453,7 @@ async function getFog (fogData, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
@@ -499,7 +472,7 @@ async function getFogListEndPoint (filters, user, isCLI, isSystem, transaction) 
     throw new Errors.AuthenticationError('Unauthorized')
   }
 
-  const queryFogData = isSystem ? { isSystem } : (isCLI ? {} : { userId: user.id, isSystem: false })
+  const queryFogData = isSystem ? { isSystem } : (isCLI ? {} : { isSystem: false })
 
   let fogs = await FogManager.findAllWithTags(queryFogData, transaction)
   fogs = _filterFogs(fogs, filters)
@@ -529,7 +502,7 @@ async function generateProvisioningKeyEndPoint (fogData, user, isCLI, transactio
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
@@ -557,7 +530,7 @@ async function setFogVersionCommandEndPoint (fogVersionData, user, isCLI, transa
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, queryFogData.uuid))
   }
 
@@ -584,7 +557,7 @@ async function setFogRebootCommandEndPoint (fogData, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
@@ -602,7 +575,7 @@ async function getHalHardwareInfoEndPoint (uuidObj, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
   }
 
@@ -622,7 +595,7 @@ async function getHalUsbInfoEndPoint (uuidObj, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
   }
 
@@ -678,7 +651,6 @@ async function _createHalMicroserviceForFog (fogData, oldFog, user, transaction)
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
-    userId: oldFog ? oldFog.userId : user.id,
     configLastUpdated: Date.now()
   }
 
@@ -706,7 +678,6 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, user, transa
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
-    userId: oldFog ? oldFog.userId : user.id,
     configLastUpdated: Date.now()
   }
 
@@ -723,19 +694,6 @@ async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
   await MicroserviceManager.delete(deleteBluetoothMicroserviceData, transaction)
 }
 
-const informKubelet = function (iofogUuid, method) {
-  const kubeletUri = config.get('Kubelet:Uri')
-  const options = {
-    uri: kubeletUri + '/node',
-    qs: {
-      uuid: iofogUuid
-    },
-    method: method
-  }
-
-  return request(options)
-}
-
 async function setFogPruneCommandEndPoint (fogData, user, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogPrune)
 
@@ -747,7 +705,7 @@ async function setFogPruneCommandEndPoint (fogData, user, isCLI, transaction) {
   }
 
   // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI && fog.userId !== user.id) {
+  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 

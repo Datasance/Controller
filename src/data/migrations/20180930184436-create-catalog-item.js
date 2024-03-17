@@ -61,12 +61,6 @@ module.exports = {
         field: 'is_public',
         defaultValue: false
       },
-      userId: {
-        type: Sequelize.INTEGER,
-        field: 'user_id',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'cascade'
-      },
       registryId: {
         type: Sequelize.INTEGER,
         field: 'registry_id',

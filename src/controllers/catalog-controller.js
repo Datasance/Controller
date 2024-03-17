@@ -14,7 +14,8 @@
 const CatalogService = require('../services/catalog-service')
 const AuthDecorator = require('./../decorators/authorization-decorator')
 
-const createCatalogItemEndPoint = async function (req, user) {
+const createCatalogItemEndPoint = async function (req) {
+  const user = req.kauth.grant.access_token.content
   return CatalogService.createCatalogItemEndPoint(req.body, user)
 }
 

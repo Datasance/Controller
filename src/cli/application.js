@@ -71,13 +71,6 @@ class Application extends BaseCLIHandler {
         type: Boolean,
         description: 'Deactivate application',
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
-      },
-      {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD, constants.CMD_UPDATE, constants.CMD_REMOVE]
       }
     ]
     this.commands = {

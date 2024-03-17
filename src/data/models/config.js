@@ -30,15 +30,5 @@ module.exports = (sequelize, DataTypes) => {
       }
     ]
   })
-  Config.associate = function (models) {
-    Config.belongsTo(models.ControlPlane, {
-      foreignKey: {
-        name: 'controlPlaneUuid',
-        field: 'controlPlane_uuid'
-      },
-      as: 'controlPlane',
-      onDelete: 'cascade'
-    })
-  }
   return Config
 }

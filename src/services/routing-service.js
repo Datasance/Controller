@@ -70,7 +70,7 @@ async function _validateRouteMsvc (routingData, user, isCLI, transaction) {
     }
     return { sourceMicroservice, destMicroservice }
   } else {
-    const applicationWhere = isCLI ? { name: routingData.application } : { name: routingData.application, userId: user.id }
+    const applicationWhere = isCLI ? { name: routingData.application } : { name: routingData.application }
     const application = await ApplicationManager.findOne(applicationWhere, transaction)
     if (!application) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, routingData.application))

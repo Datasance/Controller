@@ -26,10 +26,7 @@ module.exports = {
   'Service:LogsFileCount': 10,
 
   'Settings:DefaultJobIntervalSeconds': 120,
-  'Settings:UserTokenExpirationIntervalSeconds': 3600,
   'Settings:FogTokenExpirationIntervalSeconds': 3600,
-  'Settings:KubeletTokenExpirationIntervalSeconds': 3600,
-  'Settings:SchedulerTokenExpirationIntervalSeconds': 3600,
   'Settings:FogStatusUpdateIntervalSeconds': 30,
   'Settings:FogStatusUpdateTolerance': 3,
 

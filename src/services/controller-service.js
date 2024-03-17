@@ -12,7 +12,6 @@
  */
 
 const ioFogTypesManager = require('../data/managers/iofog-type-manager')
-const Config = require('../config')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const packageJson = require('../../package')
 const AppHelper = require('../helpers/app-helper')
@@ -32,13 +31,6 @@ const getFogTypes = async function (isCLI, transaction) {
 
   return {
     fogTypes: response
-  }
-}
-
-const emailActivation = async function (isCLI) {
-  const emailActivation = await Config.get('Email:ActivationEnabled', false)
-  return {
-    isEmailActivationEnabled: emailActivation
   }
 }
 
@@ -68,7 +60,6 @@ const getVersion = async function (isCLI) {
 
 module.exports = {
   getFogTypes: TransactionDecorator.generateTransaction(getFogTypes),
-  emailActivation: emailActivation,
   statusController: statusController,
   getVersion: getVersion
 }

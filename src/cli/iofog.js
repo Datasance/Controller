@@ -249,13 +249,6 @@ class IOFog extends BaseCLIHandler {
         group: [constants.CMD_VERSION]
       },
       {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD, constants.CMD_UPDATE, constants.CMD_REMOVE]
-      },
-      {
         name: 'log-level',
         alias: 'L',
         type: String,
@@ -507,7 +500,6 @@ function _createFogObject (cliData) {
     abstractedHardwareEnabled: AppHelper.validateBooleanCliOptions(cliData.absHwEnable, cliData.absHwDisable),
 
     fogType: cliData.fogType,
-    userId: cliData.userId,
     dockerPruningFrequency: cliData.dockerPruningFrequency,
     availableDiskThreshold: cliData.availableDiskThreshold,
     logLevel: cliData.logLevel,

@@ -257,12 +257,6 @@ module.exports = {
         type: Sequelize.DATE,
         field: 'updated_at'
       },
-      userId: {
-        type: Sequelize.INTEGER,
-        field: 'user_id',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'cascade'
-      },
       fogTypeId: {
         type: Sequelize.INTEGER,
         field: 'fog_type_id',

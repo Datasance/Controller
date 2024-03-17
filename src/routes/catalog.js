@@ -15,35 +15,39 @@ const CatalogController = require('../controllers/catalog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak')
 
 module.exports = [
   {
     method: 'get',
     path: '/api/v1/catalog/microservices',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
+    middleware: [
+      keycloak.protect(['Admin', 'SRE', 'Developer', 'Viewer']),
+      async (req, res) => {
+        logger.apiReq(req)
 
-      const successCode = constants.HTTP_CODE_SUCCESS
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        }
-      ]
+        const successCode = constants.HTTP_CODE_SUCCESS
+        const errorCodes = [
+          {
+            code: constants.HTTP_CODE_UNAUTHORIZED,
+            errors: [Errors.AuthenticationError]
+          }
+        ]
 
-      const listCatalogItemsEndPoint = ResponseDecorator.handleErrors(
-        CatalogController.listCatalogItemsEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await listCatalogItemsEndPoint(req)
+        const listCatalogItemsEndPoint = ResponseDecorator.handleErrors(
+          CatalogController.listCatalogItemsEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await listCatalogItemsEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
-    }
+        logger.apiRes({ req, res: responseObject })
+      }
+    ]
   },
   {
     method: 'post',
@@ -79,7 +83,7 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      logger.apiRes({ req, res: responseObject })
     }
   },
   {
@@ -111,7 +115,7 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      logger.apiRes({ req, res: responseObject })
     }
   },
   {
@@ -152,7 +156,7 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      logger.apiRes({ req, res: responseObject })
     }
   },
   {
@@ -184,7 +188,7 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      logger.apiRes({ req, res: responseObject })
     }
   }
 ]

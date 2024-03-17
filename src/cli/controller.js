@@ -50,9 +50,6 @@ class Controller extends BaseCLIHandler {
         case constants.CMD_STATUS:
           await _executeCase(controllerCommand, constants.CMD_STATUS, _getStatus, false)
           break
-        case constants.CMD_EMAIL_ACTIVATION:
-          await _executeCase(controllerCommand, constants.CMD_EMAIL_ACTIVATION, _emailActivation, false)
-          break
         case constants.CMD_FOG_TYPES:
           await _executeCase(controllerCommand, constants.CMD_FOG_TYPES, _getFogTypes, false)
           break
@@ -86,12 +83,6 @@ const _executeCase = async function (userCommand, commandName, f, isUserRequired
 
 const _getStatus = async function () {
   const response = await ControllerService.statusController(true)
-  logger.cliRes(JSON.stringify(response, null, 2))
-}
-
-const _emailActivation = async function () {
-  logger.cliReq('controller email-activation')
-  const response = await ControllerService.emailActivation(true)
   logger.cliRes(JSON.stringify(response, null, 2))
 }
 

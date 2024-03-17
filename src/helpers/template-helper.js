@@ -10,7 +10,7 @@
  *
  * Author: Franck Roudet
  */
-const UserManager = require('../data/managers/user-manager')
+
 const ApplicationManager = require('../data/managers/application-manager.js') // Using manager instead of service to avoid dependency loop
 const FogService = require('../services/iofog-service')
 const MicroservicesService = require('../services/microservices-service')
@@ -60,7 +60,7 @@ async function findApplicationHandler (name) {
     return this.context.environments._applicationsByName[name]
   }
 
-  const result = await ApplicationManager.findOnePopulated({ name, userId: user.id }, { exclude: ['created_at', 'updated_at'] }, { fakeTransaction: true }) // TODO: Get a proper DB transaction
+  const result = await ApplicationManager.findOnePopulated({ exclude: ['created_at', 'updated_at'] }, { fakeTransaction: true }) // TODO: Get a proper DB transaction
   if (result) {
     result.microservices = (await MicroservicesService.listMicroservicesEndPoint({ applicationName: name }, user, false)).microservices
     if (this.context.environments._applicationsByName) {
@@ -169,15 +169,7 @@ const rvaluesVarSubstition = async (subjects, templateContext, user) => {
 
 const substitutionMiddleware = async (req, res, next) => {
   if (['POST', 'PUT', 'PATCH'].indexOf(req.method) > -1) {
-    const token = req.headers.authorization
     let user
-    if (token) {
-      try {
-        user = await UserManager.checkAuthentication(token)
-      } catch (e) {
-        // Nothing to do, suppose the token has no permission to access. The is the case of agent
-      }
-    }
     let tmplContext = {
       self: req.body,
       // Private context

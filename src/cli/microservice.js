@@ -267,13 +267,6 @@ class Microservice extends BaseCLIHandler {
         group: [constants.CMD_REMOVE]
       },
       {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD]
-      },
-      {
         name: 'mapping-id',
         alias: 'm',
         type: CliDataTypes.Integer,

@@ -3,21 +3,6 @@ info:
   version: 1.0.0
   title: Datasance PoT-ioFog Controller
 paths:
-  /controlplane/profile:
-    get:
-      tags:
-        - ControlPlane
-      summary: Returns Control Plane Profile 
-      operationId: getControlPlaneProfile
-      responses:
-        "200":
-          description: Control Plane Profile
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ControlPlaneProfileResponse"
-        "500":
-          description: Internal Server Error
   /status:
     get:
       tags:
@@ -31,21 +16,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServiceStatusResponse"
-        "500":
-          description: Internal Server Error
-  /email-activation:
-    get:
-      tags:
-        - Controller
-      summary: Returns email activation status
-      operationId: getEmailActivationStatus
-      responses:
-        "200":
-          description: Email activation status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmailActivationStatusResponse"
         "500":
           description: Internal Server Error
   /fog-types:
@@ -2744,237 +2714,6 @@ paths:
           description: bad request
         "401":
           description: incorrect credentials
-  /user/logout:
-    post:
-      tags:
-        - User
-      summary: Logout
-      operationId: logout
-      security:
-        - userToken: []
-      responses:
-        "204":
-          description: Success
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-  /user/signup:
-    post:
-      tags:
-        - User
-      summary: Signup
-      operationId: signup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignupRequest"
-        description: new user data
-        required: true
-      responses:
-        "201":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SignupSuccessResponse"
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-  /user/signup/resend-activation:
-    get:
-      tags:
-        - User
-      summary: Resend activation email
-      operationId: resendActivationEmail
-      parameters:
-        - in: query
-          name: email
-          required: true
-          schema:
-            type: string
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-  /user/activate:
-    post:
-      tags:
-        - User
-      summary: Activate account
-      operationId: activateAccount
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserActivateRequest"
-        description: activation code
-        required: true
-      responses:
-        "303":
-          description: Redirect to login page
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-            Location:
-              description: Login page url
-              schema:
-                type: string
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-  /user/profile:
-    get:
-      tags:
-        - User
-      summary: Get current user profile data
-      operationId: getUserProfile
-      security:
-        - userToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfileDetailsResponse"
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    patch:
-      tags:
-        - User
-      summary: Update user profile
-      operationId: updateUserProfile
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserProfileUpdatesRequest"
-        description: Updated profile data
-        required: true
-      responses:
-        "200":
-          description: Updated user profile
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfileDetailsResponse"
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - User
-      summary: Delete account
-      operationId: deleteAccount
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DeleteParameters"
-        description: parameters for delete
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-  /user/password:
-    patch:
-      tags:
-        - User
-      summary: change password
-      operationId: changePassword
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PasswordChangeRequest"
-        description: current and new password
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - User
-      summary: Reset password
-      operationId: resetPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PasswordResetRequest"
-        description: email
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
   /routes:
     get:
       tags:
@@ -3698,8 +3437,6 @@ components:
           type: string
         isActivated:
           type: boolean
-        userId:
-          type: number
         microservices:
           type: array
           items:
@@ -3828,8 +3565,6 @@ components:
           type: string
         description:
           type: string
-        userId:
-          type: number
         application:
           type: object
           properties:
@@ -3862,11 +3597,6 @@ components:
           example: ok
         timestamp:
           type: number
-    EmailActivationStatusResponse:
-      type: object
-      properties:
-        isEmailActivationEnabled:
-          type: boolean
     IOFogTypesResponse:
       type: object
       properties:
@@ -4017,8 +3747,6 @@ components:
         updatedAt:
           type: number
         fogTypeId:
-          type: number
-        userId:
           type: number
         routerMode:
           type: string
@@ -4592,8 +4320,6 @@ components:
           type: string
         userEmail:
           type: string
-        userId:
-          type: string
     RegistryBody:
       type: object
       properties:
@@ -4895,103 +4621,6 @@ components:
         - accessToken
       properties:
         accessToken:
-          type: string
-    SignupSuccessResponse:
-      type: object
-      required:
-        - userId
-        - firstName
-        - lastName
-        - email
-        - subscriptionKey
-        - emailActivated
-      properties:
-        userId:
-          type: number
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        subscriptionKey:
-          type: string
-        emailActivated:
-          type: boolean
-    UserProfileDetailsResponse:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - subscriptionKey
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        subscriptionKey:
-          type: string
-    UserProfileUpdatesRequest:
-      type: object
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        subscriptionKey:
-          type: string
-    UserActivateRequest:
-      type: object
-      required:
-        - activationCode
-      properties:
-        activationCode:
-          type: string
-    PasswordResetRequest:
-      type: object
-      required:
-        - email
-      properties:
-        email:
-          type: string
-    PasswordChangeRequest:
-      type: object
-      required:
-        - oldPassword
-        - newPassword
-      properties:
-        oldPassword:
-          type: string
-        newPassword:
-          type: string
-    DeleteParameters:
-      type: object
-      required:
-        - force
-      properties:
-        force:
-          type: boolean
-    SignupRequest:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - password
-        - subscriptionKey
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        password:
-          type: string
-        subscriptionKey:
           type: string
     VersionCommandResponse:
       type: object

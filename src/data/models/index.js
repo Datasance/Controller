@@ -45,16 +45,12 @@ const configureImage = async (db, name, fogTypes, images) => {
 
 db.initDB = async (isStart) => {
   await databaseProvider.initDB(isStart)
-  const migrationUmzug = databaseProvider.createUmzug(path.resolve(__dirname, '../migrations'))
-  await migrationUmzug.up()
-  await databaseProvider.createUmzug(path.resolve(__dirname, '../seeders')).up()
 
   if (isStart) {
     // Configure system images
     const fogTypes = await db.FogType.findAll({})
     await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('SystemImages:Router', {}))
     await configureImage(db, constants.PROXY_CATALOG_NAME, fogTypes, config.get('SystemImages:Proxy', {}))
-    await configureImage(db, constants.PORT_ROUTER_CATALOG_NAME, fogTypes, config.get('SystemImages:PortRouter', {}))
   }
 }
 

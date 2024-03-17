@@ -52,8 +52,7 @@ async function _createOrUpdatePortRouterMicroservice (existingProxy, localPort, 
     catalogItemId: portRouterCatalogId,
     iofogUuid: hostUuid,
     rootHostAccess: true,
-    registryId: 1,
-    userId: user.id
+    registryId: 1
   }
   const res = await MicroserviceManager.create(proxyMicroserviceData, transaction)
   await ChangeTrackingService.update(hostUuid, ChangeTrackingService.events.microserviceCommon, transaction)
@@ -92,7 +91,6 @@ async function createProxyPortMapping (microservice, portMappingData, user, tran
     portInternal: portMappingData.internal,
     portExternal: portMappingData.external,
     isUdp: protocol === 'udp',
-    userId: microservice.userId,
     microserviceUuid: microservice.uuid
   }
   const port = await MicroservicePortManager.create(mappingData, transaction)

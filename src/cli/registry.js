@@ -87,13 +87,6 @@ class Registry extends BaseCLIHandler {
         group: [constants.CMD_ADD, constants.CMD_UPDATE]
       },
       {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD]
-      },
-      {
         name: 'item-id',
         alias: 'i',
         type: CliDataTypes.Integer,

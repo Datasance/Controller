@@ -121,13 +121,6 @@ class Config extends BaseCLIHandler {
         type: Boolean,
         description: 'Disable',
         group: [constants.CMD_DEV_MODE, constants.CMD_EMAIL_ACTIVATION]
-      },
-      {
-        name: 'kubelet',
-        alias: 't',
-        type: String,
-        description: 'iofog-kubelet url',
-        group: constants.CMD_ADD
       }
     ]
     this.commands = {
@@ -155,9 +148,6 @@ class Config extends BaseCLIHandler {
           break
         case constants.CMD_DEV_MODE:
           await _executeCase(configCommand, constants.CMD_DEV_MODE, _changeDevModeState)
-          break
-        case constants.CMD_EMAIL_ACTIVATION:
-          await _executeCase(configCommand, constants.CMD_EMAIL_ACTIVATION, _changeEmailActivationState)
           break
         case constants.CMD_HELP:
         default:
@@ -256,11 +246,6 @@ const _addConfigOption = async function (options) {
     config.set('Service:LogsFileCount', options.logFileCount)
     onSuccess()
   })
-
-  await updateConfig(options.kubelet, 'kubelet', 'Kubelet:Uri', (onSuccess) => {
-    config.set('Kubelet:Uri', options.kubelet)
-    onSuccess()
-  })
 }
 
 const updateConfig = async function (newConfigValue, cliConfigName, configName, fn) {
@@ -283,16 +268,10 @@ const _listConfigOptions = function () {
     'SSL key directory': config.get('Server:SslKey'),
     'SSL certificate directory': config.get('Server:SslCert'),
     'Intermediate key directory': config.get('Server:IntermediateCert'),
-    'Home url': config.get('Email:HomeUrl'),
-    'Email activation': config.get('Email:ActivationEnabled'),
-    'Email address': config.get('Email:Address'),
-    'Email password': config.get('Email:Password'),
-    'Email service': config.get('Email:Service'),
     'Log files directory': config.get('Service:LogsDirectory'),
     'Log files size': config.get('Service:LogsFileSize'),
     'Log files count': config.get('Service:LogsFileCount'),
-    'Dev mode': config.get('Server:DevMode'),
-    'Kubelet Url': config.get('Kubelet:Uri')
+    'Dev mode': config.get('Server:DevMode')
   }
 
   const result = Object.keys(configuration)
@@ -306,12 +285,6 @@ const _changeDevModeState = async function (options) {
   const enableDevMode = AppHelper.validateBooleanCliOptions(options.on, options.off)
   config.set('Server:DevMode', enableDevMode)
   logger.cliRes('Dev mode state updated successfully.')
-}
-
-const _changeEmailActivationState = function (options) {
-  const enableEmailActivation = AppHelper.validateBooleanCliOptions(options.on, options.off)
-  config.set('Email:ActivationEnabled', enableEmailActivation)
-  logger.cliRes('Email activation state updated successfully.')
 }
 
 module.exports = new Config()

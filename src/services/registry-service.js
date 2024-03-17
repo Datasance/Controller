@@ -35,8 +35,7 @@ const createRegistry = async function (registry, user, transaction) {
     isPublic: registry.isPublic,
     userEmail: registry.email,
     requiresCert: registry.requiresCert,
-    certificate: registry.certificate,
-    userId: user.id
+    certificate: registry.certificate
   }
 
   registryCreate = AppHelper.deleteUndefinedFields(registryCreate)
@@ -54,16 +53,13 @@ const findRegistries = async function (user, isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
     : {
-      [Op.or]:
+        [Op.or]:
         [
-          {
-            userId: user.id
-          },
           {
             isPublic: true
           }
         ]
-    }
+      }
 
   const registries = await RegistryManager.findAllWithAttributes(queryRegistry, { exclude: ['password'] }, transaction)
   return {
@@ -75,13 +71,10 @@ const deleteRegistry = async function (registryData, user, isCLI, transaction) {
   await Validator.validate(registryData, Validator.schemas.registryDelete)
   const queryData = isCLI
     ? { id: registryData.id }
-    : { id: registryData.id, userId: user.id }
+    : { id: registryData.id }
   const registry = await RegistryManager.findOne(queryData, transaction)
   if (!registry) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryData.id))
-  }
-  if (isCLI) {
-    user = { id: registry.userId }
   }
   await RegistryManager.delete(queryData, transaction)
   await _updateChangeTracking(user, transaction)
@@ -116,24 +109,19 @@ const updateRegistry = async function (registry, registryId, user, isCLI, transa
 
   const where = isCLI
     ? {
-      id: registryId
-    }
+        id: registryId
+      }
     : {
-      id: registryId,
-      userId: user.id
-    }
+        id: registryId
+      }
 
   await RegistryManager.update(where, registryUpdate, transaction)
-
-  if (isCLI) {
-    user = { id: existingRegistry.userId }
-  }
 
   await _updateChangeTracking(user, transaction)
 }
 
 const _updateChangeTracking = async function (user, transaction) {
-  const fogs = await FogManager.findAll({ userId: user.id }, transaction)
+  const fogs = await FogManager.findAll(transaction)
   for (const fog of fogs) {
     await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)
   }

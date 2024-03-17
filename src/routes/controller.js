@@ -36,24 +36,6 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/email-activation',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_SUCCESS
-      const errorCodes = []
-      const emailActivationEndPoint = ResponseDecorator.handleErrors(Controller.emailActivationEndPoint, successCode, errorCodes)
-      const responseObject = await emailActivationEndPoint(req)
-
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
-
-      logger.apiRes({ req: req, res: responseObject })
-    }
-  },
-  {
-    method: 'get',
     path: '/api/v1/fog-types/',
     middleware: async (req, res) => {
       logger.apiReq(req)

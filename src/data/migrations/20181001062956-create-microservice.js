@@ -73,12 +73,6 @@ module.exports = {
         references: { model: 'Fogs', key: 'uuid' },
         onDelete: 'set null'
       },
-      updatedBy: {
-        type: Sequelize.INTEGER,
-        field: 'updated_by',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'set null'
-      },
       catalogItemId: {
         type: Sequelize.INTEGER,
         field: 'catalog_item_id',

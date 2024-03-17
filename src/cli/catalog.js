@@ -192,13 +192,6 @@ class Catalog extends BaseCLIHandler {
         type: String,
         description: 'Catalog item config example',
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
-      },
-      {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD]
       }
     ]
     this.commands = {

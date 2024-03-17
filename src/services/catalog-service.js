@@ -28,7 +28,7 @@ const MicroseriveStates = require('../enums/microservice-state')
 
 const createCatalogItemEndPoint = async function (data, user, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemCreate)
-  await _checkForDuplicateName(data.name, { userId: user.id }, transaction)
+  await _checkForDuplicateName(data.name, transaction)
   await _checkForRestrictedPublisher(data.publisher)
   const catalogItem = await _createCatalogItem(data, user, transaction)
   await _createCatalogImages(data, catalogItem, transaction)
@@ -48,8 +48,7 @@ const updateCatalogItemEndPoint = async function (id, data, user, isCLI, transac
       id: id
     }
     : {
-      id: id,
-      userId: user.id
+      id: id
     }
 
   data.id = id
@@ -62,13 +61,12 @@ const listCatalogItemsEndPoint = async function (user, isCLI, transaction) {
   const where = isCLI
     ? {}
     : {
-      [Op.or]: [{ userId: user.id }, { userId: null }],
       [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
     }
 
   const attributes = isCLI
     ? {}
-    : { exclude: ['userId'] }
+    : {}
 
   const catalogItems = await CatalogItemManager.findAllWithDependencies(where, attributes, transaction)
   return {
@@ -81,13 +79,12 @@ async function getCatalogItem (id, user, isCLI, transaction) {
     ? { id: id }
     : {
       id: id,
-      [Op.or]: [{ userId: user.id }, { userId: null }],
       [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
     }
 
   const attributes = isCLI
     ? {}
-    : { exclude: ['userId'] }
+    : {}
 
   const item = await CatalogItemManager.findOneWithDependencies(where, attributes, transaction)
   if (!item) {
@@ -106,7 +103,6 @@ const deleteCatalogItemEndPoint = async function (id, user, isCLI, transaction) 
       id: id
     }
     : {
-      userId: user.id,
       id: id
     }
 
@@ -128,8 +124,7 @@ async function getNetworkCatalogItem (transaction) {
     name: 'Networking Tool',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -138,8 +133,7 @@ async function getRouterCatalogItem (transaction) {
     name: DBConstants.ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -148,8 +142,7 @@ async function getProxyCatalogItem (transaction) {
     name: DBConstants.PROXY_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -158,8 +151,7 @@ async function getPortRouterCatalogItem (transaction) {
     name: DBConstants.PORT_ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -168,8 +160,7 @@ async function getBluetoothCatalogItem (transaction) {
     name: 'RESTBlue',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -178,16 +169,15 @@ async function getHalCatalogItem (transaction) {
     name: 'HAL',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
 const _checkForDuplicateName = async function (name, item, transaction) {
   if (name) {
     const where = item.id
-      ? { [Op.or]: [{ userId: item.userId }, { userId: null }], name: name, id: { [Op.ne]: item.id } }
-      : { [Op.or]: [{ userId: item.userId }, { userId: null }], name: name }
+      ? { [Op.or]: name: name, id: { [Op.ne]: item.id } }
+      : { [Op.or]: name: name }
 
     const result = await CatalogItemManager.findOne(where, transaction)
     if (result) {
@@ -221,8 +211,7 @@ const _createCatalogItem = async function (data, user, transaction) {
     ramRequired: data.ramRequired,
     picture: data.picture,
     isPublic: data.isPublic,
-    registryId: data.registryId,
-    userId: user.id
+    registryId: data.registryId
   }
 
   catalogItem = AppHelper.deleteUndefinedFields(catalogItem)

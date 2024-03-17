@@ -48,9 +48,7 @@ async function listMicroservicesEndPoint (opt, user, isCLI, transaction) {
   }
 
   const where = application ? { applicationId: application.id, delete: false } : { delete: false, applicationId: { [Op.ne]: null } }
-  if (!isCLI) {
-    where.userId = user.id
-  }
+
   const microservices = await MicroserviceManager.findAllExcludeFields(where, transaction)
 
   const res = await Promise.all(microservices.map(async (microservice) => {
@@ -64,7 +62,7 @@ async function listMicroservicesEndPoint (opt, user, isCLI, transaction) {
 
 async function getMicroserviceEndPoint (microserviceUuid, user, isCLI, transaction) {
   if (!isCLI) {
-    await _validateMicroserviceOnGet(user.id, microserviceUuid, transaction)
+    await _validateMicroserviceOnGet(microserviceUuid, transaction)
   }
 
   const microservice = await MicroserviceManager.findOneExcludeFields({
@@ -113,11 +111,11 @@ async function _validateLocalAppHostTemplate (extraHost, templateArgs, msvc, tra
   return extraHost
 }
 
-async function _validateAppHostTemplate (extraHost, templateArgs, userId, transaction) {
+async function _validateAppHostTemplate (extraHost, templateArgs, transaction) {
   if (templateArgs.length < 4) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
   }
-  const application = await ApplicationManager.findOne({ name: templateArgs[1], userId }, transaction)
+  const application = await ApplicationManager.findOne({ name: templateArgs[1] }, transaction)
   if (!application) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_HOST_TEMPLATE, templateArgs[1]))
   }
@@ -136,13 +134,13 @@ async function _validateAppHostTemplate (extraHost, templateArgs, userId, transa
   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
 }
 
-async function _validateAgentHostTemplate (extraHost, templateArgs, userId, transaction) {
+async function _validateAgentHostTemplate (extraHost, templateArgs, transaction) {
   if (templateArgs.length !== 2) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
   }
 
   extraHost.templateType = 'Agents'
-  const fog = await FogManager.findOne({ name: templateArgs[1], userId }, transaction)
+  const fog = await FogManager.findOne({ name: templateArgs[1] }, transaction)
   if (!fog) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_HOST_TEMPLATE, templateArgs[1]))
   }
@@ -166,9 +164,9 @@ async function _validateExtraHost (extraHostData, user, transaction) {
   const templateArgs = template.split('.')
   extraHost.templateType = templateArgs[0]
   if (templateArgs[0] === 'Apps') {
-    return _validateAppHostTemplate(extraHost, templateArgs, user.id, transaction)
+    return _validateAppHostTemplate(extraHost, templateArgs, transaction)
   } else if (templateArgs[0] === 'Agents') {
-    return _validateAgentHostTemplate(extraHost, templateArgs, user.id, transaction)
+    return _validateAgentHostTemplate(extraHost, templateArgs, transaction)
   }
   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, template))
 }
@@ -202,9 +200,6 @@ async function _findFog (microserviceData, user, isCLI, transaction) {
   if (microserviceData.iofogUuid) {
     fogConditions.uuid = microserviceData.iofogUuid
   } else {
-    if (!isCLI) {
-      fogConditions.userId = user.id
-    }
     fogConditions.name = microserviceData.agentName
   }
   return FogManager.findOne(fogConditions, transaction)
@@ -356,12 +351,11 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, u
   let needStatusReset = false
   const query = isCLI
     ? {
-      uuid: microserviceUuid
-    }
+        uuid: microserviceUuid
+      }
     : {
-      uuid: microserviceUuid,
-      userId: user.id
-    }
+        uuid: microserviceUuid
+      }
 
   // validate extraHosts
   const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, user, transaction) : null
@@ -461,8 +455,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, u
   }
 
   if (microserviceDataUpdate.name) {
-    const userId = isCLI ? microservice.userId : user.id
-    await _checkForDuplicateName(microserviceDataUpdate.name, { id: microserviceUuid }, userId, microservice.applicationId || microservice.application, transaction)
+    await _checkForDuplicateName(microserviceDataUpdate.name, { id: microserviceUuid }, microservice.applicationId || microservice.application, transaction)
   }
 
   // validate fog node
@@ -571,12 +564,11 @@ const _checkIfMicroserviceImagesAreEqual = (microserviceDataUpdateImages, catalo
 async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, user, isCLI, transaction) {
   const where = isCLI
     ? {
-      uuid: microserviceUuid
-    }
+        uuid: microserviceUuid
+      }
     : {
-      uuid: microserviceUuid,
-      userId: user.id
-    }
+        uuid: microserviceUuid
+      }
 
   const microservice = await MicroserviceManager.findOneWithStatusAndCategory(where, transaction)
   if (!microservice) {
@@ -640,7 +632,7 @@ async function createPortMappingEndPoint (microserviceUuid, portMappingData, use
 
   const where = isCLI
     ? { uuid: microserviceUuid }
-    : { uuid: microserviceUuid, userId: user.id }
+    : { uuid: microserviceUuid }
 
   const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
@@ -673,7 +665,6 @@ async function _createEnv (microservice, envData, user, transaction) {
   const msEnvData = {
     key: envData.key,
     value: envData.value,
-    userId: microservice.userId,
     microserviceUuid: microservice.uuid
   }
 
@@ -720,7 +711,7 @@ async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData,
 
   const where = isCLI
     ? { uuid: microserviceUuid }
-    : { uuid: microserviceUuid, userId: user.id }
+    : { uuid: microserviceUuid }
 
   const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
@@ -755,7 +746,7 @@ async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData,
 async function deleteVolumeMappingEndPoint (microserviceUuid, volumeMappingUuid, user, isCLI, transaction) {
   const where = isCLI
     ? { uuid: microserviceUuid }
-    : { uuid: microserviceUuid, userId: user.id }
+    : { uuid: microserviceUuid }
 
   const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
@@ -776,7 +767,7 @@ async function deleteVolumeMappingEndPoint (microserviceUuid, volumeMappingUuid,
 async function listVolumeMappingsEndPoint (microserviceUuid, user, isCLI, transaction) {
   const where = isCLI
     ? { uuid: microserviceUuid }
-    : { uuid: microserviceUuid, userId: user.id }
+    : { uuid: microserviceUuid }
   const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
@@ -809,8 +800,7 @@ async function _createMicroservice (microserviceData, user, isCLI, transaction) 
     iofogUuid: microserviceData.iofogUuid,
     rootHostAccess: microserviceData.rootHostAccess,
     registryId: microserviceData.registryId || 1,
-    logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
-    userId: user.id
+    logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1
   }
 
   newMicroservice = AppHelper.deleteUndefinedFields(newMicroservice)
@@ -826,7 +816,7 @@ async function _createMicroservice (microserviceData, user, isCLI, transaction) 
   const application = await _validateApplication(microserviceData.application, user, isCLI, transaction)
   newMicroservice.applicationId = application.id
 
-  await _checkForDuplicateName(newMicroservice.name, {}, user.id, newMicroservice.applicationId, transaction)
+  await _checkForDuplicateName(newMicroservice.name, {}, newMicroservice.applicationId, transaction)
 
   // validate fog node
   if (newMicroservice.iofogUuid) {
@@ -847,14 +837,14 @@ async function _validateApplication (name, user, isCLI, transaction) {
   // Force name conversion to string for PG
   const where = isCLI
     ? { name: name.toString() }
-    : { name: name.toString(), userId: user.id }
+    : { name: name.toString() }
 
   const application = await ApplicationManager.findOne(where, transaction)
   if (!application) {
     // Try with id
     const where = isCLI
       ? { id: name }
-      : { id: name, userId: user.id }
+      : { id: name }
 
     const application = await ApplicationManager.findOne(where, transaction)
     if (!application) {
@@ -979,22 +969,20 @@ async function _updateChangeTracking (configUpdated, fogNodeUuid, transaction) {
   }
 }
 
-async function _checkForDuplicateName (name, item, userId, applicationId, transaction) {
+async function _checkForDuplicateName (name, item, applicationId, transaction) {
   if (name) {
     const where = item.id
       ? {
-        name: name,
-        uuid: { [Op.ne]: item.id },
-        delete: false,
-        userId: userId,
-        applicationId
-      }
+          name: name,
+          uuid: { [Op.ne]: item.id },
+          delete: false,
+          applicationId
+        }
       : {
-        name: name,
-        userId: userId,
-        applicationId,
-        delete: false
-      }
+          name: name,
+          applicationId,
+          delete: false
+        }
 
     const result = await MicroserviceManager.findOne(where, transaction)
     if (result) {
@@ -1003,9 +991,8 @@ async function _checkForDuplicateName (name, item, userId, applicationId, transa
   }
 }
 
-async function _validateMicroserviceOnGet (userId, microserviceUuid, transaction) {
+async function _validateMicroserviceOnGet (microserviceUuid, transaction) {
   const where = {
-    '$application.user.id$': userId,
     'uuid': microserviceUuid
   }
   const microservice = await MicroserviceManager.findMicroserviceOnGet(where, transaction)
@@ -1037,15 +1024,12 @@ async function _getLogicalRoutesByMicroservice (microserviceUuid, transaction) {
 }
 
 async function deleteMicroserviceWithRoutesAndPortMappings (microservice, transaction) {
-  const user = {
-    id: microservice.userId
-  }
   const routes = await _getLogicalRoutesByMicroservice(microservice.uuid, transaction)
   for (const route of routes) {
-    await RoutingService.deleteRouting(route.application.name, route.name, user, false, transaction)
+    await RoutingService.deleteRouting(route.application.name, route.name, false, transaction)
   }
 
-  await MicroservicePortService.deletePortMappings(microservice, user, transaction)
+  await MicroservicePortService.deletePortMappings(microservice, transaction)
 
   await MicroserviceManager.delete({
     uuid: microservice.uuid

@@ -51,7 +51,7 @@ async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog,
   return upstreamRouters
 }
 
-async function createRouterForFog (fogData, uuid, userId, upstreamRouters, transaction) {
+async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) {
   const isEdge = fogData.routerMode === 'edge'
   const messagingPort = fogData.messagingPort || 5672
   // Is default router if we are on a system fog and no other default router already exists
@@ -75,17 +75,17 @@ async function createRouterForFog (fogData, uuid, userId, upstreamRouters, trans
     microserviceConfig.connectors = (microserviceConfig.connectors || []).concat(_getRouterConnectorConfig(isEdge, upstreamRouter))
   }
 
-  const routerMicroservice = await _createRouterMicroservice(isEdge, uuid, userId, microserviceConfig, transaction)
-  await _createRouterPorts(routerMicroservice.uuid, messagingPort, userId, transaction)
+  const routerMicroservice = await _createRouterMicroservice(isEdge, uuid, microserviceConfig, transaction)
+  await _createRouterPorts(routerMicroservice.uuid, messagingPort, transaction)
   if (!isEdge) {
-    await _createRouterPorts(routerMicroservice.uuid, fogData.edgeRouterPort, userId, transaction)
-    await _createRouterPorts(routerMicroservice.uuid, fogData.interRouterPort, userId, transaction)
+    await _createRouterPorts(routerMicroservice.uuid, fogData.edgeRouterPort, transaction)
+    await _createRouterPorts(routerMicroservice.uuid, fogData.interRouterPort, transaction)
   }
 
   return router
 }
 
-async function updateRouter (oldRouter, newRouterData, upstreamRouters, userId, transaction) {
+async function updateRouter (oldRouter, newRouterData, upstreamRouters, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   const routerMicroservice = await MicroserviceManager.findOne({
     catalogItemId: routerCatalog.id,
@@ -107,8 +107,8 @@ async function updateRouter (oldRouter, newRouterData, upstreamRouters, userId, 
   } else if (!newRouterData.isEdge && oldRouter.isEdge) {
     // Moving from edge to internal
     // Nothing specific to update
-    await _createRouterPorts(routerMicroservice.uuid, newRouterData.edgeRouterPort, userId, transaction)
-    await _createRouterPorts(routerMicroservice.uuid, newRouterData.interRouterPort, userId, transaction)
+    await _createRouterPorts(routerMicroservice.uuid, newRouterData.edgeRouterPort, transaction)
+    await _createRouterPorts(routerMicroservice.uuid, newRouterData.interRouterPort, transaction)
   }
   newRouterData.messagingPort = newRouterData.messagingPort || 5672
   await RouterManager.update({ id: oldRouter.id }, newRouterData, transaction)
@@ -135,7 +135,7 @@ async function updateRouter (oldRouter, newRouterData, upstreamRouters, userId, 
   }
 
   // Update config if needed
-  await updateConfig(oldRouter.id, userId, transaction)
+  await updateConfig(oldRouter.id, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.routerChanged, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
@@ -153,7 +153,7 @@ async function _deleteRouterPorts (routerMicroserviceUuid, port, transaction) {
   await MicroservicePortManager.delete({ microserviceUuid: routerMicroserviceUuid, portInternal: port }, transaction)
 }
 
-async function updateConfig (routerID, userId, transaction) {
+async function updateConfig (routerID, transaction) {
   const router = await RouterManager.findOne({ id: routerID }, transaction)
   if (!router) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, routerID))
@@ -179,10 +179,10 @@ async function updateConfig (routerID, userId, transaction) {
 
     if (_listenersChanged(JSON.parse(routerMicroservice.config || '{}').listeners, microserviceConfig.listeners)) {
       MicroservicePortManager.delete({ microserviceUuid: routerMicroservice.uuid }, transaction)
-      await _createRouterPorts(routerMicroservice.uuid, router.messagingPort, userId, transaction)
+      await _createRouterPorts(routerMicroservice.uuid, router.messagingPort, transaction)
       if (!router.isEdge) {
-        await _createRouterPorts(routerMicroservice.uuid, router.edgeRouterPort, userId, transaction)
-        await _createRouterPorts(routerMicroservice.uuid, router.interRouterPort, userId, transaction)
+        await _createRouterPorts(routerMicroservice.uuid, router.edgeRouterPort, transaction)
+        await _createRouterPorts(routerMicroservice.uuid, router.interRouterPort, transaction)
       }
       await MicroserviceManager.update({ uuid: routerMicroservice.uuid }, { rebuild: true }, transaction)
       await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
@@ -206,19 +206,18 @@ function _listenersChanged (currentListeners, newListeners) {
   return false
 }
 
-function _createRouterPorts (routerMicroserviceUuid, port, userId, transaction) {
+function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
   const mappingData = {
     isPublic: false,
     portInternal: port,
     portExternal: port,
-    userId: userId,
     microserviceUuid: routerMicroserviceUuid
   }
 
   return MicroservicePortManager.create(mappingData, transaction)
 }
 
-async function _createRouterMicroservice (isEdge, uuid, userId, microserviceConfig, transaction) {
+async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   const routerMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
@@ -228,7 +227,6 @@ async function _createRouterMicroservice (isEdge, uuid, userId, microserviceConf
     iofogUuid: uuid,
     rootHostAccess: false,
     logSize: constants.MICROSERVICE_DEFAULT_LOG_SIZE,
-    userId,
     configLastUpdated: Date.now()
   }
   return MicroserviceManager.create(routerMicroserviceData, transaction)

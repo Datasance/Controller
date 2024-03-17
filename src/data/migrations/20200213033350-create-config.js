@@ -30,12 +30,6 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         field: 'updated_at'
-      },
-      updatedBy: {
-        type: Sequelize.INTEGER,
-        field: 'updated_by',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'set null'
       }
     }).then(() => queryInterface.addIndex('Config', ['key'], { indicesType: 'UNIQUE' }))
   },

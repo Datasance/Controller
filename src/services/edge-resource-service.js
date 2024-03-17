@@ -24,13 +24,13 @@ const Validator = require('../schemas')
 const ChangeTrackingService = require('./change-tracking-service')
 
 async function listEdgeResources (user, transaction) {
-  const edgeResources = await EdgeResourceManager.findAllWithOrchestrationTags({ userId: user.id }, transaction)
+  const edgeResources = await EdgeResourceManager.findAllWithOrchestrationTags(transaction)
   return edgeResources.map(buildGetObject)
 }
 
 async function getEdgeResource ({ name, version }, user, transaction) {
   if (version) {
-    const resource = await EdgeResourceManager.findOneWithOrchestrationTags({ name, version, userId: user.id }, transaction)
+    const resource = await EdgeResourceManager.findOneWithOrchestrationTags({ name, version }, transaction)
     if (!resource) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
     }
@@ -39,7 +39,7 @@ async function getEdgeResource ({ name, version }, user, transaction) {
     const result = { ...resource.toJSON(), interface: (intrface || { toJSON: () => {} }).toJSON() }
     return buildGetObject(result)
   } else {
-    const resources = await EdgeResourceManager.findAllWithOrchestrationTags({ name, userId: user.id }, transaction)
+    const resources = await EdgeResourceManager.findAllWithOrchestrationTags({ name }, transaction)
     if (!resources.length) {
       return []
     }
@@ -158,12 +158,11 @@ async function _updateOrchestrationTags (tagArray, edgeResourceModel, transactio
 async function createEdgeResource (edgeResourceData, user, transaction) {
   await Validator.validate(edgeResourceData, Validator.schemas.edgeResourceCreate)
   const { name, description, version, orchestrationTags, interfaceProtocol, display, custom } = edgeResourceData
-  const existingResource = await EdgeResourceManager.findOne({ name, version, userId: user.id }, transaction)
+  const existingResource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (existingResource) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_RESOURCE_NAME_VERSION, name, version))
   }
   const resourceData = {
-    userId: user.id,
     name,
     description,
     orchestrationTags,
@@ -195,7 +194,7 @@ async function createEdgeResource (edgeResourceData, user, transaction) {
 
 async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, version }, user, transaction) {
   await Validator.validate(edgeResourceData, Validator.schemas.edgeResourceUpdate)
-  const oldData = await EdgeResourceManager.findOne({ name: oldName, version, userId: user.id }, transaction)
+  const oldData = await EdgeResourceManager.findOne({ name: oldName, version }, transaction)
   if (!oldData) {
     if (!edgeResourceData.name) {
       edgeResourceData.name = oldName
@@ -210,7 +209,6 @@ async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, ve
   }
   const { name, description, orchestrationTags, interfaceProtocol, display, custom } = edgeResourceData
   const newData = {
-    userId: user.id,
     name,
     description,
     orchestrationTags,
@@ -227,7 +225,7 @@ async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, ve
   AppHelper.deleteUndefinedFields(newData)
   if (newData.name && newData.name !== oldData.name) {
     const newVersion = newData.version ? newData.version : version
-    const existingResource = await EdgeResourceManager.findOne({ name, version: newVersion, userId: user.id }, transaction)
+    const existingResource = await EdgeResourceManager.findOne({ name, version: newVersion }, transaction)
     if (existingResource) {
       throw new Errors.DuplicatePropertyError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_RESOURCE_NAME_VERSION, name, newVersion))
     }
@@ -247,7 +245,7 @@ async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, ve
 }
 
 async function deleteEdgeResource ({ name, version }, user, transaction) {
-  const resource = await EdgeResourceManager.findOne({ name, version, userId: user.id }, transaction)
+  const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
   }
@@ -257,15 +255,15 @@ async function deleteEdgeResource ({ name, version }, user, transaction) {
     await agent.removeTags(tags)
     await ChangeTrackingService.update(agent.uuid, ChangeTrackingService.events.edgeResources, transaction)
   }
-  await EdgeResourceManager.delete({ name, version, userId: user.id }, transaction)
+  await EdgeResourceManager.delete({ name, version }, transaction)
 }
 
 async function linkEdgeResource ({ name, version }, uuid, user, transaction) {
-  const resource = await EdgeResourceManager.findOne({ name, version, userId: user.id }, transaction)
+  const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
   }
-  const agent = await FogManager.findOne({ uuid, userId: user.id }, transaction)
+  const agent = await FogManager.findOne({ uuid }, transaction)
   if (!agent) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_AGENT_NAME, uuid))
   }
@@ -277,11 +275,11 @@ async function linkEdgeResource ({ name, version }, uuid, user, transaction) {
 }
 
 async function unlinkEdgeResource ({ name, version }, uuid, user, transaction) {
-  const resource = await EdgeResourceManager.findOne({ name, version, userId: user.id }, transaction)
+  const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
   }
-  const agent = await FogManager.findOne({ uuid, userId: user.id }, transaction)
+  const agent = await FogManager.findOne({ uuid }, transaction)
   if (!agent) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_AGENT_NAME, uuid))
   }

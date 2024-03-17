@@ -28,12 +28,6 @@ module.exports = {
         field: 'iofog_uuid',
         references: { model: 'Fogs', key: 'uuid' },
         onDelete: 'cascade'
-      },
-      userId: {
-        type: Sequelize.INTEGER,
-        field: 'user_id',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'cascade'
       }
     })
   },

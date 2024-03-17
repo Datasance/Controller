@@ -22,13 +22,7 @@ module.exports = {
       displayIcon: { type: Sequelize.TEXT, field: 'display_icon' },
       displayColor: { type: Sequelize.TEXT, field: 'display_color' },
       interfaceProtocol: { type: Sequelize.TEXT, field: 'interface_protocol' },
-      interfaceId: { type: Sequelize.INTEGER, field: 'interface_id' },
-      userId: {
-        type: Sequelize.INTEGER,
-        field: 'user_id',
-        references: { model: 'Users', key: 'id' },
-        onDelete: 'cascade'
-      }
+      interfaceId: { type: Sequelize.INTEGER, field: 'interface_id' }
     })
     await queryInterface.createTable('AgentEdgeResources', {
       id: {

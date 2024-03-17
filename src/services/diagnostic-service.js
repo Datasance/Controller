@@ -47,7 +47,7 @@ const getMicroserviceStraceData = async function (uuid, data, user, isCLI, trans
 
   const microserviceWhere = isCLI
     ? { uuid: uuid }
-    : { uuid: uuid, userId: user.id }
+    : { uuid: uuid }
   const microservice = await MicroserviceManager.findOne(microserviceWhere, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, uuid))
@@ -80,7 +80,7 @@ const postMicroserviceStraceDatatoFtp = async function (uuid, data, user, isCLI,
 
   const microserviceWhere = isCLI
     ? { uuid: uuid }
-    : { uuid: uuid, userId: user.id }
+    : { uuid: uuid }
   const microservice = await MicroserviceManager.findOne(microserviceWhere, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, uuid))
@@ -103,12 +103,11 @@ const postMicroserviceStraceDatatoFtp = async function (uuid, data, user, isCLI,
 const postMicroserviceImageSnapshotCreate = async function (microserviceUuid, user, isCLI, transaction) {
   const where = isCLI
     ? {
-      uuid: microserviceUuid
-    }
+        uuid: microserviceUuid
+      }
     : {
-      uuid: microserviceUuid,
-      userId: user.id
-    }
+        uuid: microserviceUuid
+      }
 
   const microservice = await MicroserviceManager.findOneWithDependencies(where, {}, transaction)
 
@@ -130,12 +129,11 @@ const postMicroserviceImageSnapshotCreate = async function (microserviceUuid, us
 const getMicroserviceImageSnapshot = async function (microserviceUuid, user, isCLI, transaction) {
   const where = isCLI
     ? {
-      uuid: microserviceUuid
-    }
+        uuid: microserviceUuid
+      }
     : {
-      uuid: microserviceUuid,
-      userId: user.id
-    }
+        uuid: microserviceUuid
+      }
   const microservice = await MicroserviceManager.findOneWithDependencies(where, {}, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
