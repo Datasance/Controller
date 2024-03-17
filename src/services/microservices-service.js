@@ -351,11 +351,11 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, u
   let needStatusReset = false
   const query = isCLI
     ? {
-        uuid: microserviceUuid
-      }
+      uuid: microserviceUuid
+    }
     : {
-        uuid: microserviceUuid
-      }
+      uuid: microserviceUuid
+    }
 
   // validate extraHosts
   const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, user, transaction) : null
@@ -564,11 +564,11 @@ const _checkIfMicroserviceImagesAreEqual = (microserviceDataUpdateImages, catalo
 async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, user, isCLI, transaction) {
   const where = isCLI
     ? {
-        uuid: microserviceUuid
-      }
+      uuid: microserviceUuid
+    }
     : {
-        uuid: microserviceUuid
-      }
+      uuid: microserviceUuid
+    }
 
   const microservice = await MicroserviceManager.findOneWithStatusAndCategory(where, transaction)
   if (!microservice) {
@@ -973,16 +973,16 @@ async function _checkForDuplicateName (name, item, applicationId, transaction) {
   if (name) {
     const where = item.id
       ? {
-          name: name,
-          uuid: { [Op.ne]: item.id },
-          delete: false,
-          applicationId
-        }
+        name: name,
+        uuid: { [Op.ne]: item.id },
+        delete: false,
+        applicationId
+      }
       : {
-          name: name,
-          applicationId,
-          delete: false
-        }
+        name: name,
+        applicationId,
+        delete: false
+      }
 
     const result = await MicroserviceManager.findOne(where, transaction)
     if (result) {

@@ -176,8 +176,8 @@ async function getHalCatalogItem (transaction) {
 const _checkForDuplicateName = async function (name, item, transaction) {
   if (name) {
     const where = item.id
-      ? { [Op.or]: name: name, id: { [Op.ne]: item.id } }
-      : { [Op.or]: name: name }
+      ? { name: name, id: { [Op.ne]: item.id } }
+      : { name: name }
 
     const result = await CatalogItemManager.findOne(where, transaction)
     if (result) {

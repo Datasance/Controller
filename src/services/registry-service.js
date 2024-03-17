@@ -53,13 +53,13 @@ const findRegistries = async function (user, isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
     : {
-        [Op.or]:
+      [Op.or]:
         [
           {
             isPublic: true
           }
         ]
-      }
+    }
 
   const registries = await RegistryManager.findAllWithAttributes(queryRegistry, { exclude: ['password'] }, transaction)
   return {
@@ -109,11 +109,11 @@ const updateRegistry = async function (registry, registryId, user, isCLI, transa
 
   const where = isCLI
     ? {
-        id: registryId
-      }
+      id: registryId
+    }
     : {
-        id: registryId
-      }
+      id: registryId
+    }
 
   await RegistryManager.update(where, registryUpdate, transaction)
 

@@ -64,8 +64,6 @@ class Cli extends BaseCLIHandler {
         return
       case constants.CMD_CONTROLLER:
         return Controller.run({ argv })
-      case constants.CMD_USER:
-        return User.run({ argv })
       case constants.CMD_CONFIG:
         return Config.run({ argv })
       case constants.CMD_TUNNEL:
