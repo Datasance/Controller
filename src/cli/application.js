@@ -13,12 +13,10 @@
 
 const BaseCLIHandler = require('./base-cli-handler')
 const constants = require('../helpers/constants')
-const AuthDecorator = require('../decorators/cli-decorator')
 const ApplicationService = require('../services/application-service')
 const AppHelper = require('../helpers/app-helper')
 const logger = require('../logger')
 const fs = require('fs')
-const CliDataTypes = require('./cli-data-types')
 
 const JSON_SCHEMA = AppHelper.stringifyCliJsonSchema({
   name: 'string',
@@ -131,13 +129,7 @@ class Application extends BaseCLIHandler {
 const _executeCase = async function (applicationCommand, commandName, f, isUserRequired) {
   try {
     const item = applicationCommand[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = AuthDecorator.prepareUserById(f)
-      await decoratedFunction(item)
-    } else {
-      await f(item)
-    }
+    await f(item)
   } catch (error) {
     logger.error(error.message)
   }

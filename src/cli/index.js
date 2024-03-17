@@ -13,7 +13,6 @@
 
 const BaseCLIHandler = require('./base-cli-handler')
 const Start = require('./start')
-const User = require('./user')
 const Config = require('./config')
 const Tunnel = require('./tunnel')
 const IOFog = require('./iofog')

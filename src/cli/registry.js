@@ -14,7 +14,6 @@
 const BaseCLIHandler = require('./base-cli-handler')
 const constants = require('../helpers/constants')
 const logger = require('../logger')
-const CliDecorator = require('../decorators/cli-decorator')
 const RegistryService = require('../services/registry-service')
 const AppHelper = require('../helpers/app-helper')
 const CliDataTypes = require('./cli-data-types')
@@ -172,13 +171,7 @@ async function _updateRegistry (obj) {
 async function _executeCase (commands, commandName, f, isUserRequired) {
   try {
     const obj = commands[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = CliDecorator.prepareUserById(f)
-      await decoratedFunction(obj)
-    } else {
-      await f(obj)
-    }
+    await f(obj)
   } catch (error) {
     logger.error(error.message)
   }

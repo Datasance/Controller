@@ -17,7 +17,6 @@ const logger = require('../logger')
 const CatalogItemService = require('../services/catalog-service')
 const fs = require('fs')
 const AppHelper = require('../helpers/app-helper')
-const AuthDecorator = require('../decorators/cli-decorator')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const CliDataTypes = require('./cli-data-types')
@@ -252,13 +251,7 @@ class Catalog extends BaseCLIHandler {
 const _executeCase = async function (catalogCommand, commandName, f, isUserRequired) {
   try {
     const item = catalogCommand[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = AuthDecorator.prepareUserById(f)
-      await decoratedFunction(item)
-    } else {
-      await f(item)
-    }
+    await f(item)
   } catch (error) {
     logger.error(error.message)
   }

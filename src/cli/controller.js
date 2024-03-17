@@ -15,7 +15,6 @@ const BaseCLIHandler = require('./base-cli-handler')
 const constants = require('../helpers/constants')
 const ControllerService = require('../services/controller-service')
 const logger = require('../logger')
-const AuthDecorator = require('../decorators/cli-decorator')
 
 class Controller extends BaseCLIHandler {
   constructor () {
@@ -69,13 +68,7 @@ class Controller extends BaseCLIHandler {
 const _executeCase = async function (userCommand, commandName, f, isUserRequired) {
   try {
     const item = userCommand[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = AuthDecorator.prepareUserByEmail(f)
-      await decoratedFunction(item)
-    } else {
-      await f(item)
-    }
+    await f(item)
   } catch (error) {
     logger.error(error.message)
   }
