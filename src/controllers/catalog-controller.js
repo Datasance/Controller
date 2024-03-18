@@ -13,14 +13,12 @@
 
 const CatalogService = require('../services/catalog-service')
 
-const createCatalogItemEndPoint = async function (req) {
-  const user = req.kauth.grant.access_token.content
+const createCatalogItemEndPoint = async function (req, user) {
   return CatalogService.createCatalogItemEndPoint(req.body, user)
 }
 
-const listCatalogItemsEndPoint = async function (req) {
-  const user = req.kauth.grant.access_token.content
-  return CatalogService.listCatalogItemsEndPoint(req.body, user)
+const listCatalogItemsEndPoint = async function (req, user) {
+  return CatalogService.listCatalogItemsEndPoint(user, false)
 }
 
 const listCatalogItemEndPoint = async function (req, user) {

@@ -84,7 +84,7 @@ app.use((req, res, next) => {
 global.appRoot = path.resolve(__dirname)
 
 const registerRoute = (route) => {
-  const middlewares = [keycloak.middleware(), route.middleware]
+  const middlewares = [keycloak.middleware(), keycloak.protect('SRE'), route.middleware]
   if (route.supportSubstitution) {
     middlewares.unshift(substitutionMiddleware)
   }
