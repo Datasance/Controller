@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const RoutingService = require('../services/routing-service')
 
 const createRoutingEndpoint = async function (req, user) {
@@ -43,9 +42,9 @@ const deleteRoutingEndpoint = async function (req, user) {
 }
 
 module.exports = {
-  deleteRoutingEndpoint: AuthDecorator.checkAuthToken(deleteRoutingEndpoint),
-  updateRoutingEndpoint: AuthDecorator.checkAuthToken(updateRoutingEndpoint),
-  createRoutingEndpoint: AuthDecorator.checkAuthToken(createRoutingEndpoint),
-  getRoutingEndPoint: AuthDecorator.checkAuthToken(getRoutingEndPoint),
-  getRoutingsEndPoint: AuthDecorator.checkAuthToken(getRoutingsEndPoint)
+  deleteRoutingEndpoint: (deleteRoutingEndpoint),
+  updateRoutingEndpoint: (updateRoutingEndpoint),
+  createRoutingEndpoint: (createRoutingEndpoint),
+  getRoutingEndPoint: (getRoutingEndPoint),
+  getRoutingsEndPoint: (getRoutingsEndPoint)
 }

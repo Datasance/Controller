@@ -12,7 +12,6 @@
  */
 
 const DiagnosticService = require('../services/diagnostic-service')
-const AuthDecorator = require('./../decorators/authorization-decorator')
 
 const changeMicroserviceStraceStateEndPoint = async function (req, user) {
   return DiagnosticService.changeMicroserviceStraceState(req.params.uuid, req.body, user, false)
@@ -35,9 +34,9 @@ const getMicroserviceImageSnapshotEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  changeMicroserviceStraceStateEndPoint: AuthDecorator.checkAuthToken(changeMicroserviceStraceStateEndPoint),
-  getMicroserviceStraceDataEndPoint: AuthDecorator.checkAuthToken(getMicroserviceStraceDataEndPoint),
-  postMicroserviceStraceDataToFtpEndPoint: AuthDecorator.checkAuthToken(postMicroserviceStraceDataToFtpEndPoint),
-  createMicroserviceImageSnapshotEndPoint: AuthDecorator.checkAuthToken(createMicroserviceImageSnapshotEndPoint),
-  getMicroserviceImageSnapshotEndPoint: AuthDecorator.checkAuthToken(getMicroserviceImageSnapshotEndPoint)
+  changeMicroserviceStraceStateEndPoint: (changeMicroserviceStraceStateEndPoint),
+  getMicroserviceStraceDataEndPoint: (getMicroserviceStraceDataEndPoint),
+  postMicroserviceStraceDataToFtpEndPoint: (postMicroserviceStraceDataToFtpEndPoint),
+  createMicroserviceImageSnapshotEndPoint: (createMicroserviceImageSnapshotEndPoint),
+  getMicroserviceImageSnapshotEndPoint: (getMicroserviceImageSnapshotEndPoint)
 }

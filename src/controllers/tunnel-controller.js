@@ -42,6 +42,6 @@ const getTunnelEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  manageTunnelEndPoint: AuthDecorator.checkAuthToken(manageTunnelEndPoint),
-  getTunnelEndPoint: AuthDecorator.checkAuthToken(getTunnelEndPoint)
+  manageTunnelEndPoint: (manageTunnelEndPoint),
+  getTunnelEndPoint: (getTunnelEndPoint)
 }

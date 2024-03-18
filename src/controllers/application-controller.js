@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const ApplicationService = require('../services/application-service')
 const YAMLParserService = require('../services/yaml-parser-service')
 const errors = require('../helpers/errors')
@@ -101,15 +100,15 @@ const getApplicationByIdEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  createApplicationEndPoint: AuthDecorator.checkAuthToken(createApplicationEndPoint),
-  createApplicationYAMLEndPoint: AuthDecorator.checkAuthToken(createApplicationYAMLEndPoint),
-  getApplicationsByUserEndPoint: AuthDecorator.checkAuthToken(getApplicationsByUserEndPoint),
-  getApplicationEndPoint: AuthDecorator.checkAuthToken(getApplicationEndPoint),
-  getApplicationByIdEndPoint: AuthDecorator.checkAuthToken(getApplicationByIdEndPoint),
-  updateApplicationEndPoint: AuthDecorator.checkAuthToken(updateApplicationEndPoint),
-  updateApplicationYAMLEndPoint: AuthDecorator.checkAuthToken(updateApplicationYAMLEndPoint),
-  patchApplicationEndPoint: AuthDecorator.checkAuthToken(patchApplicationEndPoint),
-  patchApplicationByIdEndPoint: AuthDecorator.checkAuthToken(patchApplicationByIdEndPoint),
-  deleteApplicationEndPoint: AuthDecorator.checkAuthToken(deleteApplicationEndPoint),
-  deleteApplicationByIdEndPoint: AuthDecorator.checkAuthToken(deleteApplicationByIdEndPoint)
+  createApplicationEndPoint: (createApplicationEndPoint),
+  createApplicationYAMLEndPoint: (createApplicationYAMLEndPoint),
+  getApplicationsByUserEndPoint: (getApplicationsByUserEndPoint),
+  getApplicationEndPoint: (getApplicationEndPoint),
+  getApplicationByIdEndPoint: (getApplicationByIdEndPoint),
+  updateApplicationEndPoint: (updateApplicationEndPoint),
+  updateApplicationYAMLEndPoint: (updateApplicationYAMLEndPoint),
+  patchApplicationEndPoint: (patchApplicationEndPoint),
+  patchApplicationByIdEndPoint: (patchApplicationByIdEndPoint),
+  deleteApplicationEndPoint: (deleteApplicationEndPoint),
+  deleteApplicationByIdEndPoint: (deleteApplicationByIdEndPoint)
 }

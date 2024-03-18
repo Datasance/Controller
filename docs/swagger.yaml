@@ -3191,11 +3191,11 @@ servers:
 components:
   securitySchemes:
     userToken:
-      type: apiKey
+      type: Bearer
       in: header
       name: Authorization
     agentToken:
-      type: apiKey
+      type: Bearer
       in: header
       name: Authorization
   requestBodies:

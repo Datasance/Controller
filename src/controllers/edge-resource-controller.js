@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const EdgeResourceService = require('../services/edge-resource-service')
 
 const createEdgeResourceEndpoint = async function (req, user) {
@@ -63,12 +62,12 @@ const unlinkEdgeResourceEndpoint = async function (req, user) {
 }
 
 module.exports = {
-  createEdgeResourceEndpoint: AuthDecorator.checkAuthToken(createEdgeResourceEndpoint),
-  updateEdgeResourceEndpoint: AuthDecorator.checkAuthToken(updateEdgeResourceEndpoint),
-  listEdgeResourcesEndpoint: AuthDecorator.checkAuthToken(listEdgeResourcesEndpoint),
-  getEdgeResourceEndpoint: AuthDecorator.checkAuthToken(getEdgeResourceEndpoint),
-  deleteEdgeResourceEndpoint: AuthDecorator.checkAuthToken(deleteEdgeResourceEndpoint),
-  linkEdgeResourceEndpoint: AuthDecorator.checkAuthToken(linkEdgeResourceEndpoint),
-  unlinkEdgeResourceEndpoint: AuthDecorator.checkAuthToken(unlinkEdgeResourceEndpoint),
-  getEdgeResourceAllVersionsEndpoint: AuthDecorator.checkAuthToken(getEdgeResourceAllVersionsEndpoint)
+  createEdgeResourceEndpoint: (createEdgeResourceEndpoint),
+  updateEdgeResourceEndpoint: (updateEdgeResourceEndpoint),
+  listEdgeResourcesEndpoint: (listEdgeResourcesEndpoint),
+  getEdgeResourceEndpoint: (getEdgeResourceEndpoint),
+  deleteEdgeResourceEndpoint: (deleteEdgeResourceEndpoint),
+  linkEdgeResourceEndpoint: (linkEdgeResourceEndpoint),
+  unlinkEdgeResourceEndpoint: (unlinkEdgeResourceEndpoint),
+  getEdgeResourceAllVersionsEndpoint: (getEdgeResourceAllVersionsEndpoint)
 }

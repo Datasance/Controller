@@ -95,15 +95,15 @@ async function setFogPruneCommandEndPoint (req, user) {
 }
 
 module.exports = {
-  createFogEndPoint: AuthDecorator.checkAuthToken(createFogEndPoint),
-  updateFogEndPoint: AuthDecorator.checkAuthToken(updateFogEndPoint),
-  deleteFogEndPoint: AuthDecorator.checkAuthToken(deleteFogEndPoint),
-  getFogEndPoint: AuthDecorator.checkAuthToken(getFogEndPoint),
-  getFogListEndPoint: AuthDecorator.checkAuthToken(getFogListEndPoint),
-  generateProvisioningKeyEndPoint: AuthDecorator.checkAuthToken(generateProvisionKeyEndPoint),
-  setFogVersionCommandEndPoint: AuthDecorator.checkAuthToken(setFogVersionCommandEndPoint),
-  setFogRebootCommandEndPoint: AuthDecorator.checkAuthToken(setFogRebootCommandEndPoint),
-  getHalHardwareInfoEndPoint: AuthDecorator.checkAuthToken(getHalHardwareInfoEndPoint),
-  getHalUsbInfoEndPoint: AuthDecorator.checkAuthToken(getHalUsbInfoEndPoint),
-  setFogPruneCommandEndPoint: AuthDecorator.checkAuthToken(setFogPruneCommandEndPoint)
+  createFogEndPoint: (createFogEndPoint),
+  updateFogEndPoint: (updateFogEndPoint),
+  deleteFogEndPoint: (deleteFogEndPoint),
+  getFogEndPoint: (getFogEndPoint),
+  getFogListEndPoint: (getFogListEndPoint),
+  generateProvisioningKeyEndPoint: (generateProvisionKeyEndPoint),
+  setFogVersionCommandEndPoint: (setFogVersionCommandEndPoint),
+  setFogRebootCommandEndPoint: (setFogRebootCommandEndPoint),
+  getHalHardwareInfoEndPoint: (getHalHardwareInfoEndPoint),
+  getHalUsbInfoEndPoint: (getHalUsbInfoEndPoint),
+  setFogPruneCommandEndPoint: (setFogPruneCommandEndPoint)
 }

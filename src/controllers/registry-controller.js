@@ -37,8 +37,8 @@ const updateRegistryEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  createRegistryEndPoint: AuthDecorator.checkAuthToken(createRegistryEndPoint),
-  getRegistriesEndPoint: AuthDecorator.checkAuthToken(getRegistriesEndPoint),
-  deleteRegistryEndPoint: AuthDecorator.checkAuthToken(deleteRegistryEndPoint),
-  updateRegistryEndPoint: AuthDecorator.checkAuthToken(updateRegistryEndPoint)
+  createRegistryEndPoint: (createRegistryEndPoint),
+  getRegistriesEndPoint: (getRegistriesEndPoint),
+  deleteRegistryEndPoint: (deleteRegistryEndPoint),
+  updateRegistryEndPoint: (updateRegistryEndPoint)
 }

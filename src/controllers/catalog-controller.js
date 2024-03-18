@@ -12,7 +12,6 @@
  */
 
 const CatalogService = require('../services/catalog-service')
-const AuthDecorator = require('./../decorators/authorization-decorator')
 
 const createCatalogItemEndPoint = async function (req) {
   const user = req.kauth.grant.access_token.content
@@ -36,9 +35,9 @@ const updateCatalogItemEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  createCatalogItemEndPoint: AuthDecorator.checkAuthToken(createCatalogItemEndPoint),
-  listCatalogItemsEndPoint: AuthDecorator.checkAuthToken(listCatalogItemsEndPoint),
-  listCatalogItemEndPoint: AuthDecorator.checkAuthToken(listCatalogItemEndPoint),
-  deleteCatalogItemEndPoint: AuthDecorator.checkAuthToken(deleteCatalogItemEndPoint),
-  updateCatalogItemEndPoint: AuthDecorator.checkAuthToken(updateCatalogItemEndPoint)
+  createCatalogItemEndPoint: (createCatalogItemEndPoint),
+  listCatalogItemsEndPoint: (listCatalogItemsEndPoint),
+  listCatalogItemEndPoint: (listCatalogItemEndPoint),
+  deleteCatalogItemEndPoint: (deleteCatalogItemEndPoint),
+  updateCatalogItemEndPoint: (updateCatalogItemEndPoint)
 }

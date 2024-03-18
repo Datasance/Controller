@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const MicroservicesService = require('../services/microservices-service')
 const YAMLParserService = require('../services/yaml-parser-service')
 const { rvaluesVarSubstition } = require('../helpers/template-helper')
@@ -121,20 +120,20 @@ const listAllPublicPortsEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  createMicroserviceOnFogEndPoint: AuthDecorator.checkAuthToken(createMicroserviceOnFogEndPoint),
-  getMicroserviceEndPoint: AuthDecorator.checkAuthToken(getMicroserviceEndPoint),
-  updateMicroserviceEndPoint: AuthDecorator.checkAuthToken(updateMicroserviceEndPoint),
-  deleteMicroserviceEndPoint: AuthDecorator.checkAuthToken(deleteMicroserviceEndPoint),
-  getMicroservicesByApplicationEndPoint: AuthDecorator.checkAuthToken(getMicroservicesByApplicationEndPoint),
-  createMicroserviceRouteEndPoint: AuthDecorator.checkAuthToken(createMicroserviceRouteEndPoint),
-  deleteMicroserviceRouteEndPoint: AuthDecorator.checkAuthToken(deleteMicroserviceRouteEndPoint),
-  createMicroservicePortMappingEndPoint: AuthDecorator.checkAuthToken(createMicroservicePortMappingEndPoint),
-  deleteMicroservicePortMappingEndPoint: AuthDecorator.checkAuthToken(deleteMicroservicePortMappingEndPoint),
-  getMicroservicePortMappingListEndPoint: AuthDecorator.checkAuthToken(listMicroservicePortMappingsEndPoint),
-  createMicroserviceVolumeMappingEndPoint: AuthDecorator.checkAuthToken(createMicroserviceVolumeMappingEndPoint),
-  listMicroserviceVolumeMappingsEndPoint: AuthDecorator.checkAuthToken(listMicroserviceVolumeMappingsEndPoint),
-  deleteMicroserviceVolumeMappingEndPoint: AuthDecorator.checkAuthToken(deleteMicroserviceVolumeMappingEndPoint),
-  listAllPublicPortsEndPoint: AuthDecorator.checkAuthToken(listAllPublicPortsEndPoint),
-  createMicroserviceYAMLEndPoint: AuthDecorator.checkAuthToken(createMicroserviceYAMLEndPoint),
-  updateMicroserviceYAMLEndPoint: AuthDecorator.checkAuthToken(updateMicroserviceYAMLEndPoint)
+  createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
+  getMicroserviceEndPoint: (getMicroserviceEndPoint),
+  updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
+  deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),
+  getMicroservicesByApplicationEndPoint: (getMicroservicesByApplicationEndPoint),
+  createMicroserviceRouteEndPoint: (createMicroserviceRouteEndPoint),
+  deleteMicroserviceRouteEndPoint: (deleteMicroserviceRouteEndPoint),
+  createMicroservicePortMappingEndPoint: (createMicroservicePortMappingEndPoint),
+  deleteMicroservicePortMappingEndPoint: (deleteMicroservicePortMappingEndPoint),
+  getMicroservicePortMappingListEndPoint: (listMicroservicePortMappingsEndPoint),
+  createMicroserviceVolumeMappingEndPoint: (createMicroserviceVolumeMappingEndPoint),
+  listMicroserviceVolumeMappingsEndPoint: (listMicroserviceVolumeMappingsEndPoint),
+  deleteMicroserviceVolumeMappingEndPoint: (deleteMicroserviceVolumeMappingEndPoint),
+  listAllPublicPortsEndPoint: (listAllPublicPortsEndPoint),
+  createMicroserviceYAMLEndPoint: (createMicroserviceYAMLEndPoint),
+  updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint)
 }

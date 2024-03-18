@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const ApplicationTemplateService = require('../services/application-template-service')
 const YAMLParserService = require('../services/yaml-parser-service')
 const errors = require('../helpers/errors')
@@ -78,12 +77,12 @@ const deleteApplicationTemplateEndPoint = async function (req, user) {
 }
 
 module.exports = {
-  createApplicationTemplateEndPoint: AuthDecorator.checkAuthToken(createApplicationTemplateEndPoint),
-  getApplicationTemplatesByUserEndPoint: AuthDecorator.checkAuthToken(getApplicationTemplatesByUserEndPoint),
-  getApplicationTemplateEndPoint: AuthDecorator.checkAuthToken(getApplicationTemplateEndPoint),
-  updateApplicationTemplateEndPoint: AuthDecorator.checkAuthToken(updateApplicationTemplateEndPoint),
-  updateApplicationTemplateYAMLEndPoint: AuthDecorator.checkAuthToken(updateApplicationTemplateYAMLEndPoint),
-  patchApplicationTemplateEndPoint: AuthDecorator.checkAuthToken(patchApplicationTemplateEndPoint),
-  deleteApplicationTemplateEndPoint: AuthDecorator.checkAuthToken(deleteApplicationTemplateEndPoint),
-  createApplicationTemplateYAMLEndPoint: AuthDecorator.checkAuthToken(createApplicationTemplateYAMLEndPoint)
+  createApplicationTemplateEndPoint: (createApplicationTemplateEndPoint),
+  getApplicationTemplatesByUserEndPoint: (getApplicationTemplatesByUserEndPoint),
+  getApplicationTemplateEndPoint: (getApplicationTemplateEndPoint),
+  updateApplicationTemplateEndPoint: (updateApplicationTemplateEndPoint),
+  updateApplicationTemplateYAMLEndPoint: (updateApplicationTemplateYAMLEndPoint),
+  patchApplicationTemplateEndPoint: (patchApplicationTemplateEndPoint),
+  deleteApplicationTemplateEndPoint: (deleteApplicationTemplateEndPoint),
+  createApplicationTemplateYAMLEndPoint: (createApplicationTemplateYAMLEndPoint)
 }

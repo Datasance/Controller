@@ -29,7 +29,7 @@ const login = async function (credentials, isCLI, transaction) {
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: `${process.env.KC_URL}/realms/${process.env.KC_REALM}/protocol/openid-connect/token`,
+      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/token`,
       headers: {
         'Cache-Control': 'no-cache',
         'Content-Type': 'application/x-www-form-urlencoded'
