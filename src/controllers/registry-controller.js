@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('../decorators/authorization-decorator')
 const RegistryService = require('../services/registry-service')
 
 const createRegistryEndPoint = async function (req, user) {

@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('../decorators/authorization-decorator')
 const FogService = require('../services/iofog-service')
 const qs = require('qs')
 

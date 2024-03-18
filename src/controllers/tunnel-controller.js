@@ -11,7 +11,6 @@
  *
  */
 
-const AuthDecorator = require('../decorators/authorization-decorator')
 const TunnelService = require('../services/tunnel-service')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
