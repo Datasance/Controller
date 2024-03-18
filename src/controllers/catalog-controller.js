@@ -18,8 +18,9 @@ const createCatalogItemEndPoint = async function (req) {
   return CatalogService.createCatalogItemEndPoint(req.body, user)
 }
 
-const listCatalogItemsEndPoint = async function (req, user) {
-  return CatalogService.listCatalogItemsEndPoint(user, false)
+const listCatalogItemsEndPoint = async function (req) {
+  const user = req.kauth.grant.access_token.content
+  return CatalogService.listCatalogItemsEndPoint(req.body, user)
 }
 
 const listCatalogItemEndPoint = async function (req, user) {
