@@ -15,7 +15,7 @@ const CatalogController = require('../controllers/catalog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak')
+const keycloak = require('../config/keycloak.js').getKeycloak()
 
 module.exports = [
   {

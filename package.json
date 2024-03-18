@@ -73,6 +73,7 @@
     "formidable": "1.2.1",
     "ftp": "0.3.10",
     "helmet": "3.21.2",
+    "https": "1.0.0",
     "is-elevated": "3.0.0",
     "js-yaml": "3.14.1",
     "jsonschema": "1.2.5",

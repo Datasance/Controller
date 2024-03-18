@@ -15,6 +15,7 @@ const Errors = require('../helpers/errors')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const axios = require('axios')
 const qs = require('qs')
+const https = require('https')
 
 const login = async function (credentials, isCLI, transaction) {
   try {
@@ -26,6 +27,10 @@ const login = async function (credentials, isCLI, transaction) {
       client_secret: process.env.KC_CLIENT_SECRET
     })
 
+    const agent = new https.Agent({
+      rejectUnauthorized: false // Ignore SSL certificate errors
+    })
+
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
@@ -34,7 +39,8 @@ const login = async function (credentials, isCLI, transaction) {
         'Cache-Control': 'no-cache',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      data: data
+      data: data,
+      httpsAgent: agent
     }
 
     // Make a POST request to Keycloak token endpoint
