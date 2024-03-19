@@ -61,21 +61,18 @@ module.exports = [
         }
       ]
 
-      // Protecting for SRE, Developer, and Viewer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
-        const getUserProfileEndPoint = ResponseDecorator.handleErrors(
-          UserController.getUserProfileEndPoint,
-          successCode,
-          errorCodes
-        )
-        const responseObject = await getUserProfileEndPoint(req)
+      const getUserProfileEndPoint = ResponseDecorator.handleErrors(
+        UserController.getUserProfileEndPoint,
+        successCode,
+        errorCodes
+      )
+      const responseObject = await getUserProfileEndPoint(req)
 
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
+      res
+        .status(responseObject.code)
+        .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
-      })
+      logger.apiRes({ req: req, res: responseObject })
     }
   }
 ]
