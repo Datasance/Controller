@@ -18,9 +18,6 @@ module.exports = {
   'Server:Port': 51121,
   'Server:DevMode': false,
 
-  'Email:ActivationEnabled': false,
-  'Email:HomeUrl': 'https://datasance.com',
-
   'Service:LogsDirectory': '/var/log/iofog-controller',
   'Service:LogsFileSize': 10485760,
   'Service:LogsFileCount': 10,

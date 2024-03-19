@@ -15,6 +15,7 @@ const MicroservicesController = require('../controllers/microservices-controller
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -31,18 +32,20 @@ module.exports = [
         }
       ]
 
-      const listAllPublicPortsEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.listAllPublicPortsEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await listAllPublicPortsEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listAllPublicPortsEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.listAllPublicPortsEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await listAllPublicPortsEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -59,15 +62,17 @@ module.exports = [
         }
       ]
 
-      const getMicroservicesByApplicationEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroservicesByApplicationEndPoint,
-        successCode, errorCodes)
-      const responseObject = await getMicroservicesByApplicationEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getMicroservicesByApplicationEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroservicesByApplicationEndPoint,
+          successCode, errorCodes)
+        const responseObject = await getMicroservicesByApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -89,15 +94,17 @@ module.exports = [
         }
       ]
 
-      const createMicroservicesOnFogEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.createMicroserviceOnFogEndPoint, successCode, errorCodes)
-      const responseObject = await createMicroservicesOnFogEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroservicesOnFogEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroserviceOnFogEndPoint, successCode, errorCodes)
+        const responseObject = await createMicroservicesOnFogEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -120,15 +127,17 @@ module.exports = [
         }
       ]
 
-      const createMicroservicesYAMLEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.createMicroserviceYAMLEndPoint, successCode, errorCodes)
-      const responseObject = await createMicroservicesYAMLEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroservicesYAMLEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroserviceYAMLEndPoint, successCode, errorCodes)
+        const responseObject = await createMicroservicesYAMLEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -149,18 +158,19 @@ module.exports = [
         }
       ]
 
-      const getMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroserviceEndPoint,
-        successCode, errorCodes)
-      const responseObject = await getMicroserviceEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await getMicroserviceEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
-
   {
     method: 'patch',
     path: '/api/v1/microservices/:uuid',
@@ -184,15 +194,17 @@ module.exports = [
         }
       ]
 
-      const updateMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceEndPoint,
-        successCode, errorCodes)
-      const responseObject = await updateMicroserviceEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const updateMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await updateMicroserviceEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
 
@@ -220,15 +232,17 @@ module.exports = [
         }
       ]
 
-      const updateMicroserviceYAMLEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceYAMLEndPoint,
-        successCode, errorCodes)
-      const responseObject = await updateMicroserviceYAMLEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const updateMicroserviceYAMLEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceYAMLEndPoint,
+          successCode, errorCodes)
+        const responseObject = await updateMicroserviceYAMLEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -249,15 +263,17 @@ module.exports = [
         }
       ]
 
-      const deleteMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.deleteMicroserviceEndPoint,
-        successCode, errorCodes)
-      const responseObject = await deleteMicroserviceEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.deleteMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await deleteMicroserviceEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -282,15 +298,17 @@ module.exports = [
         }
       ]
 
-      const createMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.createMicroserviceRouteEndPoint, successCode, errorCodes)
-      const responseObject = await createMicroserviceRouteEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroserviceRouteEndPoint, successCode, errorCodes)
+        const responseObject = await createMicroserviceRouteEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -315,15 +333,17 @@ module.exports = [
         }
       ]
 
-      const deleteMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.deleteMicroserviceRouteEndPoint, successCode, errorCodes)
-      const responseObject = await deleteMicroserviceRouteEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteMicroserviceRouteEndPoint, successCode, errorCodes)
+        const responseObject = await deleteMicroserviceRouteEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -348,15 +368,17 @@ module.exports = [
         }
       ]
 
-      const createMicroservicePortMappingEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.createMicroservicePortMappingEndPoint, successCode, errorCodes)
-      const responseObject = await createMicroservicePortMappingEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroservicePortMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroservicePortMappingEndPoint, successCode, errorCodes)
+        const responseObject = await createMicroservicePortMappingEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -377,15 +399,17 @@ module.exports = [
         }
       ]
 
-      const deleteMicroservicePortMapping = ResponseDecorator.handleErrors(
-        MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
-      const responseObject = await deleteMicroservicePortMapping(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteMicroservicePortMapping = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
+        const responseObject = await deleteMicroservicePortMapping(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -406,15 +430,17 @@ module.exports = [
         }
       ]
 
-      const getMicroservicePortMapping = ResponseDecorator.handleErrors(
-        MicroservicesController.getMicroservicePortMappingListEndPoint, successCode, errorCodes)
-      const responseObject = await getMicroservicePortMapping(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getMicroservicePortMapping = ResponseDecorator.handleErrors(
+          MicroservicesController.getMicroservicePortMappingListEndPoint, successCode, errorCodes)
+        const responseObject = await getMicroservicePortMapping(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -435,18 +461,20 @@ module.exports = [
         }
       ]
 
-      const listMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.listMicroserviceVolumeMappingsEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await listMicroserviceVolumeMappingEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.listMicroserviceVolumeMappingsEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await listMicroserviceVolumeMappingEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -471,18 +499,20 @@ module.exports = [
         }
       ]
 
-      const createMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.createMicroserviceVolumeMappingEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await createMicroserviceVolumeMappingEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroserviceVolumeMappingEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createMicroserviceVolumeMappingEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -507,18 +537,20 @@ module.exports = [
         }
       ]
 
-      const deleteMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
-        MicroservicesController.deleteMicroserviceVolumeMappingEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await deleteMicroserviceVolumeMappingEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteMicroserviceVolumeMappingEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await deleteMicroserviceVolumeMappingEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

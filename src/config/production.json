@@ -9,9 +9,6 @@
     "Port": 51121,
     "DevMode": true
   },
-  "Email": {
-    "ActivationEnabled": false
-  },
   "Service": {
     "LogsDirectory": "/var/log/iofog-controller",
     "LogsFileSize": 10485760,

@@ -92,7 +92,6 @@ function testConfigSection () {
   //   " -h testHomeUrl -a testEmailAddress -w testEmailPassword -s testEmailService -d testLogDir -z 555"));
   hasSomeResponse(testCommand('config list'))
   responseEquals(testCommand('config dev-mode -o'), 'Dev mode state updated successfully.')
-  responseEquals(testCommand('config email-activation -f'), 'Email activation state updated successfully.')
 }
 
 function testTunnelSection () {

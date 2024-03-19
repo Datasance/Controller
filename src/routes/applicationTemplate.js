@@ -15,6 +15,7 @@ const ApplicationTemplateController = require('../controllers/application-templa
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -32,13 +33,17 @@ module.exports = [
       ]
 
       const getApplicationTemplatesByUserEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.getApplicationTemplatesByUserEndPoint, successCode, errorCodes)
-      const responseObject = await getApplicationTemplatesByUserEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getApplicationTemplatesByUserEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -60,13 +65,17 @@ module.exports = [
       ]
 
       const createApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.createApplicationTemplateEndPoint, successCode, errorCodes)
-      const responseObject = await createApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await createApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -89,13 +98,17 @@ module.exports = [
       ]
 
       const createApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.createApplicationTemplateYAMLEndPoint, successCode, errorCodes)
-      const responseObject = await createApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await createApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -117,13 +130,17 @@ module.exports = [
       ]
 
       const getApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.getApplicationTemplateEndPoint, successCode, errorCodes)
-      const responseObject = await getApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -149,13 +166,17 @@ module.exports = [
       ]
 
       const patchApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.patchApplicationTemplateEndPoint, successCode, errorCodes)
-      const responseObject = await patchApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await patchApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -182,13 +203,17 @@ module.exports = [
       ]
 
       const updateApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.updateApplicationTemplateYAMLEndPoint, successCode, errorCodes)
-      const responseObject = await updateApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -214,13 +239,17 @@ module.exports = [
       ]
 
       const updateApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.updateApplicationTemplateEndPoint, successCode, errorCodes)
-      const responseObject = await updateApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -242,13 +271,17 @@ module.exports = [
       ]
 
       const deleteApplicationTemplateEndPoint = ResponseDecorator.handleErrors(ApplicationTemplateController.deleteApplicationTemplateEndPoint, successCode, errorCodes)
-      const responseObject = await deleteApplicationTemplateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await deleteApplicationTemplateEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

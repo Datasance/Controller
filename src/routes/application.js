@@ -15,6 +15,7 @@ const ApplicationController = require('../controllers/application-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -32,13 +33,17 @@ module.exports = [
       ]
 
       const getApplicationsByUserEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsByUserEndPoint, successCode, errorCodes)
-      const responseObject = await getApplicationsByUserEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getApplicationsByUserEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -61,13 +66,17 @@ module.exports = [
       ]
 
       const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await createApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await createApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -90,13 +99,17 @@ module.exports = [
       ]
 
       const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationYAMLEndPoint, successCode, errorCodes)
-      const responseObject = await createApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await createApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -118,14 +131,18 @@ module.exports = [
       ]
 
       const getApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await getApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
-      return null
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+        return null
+      })
     }
   },
   {
@@ -152,13 +169,17 @@ module.exports = [
       ]
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.patchApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await updateApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -185,13 +206,17 @@ module.exports = [
       ]
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationYAMLEndPoint, successCode, errorCodes)
-      const responseObject = await updateApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -218,13 +243,17 @@ module.exports = [
       ]
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await updateApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -246,13 +275,17 @@ module.exports = [
       ]
 
       const deleteApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await deleteApplicationEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await deleteApplicationEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

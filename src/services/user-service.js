@@ -39,7 +39,7 @@ const login = async function (credentials, isCLI, transaction) {
         'Cache-Control': 'no-cache',
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      data: data,
+      data,
       httpsAgent: agent
     }
 
@@ -49,7 +49,7 @@ const login = async function (credentials, isCLI, transaction) {
     // Extract the access token from the response
     const accessToken = response.data.access_token
     return {
-      accessToken: accessToken
+      accessToken
     }
   } catch (error) {
     console.error('Error during login:', error)
@@ -57,6 +57,38 @@ const login = async function (credentials, isCLI, transaction) {
   }
 }
 
+const profile = async function (req, isCLI, transaction) {
+  try {
+    const data = {}
+    const agent = new https.Agent({
+      // Ignore SSL certificate errors
+      rejectUnauthorized: false
+    })
+
+    const profileconfig = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/userinfo`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Cookie: 'KEYCLOAK_LOCALE=en'
+      },
+      data: data,
+      httpsAgent: agent
+    }
+
+    // Make the request using async/await
+    const response = await axios.request(profileconfig)
+
+    // Return the userinfo data
+    return response.data
+  } catch (error) {
+    console.error('Error during profile retrieval:', error)
+    throw new Errors.InvalidCredentialsError()
+  }
+}
+
 module.exports = {
-  login: TransactionDecorator.generateTransaction(login)
+  login: TransactionDecorator.generateTransaction(login),
+  profile: TransactionDecorator.generateTransaction(profile)
 }

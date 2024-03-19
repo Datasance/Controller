@@ -9,17 +9,13 @@
     "Port": 51121,
     "DevMode": true
   },
-  "Email": {
-    "ActivationEnabled": false,
-    "HomeUrl": "https://google.com"
-  },
   "Service": {
     "LogsDirectory": "/var/log/iofog-controller",
     "LogsFileSize": 10485760,
     "LogsFileCount": 10
   },
   "Settings": {
-    "FogTokenExpirationIntervalSeconds": 3600000,
+    "FogTokenExpirationIntervalSeconds": 3600,
     "FogStatusUpdateIntervalSeconds": 30,
     "FogStatusUpdateTolerance": 3
   },

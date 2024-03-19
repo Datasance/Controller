@@ -60,34 +60,6 @@ class Config extends BaseCLIHandler {
         group: constants.CMD_ADD
       },
       {
-        name: 'home-url',
-        alias: 'h',
-        type: String,
-        description: 'Home page url for email activation links',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-address',
-        alias: 'a',
-        type: String,
-        description: 'Email address to send activations from',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-password',
-        alias: 'w',
-        type: String,
-        description: 'Email password to send activations from',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-service',
-        alias: 's',
-        type: String,
-        description: 'Email service to send activations',
-        group: constants.CMD_ADD
-      },
-      {
         name: 'log-dir',
         alias: 'd',
         type: String,
@@ -107,27 +79,12 @@ class Config extends BaseCLIHandler {
         type: CliDataTypes.Integer,
         description: 'Log files count',
         group: constants.CMD_ADD
-      },
-      {
-        name: 'on',
-        alias: 'o',
-        type: Boolean,
-        description: 'Enable',
-        group: [constants.CMD_DEV_MODE, constants.CMD_EMAIL_ACTIVATION]
-      },
-      {
-        name: 'off',
-        alias: 'f',
-        type: Boolean,
-        description: 'Disable',
-        group: [constants.CMD_DEV_MODE, constants.CMD_EMAIL_ACTIVATION]
       }
     ]
     this.commands = {
       [constants.CMD_ADD]: 'Add a new config value.',
       [constants.CMD_LIST]: 'Display current config.',
-      [constants.CMD_DEV_MODE]: 'Dev mode config.',
-      [constants.CMD_EMAIL_ACTIVATION]: 'Email activation config.'
+      [constants.CMD_DEV_MODE]: 'Dev mode config.'
     }
   }
 
@@ -209,26 +166,6 @@ const _addConfigOption = async function (options) {
       return
     }
     config.set('Server:IntermediateCert', intermediateCert)
-    onSuccess()
-  })
-
-  await updateConfig(options.homeUrl, 'home-url', 'Email:HomeUrl', (onSuccess) => {
-    config.set('Email:HomeUrl', options.homeUrl)
-    onSuccess()
-  })
-
-  await updateConfig(options.emailAddress, 'email-address', 'Email:Address', (onSuccess) => {
-    config.set('Email:Address', options.emailAddress)
-    onSuccess()
-  })
-
-  if (options.emailPassword) {
-    config.set('Email:Password', AppHelper.encryptText(options.emailPassword, config.get('Email:Address')))
-    logger.cliRes('Config option email-password has been updated.')
-  }
-
-  await updateConfig(options.emailService, 'email-service', 'Email:Service', (onSuccess) => {
-    config.set('Email:Service', options.emailService)
     onSuccess()
   })
 

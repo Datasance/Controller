@@ -2,9 +2,6 @@
   "Server": {
     "DevMode": true
   },
-  "Email": {
-    "ActivationEnabled": false
-  },
   "Database": {
     "Provider": "sqlite",
     "Config": {

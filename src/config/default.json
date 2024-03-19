@@ -9,10 +9,6 @@
     "Port": 51121,
     "DevMode": false
   },
-  "Email": {
-    "ActivationEnabled": false,
-    "HomeUrl": "https://google.com"
-  },
   "Service": {
     "LogsDirectory": "/var/log/iofog-controller",
     "LogsFileSize": 10485760,

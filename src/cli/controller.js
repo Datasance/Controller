@@ -25,13 +25,12 @@ class Controller extends BaseCLIHandler {
       {
         name: 'command',
         defaultOption: true,
-        description: 'status, email-activation, fog-types, version',
+        description: 'status, fog-types, version',
         group: constants.CMD
       }
     ]
     this.commands = {
       [constants.CMD_STATUS]: 'Display iofog-controller service status.',
-      [constants.CMD_EMAIL_ACTIVATION]: 'Is email activation.',
       [constants.CMD_FOG_TYPES]: 'List all Fog-types.',
       [constants.CMD_VERSION]: 'Display iofog-controller service version.'
     }

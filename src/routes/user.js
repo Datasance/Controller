@@ -11,12 +11,11 @@
  *
  */
 const constants = require('../helpers/constants')
-
 const UserController = require('../controllers/user-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
-
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -46,6 +45,37 @@ module.exports = [
 
       logger.apiRes('POST /api/v1/user/login', { args: { statusCode: responseObject.code } })
       // don't use req and responseObject as args, because they have password and token
+    }
+  },
+  {
+    method: 'get',
+    path: '/api/v1/user/profile',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      // Protecting for SRE, Developer, and Viewer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getUserProfileEndPoint = ResponseDecorator.handleErrors(
+          UserController.getUserProfileEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getUserProfileEndPoint(req)
+
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

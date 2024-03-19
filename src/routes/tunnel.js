@@ -15,6 +15,7 @@ const TunnelController = require('../controllers/tunnel-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -38,13 +39,21 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const tunnelEndPoint = ResponseDecorator.handleErrors(TunnelController.manageTunnelEndPoint, successCode, errorCodes)
-      const responseObject = await tunnelEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      // Protecting for SRE and Developer roles
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const tunnelEndPoint = ResponseDecorator.handleErrors(
+          TunnelController.manageTunnelEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await tunnelEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -64,13 +73,21 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const tunnelEndPoint = ResponseDecorator.handleErrors(TunnelController.getTunnelEndPoint, successCode, errorCodes)
-      const responseObject = await tunnelEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      // Protecting for SRE and Developer roles
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const tunnelEndPoint = ResponseDecorator.handleErrors(
+          TunnelController.getTunnelEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await tunnelEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

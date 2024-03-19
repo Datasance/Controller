@@ -15,6 +15,7 @@ const Routing = require('../controllers/routing-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -34,14 +35,22 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const getRouterEndpoint = ResponseDecorator.handleErrors(Routing.getRoutingsEndPoint, successCode, errorCodes)
-      const responseObject = await getRouterEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Protecting for SRE , Developer and Viewer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getRouterEndpoint = ResponseDecorator.handleErrors(
+          Routing.getRoutingsEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getRouterEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -61,14 +70,22 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const getRouterEndpoint = ResponseDecorator.handleErrors(Routing.getRoutingEndPoint, successCode, errorCodes)
-      const responseObject = await getRouterEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Protecting for SRE, Developer, and Viewer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getRouterEndpoint = ResponseDecorator.handleErrors(
+          Routing.getRoutingEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getRouterEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -97,14 +114,22 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const createRoutingEndpoint = ResponseDecorator.handleErrors(Routing.createRoutingEndpoint, successCode, errorCodes)
-      const responseObject = await createRoutingEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Protecting for SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createRoutingEndpoint = ResponseDecorator.handleErrors(
+          Routing.createRoutingEndpoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createRoutingEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -130,15 +155,21 @@ module.exports = [
         }
       ]
 
-      const updateRoutingEndpoint = ResponseDecorator.handleErrors(Routing.updateRoutingEndpoint,
-        successCode, errorCodes)
-      const responseObject = await updateRoutingEndpoint(req)
+      // Protecting for SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const updateRoutingEndpoint = ResponseDecorator.handleErrors(
+          Routing.updateRoutingEndpoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await updateRoutingEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -159,15 +190,21 @@ module.exports = [
         }
       ]
 
-      const deleteRoutingEndpoint = ResponseDecorator.handleErrors(Routing.deleteRoutingEndpoint,
-        successCode, errorCodes)
-      const responseObject = await deleteRoutingEndpoint(req)
+      // Protecting for SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteRoutingEndpoint = ResponseDecorator.handleErrors(
+          Routing.deleteRoutingEndpoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await deleteRoutingEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

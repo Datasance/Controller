@@ -27,6 +27,11 @@ const userLoginEndPoint = async function (req) {
   return UserService.login(credentials, false)
 }
 
+const getUserProfileEndPoint = async function (req) {
+  return UserService.profile(req, false)
+}
+
 module.exports = {
-  userLoginEndPoint: userLoginEndPoint
+  userLoginEndPoint: userLoginEndPoint,
+  getUserProfileEndPoint: getUserProfileEndPoint
 }
