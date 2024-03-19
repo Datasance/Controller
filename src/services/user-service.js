@@ -59,6 +59,7 @@ const login = async function (credentials, isCLI, transaction) {
 
 const profile = async function (req, isCLI, transaction) {
   try {
+    const accessToken = req.headers.authorization.replace('Bearer ', '')
     const agent = new https.Agent({
       // Ignore SSL certificate errors
       rejectUnauthorized: false
@@ -70,7 +71,7 @@ const profile = async function (req, isCLI, transaction) {
       url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/userinfo`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Cookie: 'KEYCLOAK_LOCALE=en'
+        'Authorization': `Bearer ${accessToken}`
       },
       httpsAgent: agent
     }
