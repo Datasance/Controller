@@ -15,7 +15,6 @@ const UserController = require('../controllers/user-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
