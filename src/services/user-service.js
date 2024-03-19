@@ -59,7 +59,6 @@ const login = async function (credentials, isCLI, transaction) {
 
 const profile = async function (req, isCLI, transaction) {
   try {
-    const data = {}
     const agent = new https.Agent({
       // Ignore SSL certificate errors
       rejectUnauthorized: false
@@ -73,7 +72,6 @@ const profile = async function (req, isCLI, transaction) {
         'Content-Type': 'application/x-www-form-urlencoded',
         Cookie: 'KEYCLOAK_LOCALE=en'
       },
-      data: data,
       httpsAgent: agent
     }
 
