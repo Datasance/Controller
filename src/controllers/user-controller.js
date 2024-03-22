@@ -32,8 +32,8 @@ const getUserProfileEndPoint = async function (req) {
   return UserService.profile(req, false)
 }
 
-const userLogoutEndPoint = async function (req, user) {
-  return UserService.logout(user, false)
+const userLogoutEndPoint = async function (req) {
+  return UserService.logout(req, false)
 }
 
 module.exports = {

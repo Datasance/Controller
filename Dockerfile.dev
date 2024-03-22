@@ -37,18 +37,11 @@ RUN python3 -m ensurepip
 RUN pip3 install --no-cache --upgrade pip setuptools
 
 COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /tmp/iofog-controller.tgz
-#ARG GITHUB_TOKEN
-
-#COPY --from=builder /tmp/.npmrc .
-# Set GitHub npm registry with authentication token
-#RUN echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" > ~/.npmrc
-
-#RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
-# RUN sudo rm -rf /usr/local/lib/node_modules/@datasance/iofogcontroller/src/data/sqlite_files
+
 LABEL org.opencontainers.image.description controller
 LABEL org.opencontainers.image.source=https://github.com/datasance/controller
 LABEL org.opencontainers.image.licenses=EPL2.0

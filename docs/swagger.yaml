@@ -4215,6 +4215,7 @@ components:
       required:
         - email
         - password
+        - totp
       properties:
         email:
           type: string
