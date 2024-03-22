@@ -23,6 +23,7 @@ const login = async function (credentials, isCLI, transaction) {
       grant_type: 'password',
       username: credentials.email,
       password: credentials.password,
+      totp: credentials.totp,
       client_id: process.env.KC_CLIENT,
       client_secret: process.env.KC_CLIENT_SECRET
     })
@@ -71,7 +72,7 @@ const profile = async function (req, isCLI, transaction) {
       url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/userinfo`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${accessToken}`
+        Authorization: `Bearer ${accessToken}`
       },
       httpsAgent: agent
     }
@@ -87,7 +88,38 @@ const profile = async function (req, isCLI, transaction) {
   }
 }
 
+const logout = async function (req, isCLI, transaction) {
+  try {
+    const accessToken = req.headers.authorization.replace('Bearer ', '')
+    const agent = new https.Agent({
+      // Ignore SSL certificate errors
+      rejectUnauthorized: false
+    })
+
+    const logoutconfig = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/logout`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${accessToken}`
+      },
+      httpsAgent: agent
+    }
+
+    // Make the request using async/await
+    const response = await axios.request(logoutconfig)
+
+    // Return the userinfo data
+    return response.data
+  } catch (error) {
+    console.error('Error during logout:', error)
+    throw new Errors.InvalidCredentialsError()
+  }
+}
+
 module.exports = {
   login: TransactionDecorator.generateTransaction(login),
-  profile: TransactionDecorator.generateTransaction(profile)
+  profile: TransactionDecorator.generateTransaction(profile),
+  logout: TransactionDecorator.generateTransaction(logout)
 }

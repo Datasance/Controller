@@ -21,7 +21,8 @@ const userLoginEndPoint = async function (req) {
 
   const credentials = {
     email: user.email,
-    password: user.password
+    password: user.password,
+    totp: user.totp
   }
 
   return UserService.login(credentials, false)
@@ -31,7 +32,12 @@ const getUserProfileEndPoint = async function (req) {
   return UserService.profile(req, false)
 }
 
+const userLogoutEndPoint = async function (req, user) {
+  return UserService.logout(user, false)
+}
+
 module.exports = {
   userLoginEndPoint: userLoginEndPoint,
-  getUserProfileEndPoint: getUserProfileEndPoint
+  getUserProfileEndPoint: getUserProfileEndPoint,
+  userLogoutEndPoint: userLogoutEndPoint
 }

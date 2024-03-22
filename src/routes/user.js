@@ -73,5 +73,27 @@ module.exports = [
 
       logger.apiRes({ req: req, res: responseObject })
     }
+  },
+  {
+    method: 'post',
+    path: '/api/v1/user/logout',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      const userLogoutEndPoint = ResponseDecorator.handleErrors(UserController.userLogoutEndPoint, successCode, errorCodes)
+      const responseObject = await userLogoutEndPoint(req)
+
+      res
+        .status(responseObject.code)
+        .send()
+    }
   }
 ]

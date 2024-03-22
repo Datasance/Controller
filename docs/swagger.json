@@ -2418,6 +2418,28 @@
         }
       }
     },
+    "/user/logout" : {
+      "post" : {
+        "tags" : [ "User" ],
+        "summary" : "Logout",
+        "operationId" : "logout",
+        "parameters" : [ ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
     "/user/profile" : {
       "get" : {
         "tags" : [ "User" ],
