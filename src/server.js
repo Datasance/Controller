@@ -182,6 +182,9 @@ const viewerURL = process.env.VIEWER_URL || config.get('Viewer:Url')
 const sslKey = config.get('Server:SslKey')
 const sslCert = config.get('Server:SslCert')
 const intermedKey = config.get('Server:IntermediateCert')
+const kcRealm = process.env.KC_REALM
+const kcURL = `${process.env.KC_URL}`
+const kcClient = process.env.KC_VIEWER_CLIENT
 
 viewerApp.use('/', ecnViewer.middleware(express))
 
@@ -210,7 +213,10 @@ const initState = async () => {
   const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@datasance', 'ecn-viewer', 'build', 'controller-config.js')
   const ecnViewerControllerConfig = {
     port: apiPort,
-    user: {}
+    user: {},
+    keycloakURL: kcURL,
+    keycloakRealm: kcRealm,
+    keycloakClientid: kcClient
   }
   if (viewerURL) {
     ecnViewerControllerConfig.url = viewerURL
