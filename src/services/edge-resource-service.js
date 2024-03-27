@@ -23,12 +23,12 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const Validator = require('../schemas')
 const ChangeTrackingService = require('./change-tracking-service')
 
-async function listEdgeResources (user, transaction) {
+async function listEdgeResources (transaction) {
   const edgeResources = await EdgeResourceManager.findAllWithOrchestrationTags(transaction)
   return edgeResources.map(buildGetObject)
 }
 
-async function getEdgeResource ({ name, version }, user, transaction) {
+async function getEdgeResource ({ name, version }, transaction) {
   if (version) {
     const resource = await EdgeResourceManager.findOneWithOrchestrationTags({ name, version }, transaction)
     if (!resource) {

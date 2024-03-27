@@ -23,7 +23,7 @@ const login = {
     password: { type: 'string' },
     totp: { type: 'string' }
   },
-  required: ['email', 'password', 'totp'],
+  required: ['email', 'password'],
   additionalProperties: true
 }
 
