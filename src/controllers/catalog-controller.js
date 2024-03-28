@@ -13,24 +13,24 @@
 
 const CatalogService = require('../services/catalog-service')
 
-const createCatalogItemEndPoint = async function (req, user) {
-  return CatalogService.createCatalogItemEndPoint(req.body, user)
+const createCatalogItemEndPoint = async function (req) {
+  return CatalogService.createCatalogItemEndPoint(req.body)
 }
 
-const listCatalogItemsEndPoint = async function (req, user) {
-  return CatalogService.listCatalogItemsEndPoint(user, false)
+const listCatalogItemsEndPoint = async function (req) {
+  return CatalogService.listCatalogItemsEndPoint(false)
 }
 
-const listCatalogItemEndPoint = async function (req, user) {
-  return CatalogService.getCatalogItemEndPoint(req.params.id, user, false)
+const listCatalogItemEndPoint = async function (req) {
+  return CatalogService.getCatalogItemEndPoint(req.params.id, false)
 }
 
-const deleteCatalogItemEndPoint = async function (req, user) {
-  await CatalogService.deleteCatalogItemEndPoint(req.params.id, user, false)
+const deleteCatalogItemEndPoint = async function (req) {
+  await CatalogService.deleteCatalogItemEndPoint(req.params.id, false)
 }
 
-const updateCatalogItemEndPoint = async function (req, user) {
-  await CatalogService.updateCatalogItemEndPoint(req.params.id, req.body, user, false)
+const updateCatalogItemEndPoint = async function (req) {
+  await CatalogService.updateCatalogItemEndPoint(req.params.id, req.body, false)
 }
 
 module.exports = {

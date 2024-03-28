@@ -180,11 +180,11 @@ async function validatePublicPortAppHostTemplate (extraHost, templateArgs, msvc,
   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_HOST_TEMPLATE, templateArgs[4]))
 }
 
-async function movePublicPortsToNewFog (updatedMicroservice, user, transaction) {
+async function movePublicPortsToNewFog (updatedMicroservice, transaction) {
   const portMappings = await updatedMicroservice.getPorts()
   for (const portMapping of portMappings) {
     if (portMapping.isProxy) {
-      Proxy.moveProxyPortsToNewFog(updatedMicroservice, portMapping, user, transaction)
+      Proxy.moveProxyPortsToNewFog(updatedMicroservice, portMapping, transaction)
       continue
     } else if (!portMapping.isPublic) {
       continue
@@ -201,13 +201,13 @@ async function movePublicPortsToNewFog (updatedMicroservice, user, transaction) 
       host: destAgentsRouter.host,
       port: destAgentsRouter.messagingPort
     }
-    const newProxy = await _createOrUpdateProxyMicroservice(localMapping, networkRouter, updatedMicroservice.iofogUuid, localProxy.catalogItemId, user, transaction)
+    const newProxy = await _createOrUpdateProxyMicroservice(localMapping, networkRouter, updatedMicroservice.iofogUuid, localProxy.catalogItemId, transaction)
     publicPort.localProxyId = newProxy.uuid
     await MicroservicePublicPortManager.updateOrCreate({ id: publicPort.id }, publicPort.toJSON(), transaction)
   }
 }
 
-async function createPortMapping (microservice, portMappingData, user, transaction) {
+async function createPortMapping (microservice, portMappingData, transaction) {
   if (!microservice.iofogUuid) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.REQUIRED_FOG_NODE))
   }
@@ -231,15 +231,15 @@ async function createPortMapping (microservice, portMappingData, user, transacti
   portMappingData.protocol = portMappingData.protocol || ''
 
   if (portMappingData.public) {
-    return _createPublicPortMapping(microservice, portMappingData, user, transaction)
+    return _createPublicPortMapping(microservice, portMappingData, transaction)
   } else if (portMappingData.proxy) {
-    return Proxy.createProxyPortMapping(microservice, portMappingData, user, transaction)
+    return Proxy.createProxyPortMapping(microservice, portMappingData, transaction)
   } else {
-    return _createSimplePortMapping(microservice, portMappingData, user, transaction)
+    return _createSimplePortMapping(microservice, portMappingData, transaction)
   }
 }
 
-async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUuid, proxyCatalogId, user, transaction) {
+async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUuid, proxyCatalogId, transaction) {
   const existingProxy = await MicroserviceManager.findOne({ catalogItemId: proxyCatalogId, iofogUuid: hostUuid }, transaction)
   if (existingProxy) {
     const config = JSON.parse(existingProxy.config || '{}')
@@ -267,7 +267,7 @@ async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUui
   return res
 }
 
-async function _createPublicPortMapping (microservice, portMappingData, user, transaction) {
+async function _createPublicPortMapping (microservice, portMappingData, transaction) {
   const isTcp = portMappingData.public.protocol ? portMappingData.public.protocol.toLowerCase() === 'tcp' : false
   const isUdp = portMappingData.protocol.toLowerCase() === 'udp'
   const localAgent = portMappingData.localAgent // This is populated by validating the ports
@@ -289,7 +289,6 @@ async function _createPublicPortMapping (microservice, portMappingData, user, tr
       localNetworkRouter,
       microservice.iofogUuid,
       proxyCatalog.id,
-      user,
       transaction)
     : null
 
@@ -307,7 +306,6 @@ async function _createPublicPortMapping (microservice, portMappingData, user, tr
         remoteNetworkRouter,
         portMappingData.publicHost.uuid,
         proxyCatalog.id,
-        user,
         transaction)
       : null
   }
@@ -345,13 +343,13 @@ async function _createPublicPortMapping (microservice, portMappingData, user, tr
   }
 }
 
-async function _deletePortMapping (microservice, portMapping, user, transaction) {
+async function _deletePortMapping (microservice, portMapping, transaction) {
   if (portMapping.isPublic) {
     await _deletePublicPortMapping(microservice, portMapping, transaction)
   } else if (portMapping.isProxy) {
-    return Proxy.deleteProxyPortMapping(microservice, portMapping, user, transaction)
+    return Proxy.deleteProxyPortMapping(microservice, portMapping, transaction)
   } else {
-    await _deleteSimplePortMapping(microservice, portMapping, user, transaction)
+    await _deleteSimplePortMapping(microservice, portMapping, transaction)
   }
 }
 
@@ -386,7 +384,7 @@ async function _deletePublicPortMapping (microservice, portMapping, transaction)
   await MicroservicePortManager.delete({ id: portMapping.id }, transaction)
 }
 
-async function _createSimplePortMapping (microservice, portMappingData, user, transaction) {
+async function _createSimplePortMapping (microservice, portMappingData, transaction) {
   // create port mapping
   const mappingData = {
     isPublic: false,
@@ -401,7 +399,7 @@ async function _createSimplePortMapping (microservice, portMappingData, user, tr
   await switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
 }
 
-async function _deleteSimplePortMapping (microservice, msPorts, user, transaction) {
+async function _deleteSimplePortMapping (microservice, msPorts, transaction) {
   await MicroservicePortManager.delete({ id: msPorts.id }, transaction)
 
   const updateRebuildMs = {
@@ -470,7 +468,7 @@ async function switchOnUpdateFlagsForMicroservicesForPortMapping (microservice, 
   }
 }
 
-async function listPortMappings (microserviceUuid, user, isCLI, transaction) {
+async function listPortMappings (microserviceUuid, isCLI, transaction) {
   const where = isCLI
     ? { uuid: microserviceUuid }
     : { uuid: microserviceUuid }
@@ -483,7 +481,7 @@ async function listPortMappings (microserviceUuid, user, isCLI, transaction) {
   return _buildPortsList(portsPairs, transaction)
 }
 
-async function deletePortMapping (microserviceUuid, internalPort, user, isCLI, transaction) {
+async function deletePortMapping (microserviceUuid, internalPort, isCLI, transaction) {
   const where = isCLI
     ? { uuid: microserviceUuid }
     : { uuid: microserviceUuid }
@@ -505,13 +503,13 @@ async function deletePortMapping (microserviceUuid, internalPort, user, isCLI, t
     throw new Errors.NotFoundError('port mapping not exists')
   }
 
-  await _deletePortMapping(microservice, msPorts, user, transaction)
+  await _deletePortMapping(microservice, msPorts, transaction)
 }
 
-async function deletePortMappings (microservice, user, transaction) {
+async function deletePortMappings (microservice, transaction) {
   const portMappings = await MicroservicePortManager.findAll({ microserviceUuid: microservice.uuid }, transaction)
   for (const ports of portMappings) {
-    await _deletePortMapping(microservice, ports, user, transaction)
+    await _deletePortMapping(microservice, ports, transaction)
   }
 }
 
@@ -519,7 +517,7 @@ async function getPortMappings (microserviceUuid, transaction) {
   return MicroservicePortManager.findAll({ microserviceUuid }, transaction)
 }
 
-function listAllPublicPorts (user, transaction) {
+function listAllPublicPorts (transaction) {
   return MicroservicePortManager.findAllPublicPorts(transaction)
 }
 

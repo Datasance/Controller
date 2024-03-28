@@ -22,7 +22,7 @@ const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
 
-const createRegistry = async function (registry, user, transaction) {
+const createRegistry = async function (registry, transaction) {
   await Validator.validate(registry, Validator.schemas.registryCreate)
   if (registry.requiresCert && registry.certificate === undefined) {
     throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
@@ -42,14 +42,14 @@ const createRegistry = async function (registry, user, transaction) {
 
   const createdRegistry = await RegistryManager.create(registryCreate, transaction)
 
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 
   return {
     id: createdRegistry.id
   }
 }
 
-const findRegistries = async function (user, isCLI, transaction) {
+const findRegistries = async function (isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
     : {
@@ -67,7 +67,7 @@ const findRegistries = async function (user, isCLI, transaction) {
   }
 }
 
-const deleteRegistry = async function (registryData, user, isCLI, transaction) {
+const deleteRegistry = async function (registryData, isCLI, transaction) {
   await Validator.validate(registryData, Validator.schemas.registryDelete)
   const queryData = isCLI
     ? { id: registryData.id }
@@ -77,10 +77,10 @@ const deleteRegistry = async function (registryData, user, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryData.id))
   }
   await RegistryManager.delete(queryData, transaction)
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 }
 
-const updateRegistry = async function (registry, registryId, user, isCLI, transaction) {
+const updateRegistry = async function (registry, registryId, isCLI, transaction) {
   await Validator.validate(registry, Validator.schemas.registryUpdate)
 
   if (registry.requiresCert && registry.certificate === undefined) {
@@ -117,10 +117,10 @@ const updateRegistry = async function (registry, registryId, user, isCLI, transa
 
   await RegistryManager.update(where, registryUpdate, transaction)
 
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 }
 
-const _updateChangeTracking = async function (user, transaction) {
+const _updateChangeTracking = async function (transaction) {
   const fogs = await FogManager.findAll(transaction)
   for (const fog of fogs) {
     await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)

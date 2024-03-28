@@ -26,9 +26,9 @@ const logger = require('../logger')
 const FtpClient = require('ftp')
 const mime = require('mime')
 
-const changeMicroserviceStraceState = async function (uuid, data, user, isCLI, transaction) {
+const changeMicroserviceStraceState = async function (uuid, data, isCLI, transaction) {
   await Validator.validate(data, Validator.schemas.straceStateUpdate)
-  const microservice = await MicroserviceService.getMicroserviceEndPoint(uuid, user, isCLI, transaction)
+  const microservice = await MicroserviceService.getMicroserviceEndPoint(uuid, isCLI, transaction)
   if (microservice.iofogUuid === null) {
     throw new Errors.ValidationError(ErrorMessages.STRACE_WITHOUT_FOG)
   }
@@ -42,7 +42,7 @@ const changeMicroserviceStraceState = async function (uuid, data, user, isCLI, t
   await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.diagnostics, transaction)
 }
 
-const getMicroserviceStraceData = async function (uuid, data, user, isCLI, transaction) {
+const getMicroserviceStraceData = async function (uuid, data, isCLI, transaction) {
   await Validator.validate(data, Validator.schemas.straceGetData)
 
   const microserviceWhere = isCLI
@@ -75,7 +75,7 @@ const getMicroserviceStraceData = async function (uuid, data, user, isCLI, trans
   }
 }
 
-const postMicroserviceStraceDatatoFtp = async function (uuid, data, user, isCLI, transaction) {
+const postMicroserviceStraceDatatoFtp = async function (uuid, data, isCLI, transaction) {
   await Validator.validate(data, Validator.schemas.stracePostToFtp)
 
   const microserviceWhere = isCLI
@@ -100,7 +100,7 @@ const postMicroserviceStraceDatatoFtp = async function (uuid, data, user, isCLI,
   _deleteFile(filePath)
 }
 
-const postMicroserviceImageSnapshotCreate = async function (microserviceUuid, user, isCLI, transaction) {
+const postMicroserviceImageSnapshotCreate = async function (microserviceUuid, isCLI, transaction) {
   const where = isCLI
     ? {
       uuid: microserviceUuid
@@ -126,7 +126,7 @@ const postMicroserviceImageSnapshotCreate = async function (microserviceUuid, us
   await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.imageSnapshot, transaction)
 }
 
-const getMicroserviceImageSnapshot = async function (microserviceUuid, user, isCLI, transaction) {
+const getMicroserviceImageSnapshot = async function (microserviceUuid, isCLI, transaction) {
   const where = isCLI
     ? {
       uuid: microserviceUuid
