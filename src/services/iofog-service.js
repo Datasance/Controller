@@ -35,7 +35,7 @@ const Constants = require('../helpers/constants')
 const Op = require('sequelize').Op
 const lget = require('lodash/get')
 
-async function createFogEndPoint (fogData, user, isCLI, transaction) {
+async function createFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogCreate)
 
   let createFogData = {
@@ -119,11 +119,11 @@ async function createFogEndPoint (fogData, user, isCLI, transaction) {
   await ChangeTrackingService.create(fog.uuid, transaction)
 
   if (fogData.abstractedHardwareEnabled) {
-    await _createHalMicroserviceForFog(fog, null, user, transaction)
+    await _createHalMicroserviceForFog(fog, null, transaction)
   }
 
   if (fogData.bluetoothEnabled) {
-    await _createBluetoothMicroserviceForFog(fog, null, user, transaction)
+    await _createBluetoothMicroserviceForFog(fog, null, transaction)
   }
 
   await ChangeTrackingService.update(createFogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
@@ -145,7 +145,7 @@ async function _setTags (fogModel, tagsArray, transaction) {
   }
 }
 
-async function updateFogEndPoint (fogData, user, isCLI, transaction) {
+async function updateFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogUpdate)
 
   const queryFogData = { uuid: fogData.uuid }
@@ -268,7 +268,7 @@ async function updateFogEndPoint (fogData, user, isCLI, transaction) {
     msChanged = true
   }
   if (oldFog.abstractedHardwareEnabled === false && fogData.abstractedHardwareEnabled === true) {
-    await _createHalMicroserviceForFog(fogData, oldFog, user, transaction)
+    await _createHalMicroserviceForFog(fogData, oldFog, transaction)
     msChanged = true
   }
 
@@ -277,7 +277,7 @@ async function updateFogEndPoint (fogData, user, isCLI, transaction) {
     msChanged = true
   }
   if (oldFog.bluetoothEnabled === false && fogData.bluetoothEnabled === true) {
-    await _createBluetoothMicroserviceForFog(fogData, oldFog, user, transaction)
+    await _createBluetoothMicroserviceForFog(fogData, oldFog, transaction)
     msChanged = true
   }
 
@@ -359,7 +359,7 @@ async function _deleteFogRouter (fogData, transaction) {
   await MicroserviceManager.delete({ catalogItemId: routerCatalog.id, iofogUuid: fogData.uuid }, transaction)
 }
 
-async function deleteFogEndPoint (fogData, user, isCLI, transaction) {
+async function deleteFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogDelete)
 
   const queryFogData = { uuid: fogData.uuid }
@@ -442,7 +442,7 @@ function _mapTags (fog) {
   return fog.tags ? fog.tags.map(t => t.value) : []
 }
 
-async function getFog (fogData, user, isCLI, transaction) {
+async function getFog (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogGet)
 
   const queryFogData = fogData.uuid ? { uuid: fogData.uuid } : { name: fogData.name }
@@ -460,15 +460,15 @@ async function getFog (fogData, user, isCLI, transaction) {
   return _getFogExtraInformation(fog, transaction)
 }
 
-async function getFogEndPoint (fogData, user, isCLI, transaction) {
-  return getFog(fogData, user, isCLI, transaction)
+async function getFogEndPoint (fogData, isCLI, transaction) {
+  return getFog(fogData, isCLI, transaction)
 }
 
-async function getFogListEndPoint (filters, user, isCLI, isSystem, transaction) {
+async function getFogListEndPoint (filters, isCLI, isSystem, transaction) {
   await Validator.validate(filters, Validator.schemas.iofogFilters)
 
   // If listing system agent through REST API, make sure user is authenticated
-  if (isSystem && !isCLI && !lget(user, 'id')) {
+  if (isSystem && !isCLI && !lget('id')) {
     throw new Errors.AuthenticationError('Unauthorized')
   }
 
@@ -485,7 +485,7 @@ async function getFogListEndPoint (filters, user, isCLI, isSystem, transaction) 
   }
 }
 
-async function generateProvisioningKeyEndPoint (fogData, user, isCLI, transaction) {
+async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogGenerateProvision)
 
   const queryFogData = { uuid: fogData.uuid }
@@ -514,7 +514,7 @@ async function generateProvisioningKeyEndPoint (fogData, user, isCLI, transactio
   }
 }
 
-async function setFogVersionCommandEndPoint (fogVersionData, user, isCLI, transaction) {
+async function setFogVersionCommandEndPoint (fogVersionData, isCLI, transaction) {
   await Validator.validate(fogVersionData, Validator.schemas.iofogSetVersionCommand)
 
   const queryFogData = { uuid: fogVersionData.uuid }
@@ -541,12 +541,12 @@ async function setFogVersionCommandEndPoint (fogVersionData, user, isCLI, transa
     throw new Errors.ValidationError(ErrorMessages.INVALID_VERSION_COMMAND_UPGRADE)
   }
 
-  await generateProvisioningKeyEndPoint({ uuid: fogVersionData.uuid }, user, isCLI, transaction)
+  await generateProvisioningKeyEndPoint({ uuid: fogVersionData.uuid }, isCLI, transaction)
   await FogVersionCommandManager.updateOrCreate({ iofogUuid: fogVersionData.uuid }, newVersionCommand, transaction)
   await ChangeTrackingService.update(fogVersionData.uuid, ChangeTrackingService.events.version, transaction)
 }
 
-async function setFogRebootCommandEndPoint (fogData, user, isCLI, transaction) {
+async function setFogRebootCommandEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogReboot)
 
   const queryFogData = { uuid: fogData.uuid }
@@ -564,7 +564,7 @@ async function setFogRebootCommandEndPoint (fogData, user, isCLI, transaction) {
   await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.reboot, transaction)
 }
 
-async function getHalHardwareInfoEndPoint (uuidObj, user, isCLI, transaction) {
+async function getHalHardwareInfoEndPoint (uuidObj, isCLI, transaction) {
   await Validator.validate(uuidObj, Validator.schemas.halGet)
 
   const fog = await FogManager.findOne({
@@ -584,7 +584,7 @@ async function getHalHardwareInfoEndPoint (uuidObj, user, isCLI, transaction) {
   }, transaction)
 }
 
-async function getHalUsbInfoEndPoint (uuidObj, user, isCLI, transaction) {
+async function getHalUsbInfoEndPoint (uuidObj, isCLI, transaction) {
   await Validator.validate(uuidObj, Validator.schemas.halGet)
 
   const fog = await FogManager.findOne({
@@ -640,7 +640,7 @@ async function _processDeleteCommand (fog, transaction) {
   await FogManager.delete({ uuid: fog.uuid }, transaction)
 }
 
-async function _createHalMicroserviceForFog (fogData, oldFog, user, transaction) {
+async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
   const halItem = await CatalogService.getHalCatalogItem(transaction)
 
   const halMicroserviceData = {
@@ -667,7 +667,7 @@ async function _deleteHalMicroserviceByFog (fogData, transaction) {
   await MicroserviceManager.delete(deleteHalMicroserviceData, transaction)
 }
 
-async function _createBluetoothMicroserviceForFog (fogData, oldFog, user, transaction) {
+async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction) {
   const bluetoothItem = await CatalogService.getBluetoothCatalogItem(transaction)
 
   const bluetoothMicroserviceData = {
@@ -694,7 +694,7 @@ async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
   await MicroserviceManager.delete(deleteBluetoothMicroserviceData, transaction)
 }
 
-async function setFogPruneCommandEndPoint (fogData, user, isCLI, transaction) {
+async function setFogPruneCommandEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogPrune)
 
   const queryFogData = { uuid: fogData.uuid }

@@ -15,7 +15,7 @@ const TunnelService = require('../services/tunnel-service')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 
-const manageTunnelEndPoint = async function (req, user) {
+const manageTunnelEndPoint = async function (req) {
   const action = req.body.action
   const tunnelData = {
     iofogUuid: req.params.id
@@ -23,21 +23,21 @@ const manageTunnelEndPoint = async function (req, user) {
 
   switch (action) {
     case 'open':
-      await TunnelService.openTunnel(tunnelData, user, false)
+      await TunnelService.openTunnel(tunnelData, false)
       break
     case 'close':
-      await TunnelService.closeTunnel(tunnelData, user)
+      await TunnelService.closeTunnel(tunnelData)
       break
     default:
       throw new Errors.ValidationError(ErrorMessages.INVALID_ACTION_PROPERTY)
   }
 }
 
-const getTunnelEndPoint = async function (req, user) {
+const getTunnelEndPoint = async function (req) {
   const tunnelData = {
     iofogUuid: req.params.id
   }
-  return TunnelService.findTunnel(tunnelData, user)
+  return TunnelService.findTunnel(tunnelData)
 }
 
 module.exports = {

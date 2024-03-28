@@ -20,7 +20,7 @@ const MicroservicePortManager = require('../../data/managers/microservice-port-m
 const MicroserviceProxyPortManager = require('../../data/managers/microservice-proxy-port-manager')
 const ProxyBrokerClient = require('../../helpers/proxy-broker-client')
 
-async function _createOrUpdatePortRouterMicroservice (existingProxy, localPort, protocol, portRouterServerConfig, hostUuid, portRouterCatalogId, microserviceUuid, user, transaction) {
+async function _createOrUpdatePortRouterMicroservice (existingProxy, localPort, protocol, portRouterServerConfig, hostUuid, portRouterCatalogId, microserviceUuid, transaction) {
   const proxyConfig = {
     name: `${microserviceUuid}_${localPort}`,
     server_addr: portRouterServerConfig.host,
@@ -59,7 +59,7 @@ async function _createOrUpdatePortRouterMicroservice (existingProxy, localPort, 
   return res
 }
 
-async function createProxyPortMapping (microservice, portMappingData, user, transaction) {
+async function createProxyPortMapping (microservice, portMappingData, transaction) {
   const protocol = portMappingData.protocol || 'tcp'
 
   // create proxy microservices
@@ -82,7 +82,6 @@ async function createProxyPortMapping (microservice, portMappingData, user, tran
     microservice.iofogUuid,
     portRouterCatalog.id,
     microservice.uuid,
-    user,
     transaction)
 
   const mappingData = {
@@ -130,7 +129,7 @@ async function buildProxyPortMapping (pm, mapping, transaction) {
   }
 }
 
-async function deleteProxyPortMapping (microservice, portMapping, user, transaction) {
+async function deleteProxyPortMapping (microservice, portMapping, transaction) {
   const proxyPort = await portMapping.getProxyPort()
   if (proxyPort) {
     await _updateOrDeleteProxyMicroservice(proxyPort, false, transaction)
@@ -165,7 +164,7 @@ async function _updateOrDeleteProxyMicroservice (proxyPort, isMove, transaction)
   }
 }
 
-async function moveProxyPortsToNewFog (updatedMicroservice, portMapping, user, transaction) {
+async function moveProxyPortsToNewFog (updatedMicroservice, portMapping, transaction) {
   const proxyPort = await portMapping.getProxyPort()
   const localProxy = await MicroserviceManager.findOne({ uuid: proxyPort.localProxyId }, transaction)
   await _updateOrDeleteProxyMicroservice(proxyPort, true, transaction)
@@ -194,7 +193,6 @@ async function moveProxyPortsToNewFog (updatedMicroservice, portMapping, user, t
     updatedMicroservice.iofogUuid,
     localProxy.catalogItemId,
     updatedMicroservice.uuid,
-    user,
     transaction)
 
   proxyPort.localProxyId = newProxy.uuid

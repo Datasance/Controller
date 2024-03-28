@@ -155,7 +155,7 @@ async function _updateOrchestrationTags (tagArray, edgeResourceModel, transactio
   }
 }
 
-async function createEdgeResource (edgeResourceData, user, transaction) {
+async function createEdgeResource (edgeResourceData, transaction) {
   await Validator.validate(edgeResourceData, Validator.schemas.edgeResourceCreate)
   const { name, description, version, orchestrationTags, interfaceProtocol, display, custom } = edgeResourceData
   const existingResource = await EdgeResourceManager.findOne({ name, version }, transaction)
@@ -192,7 +192,7 @@ async function createEdgeResource (edgeResourceData, user, transaction) {
   return buildGetObject(resource)
 }
 
-async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, version }, user, transaction) {
+async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, version }, transaction) {
   await Validator.validate(edgeResourceData, Validator.schemas.edgeResourceUpdate)
   const oldData = await EdgeResourceManager.findOne({ name: oldName, version }, transaction)
   if (!oldData) {
@@ -202,7 +202,7 @@ async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, ve
     if (!edgeResourceData.version) {
       edgeResourceData.version = version
     }
-    return createEdgeResource(edgeResourceData, user, transaction)
+    return createEdgeResource(edgeResourceData, transaction)
   }
   if (edgeResourceData.version && oldData.version !== edgeResourceData.version) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.RESOURCE_UPDATE_VERSION_MISMATCH))
@@ -244,7 +244,7 @@ async function updateEdgeResourceEndpoint (edgeResourceData, { name: oldName, ve
   }
 }
 
-async function deleteEdgeResource ({ name, version }, user, transaction) {
+async function deleteEdgeResource ({ name, version }, transaction) {
   const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
@@ -258,7 +258,7 @@ async function deleteEdgeResource ({ name, version }, user, transaction) {
   await EdgeResourceManager.delete({ name, version }, transaction)
 }
 
-async function linkEdgeResource ({ name, version }, uuid, user, transaction) {
+async function linkEdgeResource ({ name, version }, uuid, transaction) {
   const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))
@@ -274,7 +274,7 @@ async function linkEdgeResource ({ name, version }, uuid, user, transaction) {
   await ChangeTrackingService.update(agent.uuid, ChangeTrackingService.events.edgeResources, transaction)
 }
 
-async function unlinkEdgeResource ({ name, version }, uuid, user, transaction) {
+async function unlinkEdgeResource ({ name, version }, uuid, transaction) {
   const resource = await EdgeResourceManager.findOne({ name, version }, transaction)
   if (!resource) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_RESOURCE_NAME_VERSION, name, version))

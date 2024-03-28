@@ -24,7 +24,7 @@ const ApplicationTemplateVariableManager = require('../data/managers/application
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const Validator = require('../schemas')
 
-const createApplicationTemplateEndPoint = async function (applicationTemplateData, user, isCLI, transaction) {
+const createApplicationTemplateEndPoint = async function (applicationTemplateData, isCLI, transaction) {
   // Add a name field to pass schema validation using the applicationCreate schema
   applicationTemplateData.application = { ...applicationTemplateData.application, name: 'validation' }
   await Validator.validate(applicationTemplateData, Validator.schemas.applicationTemplateCreate)
@@ -56,12 +56,12 @@ const createApplicationTemplateEndPoint = async function (applicationTemplateDat
     }
   } catch (e) {
     // If anything failed during creating the application, delete all that was created
-    await deleteApplicationTemplateEndPoint({ name: applicationTemplate.name }, user, isCLI, transaction)
+    await deleteApplicationTemplateEndPoint({ name: applicationTemplate.name }, isCLI, transaction)
     throw e
   }
 }
 
-const deleteApplicationTemplateEndPoint = async function (conditions, user, isCLI, transaction) {
+const deleteApplicationTemplateEndPoint = async function (conditions, isCLI, transaction) {
   const whereObj = {
     ...conditions
   }
@@ -70,7 +70,7 @@ const deleteApplicationTemplateEndPoint = async function (conditions, user, isCL
   await ApplicationTemplateManager.delete(where, transaction)
 }
 
-const patchApplicationTemplateEndPoint = async function (applicationTemplateData, conditions, user, isCLI, transaction) {
+const patchApplicationTemplateEndPoint = async function (applicationTemplateData, conditions, isCLI, transaction) {
   await Validator.validate(applicationTemplateData, Validator.schemas.applicationTemplatePatch)
 
   const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ ...conditions }, transaction)
@@ -95,7 +95,7 @@ const patchApplicationTemplateEndPoint = async function (applicationTemplateData
   await ApplicationTemplateManager.update(where, updateApplicationTemplateData, transaction)
 }
 
-const updateApplicationTemplateEndPoint = async function (applicationTemplateData, name, user, isCLI, transaction) {
+const updateApplicationTemplateEndPoint = async function (applicationTemplateData, name, isCLI, transaction) {
   // Add a name field to pass schema validation using the applicationCreate schema
   applicationTemplateData.application = { ...applicationTemplateData.application, name: 'validation' }
   await Validator.validate(applicationTemplateData, Validator.schemas.applicationTemplateUpdate)
@@ -105,7 +105,7 @@ const updateApplicationTemplateEndPoint = async function (applicationTemplateDat
   const oldApplicationTemplate = await ApplicationTemplateManager.findOne({ name }, transaction)
 
   if (!oldApplicationTemplate) {
-    return createApplicationTemplateEndPoint({ ...applicationTemplateData, name }, user, isCLI, transaction)
+    return createApplicationTemplateEndPoint({ ...applicationTemplateData, name }, isCLI, transaction)
   }
   if (applicationTemplateData.name) {
     await _checkForDuplicateName(applicationTemplateData.name, oldApplicationTemplate.id, transaction)
@@ -124,7 +124,7 @@ const updateApplicationTemplateEndPoint = async function (applicationTemplateDat
   await ApplicationTemplateManager.update(where, updateApplicationTemplateData, transaction)
 
   if (applicationTemplateData.variables) {
-    await _updateVariables(oldApplicationTemplate.id, applicationTemplateData.variables, user, isCLI, transaction)
+    await _updateVariables(oldApplicationTemplate.id, applicationTemplateData.variables, isCLI, transaction)
   }
 
   return {
@@ -146,14 +146,14 @@ const _createVariable = async function (applicationTemplateId, variableData, tra
   return ApplicationTemplateVariableManager.create({ ...newVariable, applicationTemplateId }, transaction)
 }
 
-const _updateVariables = async function (applicationTemplateId, variables, user, isCLI, transaction) {
+const _updateVariables = async function (applicationTemplateId, variables, isCLI, transaction) {
   await ApplicationTemplateVariableManager.delete({ applicationTemplateId }, transaction)
   for (const variableData of variables) {
     await _createVariable(applicationTemplateId, variableData, transaction)
   }
 }
 
-const getUserApplicationTemplatesEndPoint = async function (user, isCLI, transaction) {
+const getUserApplicationTemplatesEndPoint = async function (isCLI, transaction) {
   const application = {
   }
 
@@ -187,7 +187,7 @@ const getAllApplicationTemplatesEndPoint = async function (isCLI, transaction) {
   }
 }
 
-async function getApplicationTemplate (conditions, user, isCLI, transaction) {
+async function getApplicationTemplate (conditions, isCLI, transaction) {
   const where = isCLI
     ? { ...conditions }
     : { ...conditions }
@@ -200,11 +200,11 @@ async function getApplicationTemplate (conditions, user, isCLI, transaction) {
   return _buildGetApplicationObj(application)
 }
 
-const getApplicationTemplateEndPoint = async function (name, user, isCLI, transaction) {
-  return getApplicationTemplate(name, user, isCLI, transaction)
+const getApplicationTemplateEndPoint = async function (name, isCLI, transaction) {
+  return getApplicationTemplate(name, isCLI, transaction)
 }
 
-const getApplicationDataFromTemplate = async function (deploymentData, user, isCLI, transaction) {
+const getApplicationDataFromTemplate = async function (deploymentData, isCLI, transaction) {
   await Validator.validate(deploymentData, Validator.schemas.applicationTemplateDeploy)
 
   const applicationTemplateDBObject = await ApplicationTemplateManager.findOnePopulated({ name: deploymentData.name }, transaction)
@@ -236,7 +236,7 @@ const getApplicationDataFromTemplate = async function (deploymentData, user, isC
   }
 
   // default values are overwritten by user defined values, and self is always overwritten to the current object
-  await rvaluesVarSubstition(newApplication, { ...defaultVariablesValues, ...userProvidedVariables, self: newApplication }, user)
+  await rvaluesVarSubstition(newApplication, { ...defaultVariablesValues, ...userProvidedVariables, self: newApplication })
 
   for (const msvc of newApplication.microservices) {
     // Send it back as a string for application creation and validation
