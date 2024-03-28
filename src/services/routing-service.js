@@ -21,7 +21,7 @@ const RoutingManager = require('../data/managers/routing-manager')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const Validator = require('../schemas')
 
-async function getRoutings (isCLI, transaction) {
+async function getRoutings (user, isCLI, transaction) {
   const routes = await RoutingManager.findAllPopulated({}, transaction)
   return { routes: routes.map(r => ({
     application: r.application.name,
@@ -34,7 +34,7 @@ async function getRoutings (isCLI, transaction) {
   })) }
 }
 
-async function getRouting (appName, name, isCLI, transaction) {
+async function getRouting (appName, name, user, isCLI, transaction) {
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_NAME, appName))
@@ -54,7 +54,7 @@ async function getRouting (appName, name, isCLI, transaction) {
   }
 }
 
-async function _validateRouteMsvc (routingData, isCLI, transaction) {
+async function _validateRouteMsvc (routingData, user, isCLI, transaction) {
   // Retro compatibility logic
   if (routingData.sourceMicroserviceUuid) {
     const sourceWhere = { uuid: routingData.sourceMicroserviceUuid }
@@ -91,15 +91,15 @@ async function _validateRouteMsvc (routingData, isCLI, transaction) {
   }
 }
 
-async function createRouting (routingData, isCLI, transaction) {
+async function createRouting (routingData, user, isCLI, transaction) {
   await Validator.validate(routingData, Validator.schemas.routingCreate)
 
-  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc(routingData, isCLI, transaction)
+  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc(routingData, user, isCLI, transaction)
 
-  return _createRoute(sourceMicroservice, destMicroservice, routingData, transaction)
+  return _createRoute(sourceMicroservice, destMicroservice, routingData, user, transaction)
 }
 
-async function updateRouting (appName, routeName, routeData, isCLI, transaction) {
+async function updateRouting (appName, routeName, routeData, user, isCLI, transaction) {
   await Validator.validate(routeData, Validator.schemas.routingUpdate)
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
@@ -111,7 +111,7 @@ async function updateRouting (appName, routeName, routeData, isCLI, transaction)
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTING_NAME, routeName))
   }
 
-  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc({ ...routeData, application: oldRoute.application.name }, isCLI, transaction)
+  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc({ ...routeData, application: oldRoute.application.name }, user, isCLI, transaction)
 
   const updateRebuildMs = {
     rebuild: true
@@ -143,7 +143,7 @@ async function updateRouting (appName, routeName, routeData, isCLI, transaction)
   await RoutingManager.update({ id: oldRoute.id }, updateRouteData, transaction)
 }
 
-async function _createRoute (sourceMicroservice, destMicroservice, routeData, transaction) {
+async function _createRoute (sourceMicroservice, destMicroservice, routeData, user, transaction) {
   if (!sourceMicroservice.iofogUuid || !destMicroservice.iofogUuid) {
     throw new Errors.ValidationError('fog not set')
   }
@@ -162,7 +162,7 @@ async function _createRoute (sourceMicroservice, destMicroservice, routeData, tr
   return _createSimpleRoute(sourceMicroservice, destMicroservice, routeData, transaction)
 }
 
-async function deleteRouting (appName, name, isCLI, transaction) {
+async function deleteRouting (appName, name, user, isCLI, transaction) {
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_NAME, appName))

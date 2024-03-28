@@ -17,85 +17,85 @@ const errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const { rvaluesVarSubstition } = require('../helpers/template-helper')
 
-const createApplicationEndPoint = async function (req) {
+const createApplicationEndPoint = async function (req, user) {
   const application = req.body
 
-  return ApplicationService.createApplicationEndPoint(application, false)
+  return ApplicationService.createApplicationEndPoint(application, user, false)
 }
 
-const createApplicationYAMLEndPoint = async function (req) {
+const createApplicationYAMLEndPoint = async function (req, user) {
   if (!req.file) {
     throw new errors.ValidationError(ErrorMessages.APPLICATION_FILE_NOT_FOUND)
   }
   const fileContent = req.file.buffer.toString()
   const application = await YAMLParserService.parseAppFile(fileContent)
-  await rvaluesVarSubstition(application, { self: application })
+  await rvaluesVarSubstition(application, { self: application }, user)
 
-  return ApplicationService.createApplicationEndPoint(application, false)
+  return ApplicationService.createApplicationEndPoint(application, user, false)
 }
 
-const getApplicationsByUserEndPoint = async function (req) {
-  return ApplicationService.getUserApplicationsEndPoint(false)
+const getApplicationsByUserEndPoint = async function (req, user) {
+  return ApplicationService.getUserApplicationsEndPoint(user, false)
 }
 
-const getApplicationEndPoint = async function (req) {
+const getApplicationEndPoint = async function (req, user) {
   const name = req.params.name
 
-  const application = await ApplicationService.getApplicationEndPoint({ name }, false)
+  const application = await ApplicationService.getApplicationEndPoint({ name }, user, false)
   return application
 }
 
-const patchApplicationEndPoint = async function (req) {
+const patchApplicationEndPoint = async function (req, user) {
   const application = req.body
   const name = req.params.name
 
-  return ApplicationService.patchApplicationEndPoint(application, { name }, false)
+  return ApplicationService.patchApplicationEndPoint(application, { name }, user, false)
 }
 
-const updateApplicationEndPoint = async function (req) {
+const updateApplicationEndPoint = async function (req, user) {
   const application = req.body
   const name = req.params.name
 
-  return ApplicationService.updateApplicationEndPoint(application, name, false)
+  return ApplicationService.updateApplicationEndPoint(application, name, user, false)
 }
 
-const updateApplicationYAMLEndPoint = async function (req) {
+const updateApplicationYAMLEndPoint = async function (req, user) {
   if (!req.file) {
     throw new errors.ValidationError(ErrorMessages.APPLICATION_FILE_NOT_FOUND)
   }
   const name = req.params.name
   const fileContent = req.file.buffer.toString()
   const application = await YAMLParserService.parseAppFile(fileContent)
-  await rvaluesVarSubstition(application, { self: application })
+  await rvaluesVarSubstition(application, { self: application }, user)
 
-  return ApplicationService.updateApplicationEndPoint(application, name, false)
+  return ApplicationService.updateApplicationEndPoint(application, name, user, false)
 }
 
-const deleteApplicationEndPoint = async function (req) {
+const deleteApplicationEndPoint = async function (req, user) {
   const name = req.params.name
 
-  return ApplicationService.deleteApplicationEndPoint({ name }, false)
+  return ApplicationService.deleteApplicationEndPoint({ name }, user, false)
 }
 
 // Legacy
 
-const deleteApplicationByIdEndPoint = async function (req) {
+const deleteApplicationByIdEndPoint = async function (req, user) {
   const id = req.params.id
 
-  return ApplicationService.deleteApplicationEndPoint({ id }, false)
+  return ApplicationService.deleteApplicationEndPoint({ id }, user, false)
 }
 
-const patchApplicationByIdEndPoint = async function (req) {
+const patchApplicationByIdEndPoint = async function (req, user) {
   const application = req.body
   const id = req.params.id
 
-  return ApplicationService.patchApplicationEndPoint(application, { id }, false)
+  return ApplicationService.patchApplicationEndPoint(application, { id }, user, false)
 }
 
-const getApplicationByIdEndPoint = async function (req) {
+const getApplicationByIdEndPoint = async function (req, user) {
   const id = req.params.id
 
-  const application = await ApplicationService.getApplicationEndPoint({ id }, false)
+  const application = await ApplicationService.getApplicationEndPoint({ id }, user, false)
   return application
 }
 

@@ -17,63 +17,63 @@ const errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const { rvaluesVarSubstition } = require('../helpers/template-helper')
 
-const createApplicationTemplateEndPoint = async function (req) {
+const createApplicationTemplateEndPoint = async function (req, user) {
   const application = req.body
 
-  return ApplicationTemplateService.createApplicationTemplateEndPoint(application, false)
+  return ApplicationTemplateService.createApplicationTemplateEndPoint(application, user, false)
 }
 
-const createApplicationTemplateYAMLEndPoint = async function (req) {
+const createApplicationTemplateYAMLEndPoint = async function (req, user) {
   if (!req.file) {
     throw new errors.ValidationError(ErrorMessages.APPLICATION_FILE_NOT_FOUND)
   }
   const fileContent = req.file.buffer.toString()
   const application = await YAMLParserService.parseAppTemplateFile(fileContent)
-  await rvaluesVarSubstition(application.variables, { self: application.variables })
+  await rvaluesVarSubstition(application.variables, { self: application.variables }, user)
 
-  return ApplicationTemplateService.createApplicationTemplateEndPoint(application, false)
+  return ApplicationTemplateService.createApplicationTemplateEndPoint(application, user, false)
 }
 
-const getApplicationTemplatesByUserEndPoint = async function (req) {
-  return ApplicationTemplateService.getUserApplicationTemplatesEndPoint(false)
+const getApplicationTemplatesByUserEndPoint = async function (req, user) {
+  return ApplicationTemplateService.getUserApplicationTemplatesEndPoint(user, false)
 }
 
-const getApplicationTemplateEndPoint = async function (req) {
+const getApplicationTemplateEndPoint = async function (req, user) {
   const name = req.params.name
 
-  return ApplicationTemplateService.getApplicationTemplateEndPoint({ name }, false)
+  return ApplicationTemplateService.getApplicationTemplateEndPoint({ name }, user, false)
 }
 
-const patchApplicationTemplateEndPoint = async function (req) {
+const patchApplicationTemplateEndPoint = async function (req, user) {
   const application = req.body
   const name = req.params.name
 
-  return ApplicationTemplateService.patchApplicationTemplateEndPoint(application, { name }, false)
+  return ApplicationTemplateService.patchApplicationTemplateEndPoint(application, { name }, user, false)
 }
 
-const updateApplicationTemplateEndPoint = async function (req) {
+const updateApplicationTemplateEndPoint = async function (req, user) {
   const application = req.body
   const name = req.params.name
 
-  return ApplicationTemplateService.updateApplicationTemplateEndPoint(application, name, false)
+  return ApplicationTemplateService.updateApplicationTemplateEndPoint(application, name, user, false)
 }
 
-const updateApplicationTemplateYAMLEndPoint = async function (req) {
+const updateApplicationTemplateYAMLEndPoint = async function (req, user) {
   if (!req.file) {
     throw new errors.ValidationError(ErrorMessages.APPLICATION_FILE_NOT_FOUND)
   }
   const name = req.params.name
   const fileContent = req.file.buffer.toString()
   const application = await YAMLParserService.parseAppTemplateFile(fileContent)
-  await rvaluesVarSubstition(application.variables, { self: application.variables })
+  await rvaluesVarSubstition(application.variables, { self: application.variables }, user)
 
-  return ApplicationTemplateService.updateApplicationTemplateEndPoint(application, name, false)
+  return ApplicationTemplateService.updateApplicationTemplateEndPoint(application, name, user, false)
 }
 
-const deleteApplicationTemplateEndPoint = async function (req) {
+const deleteApplicationTemplateEndPoint = async function (req, user) {
   const name = req.params.name
 
-  return ApplicationTemplateService.deleteApplicationTemplateEndPoint({ name }, false)
+  return ApplicationTemplateService.deleteApplicationTemplateEndPoint({ name }, user, false)
 }
 
 module.exports = {

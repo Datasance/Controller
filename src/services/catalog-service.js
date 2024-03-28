@@ -26,11 +26,11 @@ const RegistryManager = require('../data/managers/registry-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroseriveStates = require('../enums/microservice-state')
 
-const createCatalogItemEndPoint = async function (data, transaction) {
+const createCatalogItemEndPoint = async function (data, user, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemCreate)
   await _checkForDuplicateName(data.name, transaction)
   await _checkForRestrictedPublisher(data.publisher)
-  const catalogItem = await _createCatalogItem(data, transaction)
+  const catalogItem = await _createCatalogItem(data, user, transaction)
   await _createCatalogImages(data, catalogItem, transaction)
   await _createCatalogItemInputType(data, catalogItem, transaction)
   await _createCatalogItemOutputType(data, catalogItem, transaction)
@@ -40,7 +40,7 @@ const createCatalogItemEndPoint = async function (data, transaction) {
   }
 }
 
-const updateCatalogItemEndPoint = async function (id, data, isCLI, transaction) {
+const updateCatalogItemEndPoint = async function (id, data, user, isCLI, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemUpdate)
 
   const where = isCLI
@@ -57,7 +57,7 @@ const updateCatalogItemEndPoint = async function (id, data, isCLI, transaction) 
   await _updateCatalogItemIOTypes(data, where, transaction)
 }
 
-const listCatalogItemsEndPoint = async function (isCLI, transaction) {
+const listCatalogItemsEndPoint = async function (user, isCLI, transaction) {
   const where = isCLI
     ? {}
     : {
@@ -74,7 +74,7 @@ const listCatalogItemsEndPoint = async function (isCLI, transaction) {
   }
 }
 
-async function getCatalogItem (id, isCLI, transaction) {
+async function getCatalogItem (id, user, isCLI, transaction) {
   const where = isCLI
     ? { id: id }
     : {
@@ -93,11 +93,11 @@ async function getCatalogItem (id, isCLI, transaction) {
   return item
 }
 
-const getCatalogItemEndPoint = async function (id, isCLI, transaction) {
-  return getCatalogItem(id, isCLI, transaction)
+const getCatalogItemEndPoint = async function (id, user, isCLI, transaction) {
+  return getCatalogItem(id, user, isCLI, transaction)
 }
 
-const deleteCatalogItemEndPoint = async function (id, isCLI, transaction) {
+const deleteCatalogItemEndPoint = async function (id, user, isCLI, transaction) {
   const where = isCLI
     ? {
       id: id
@@ -200,7 +200,7 @@ const _checkIfItemExists = async function (where, transaction) {
   return item
 }
 
-const _createCatalogItem = async function (data, transaction) {
+const _createCatalogItem = async function (data, user, transaction) {
   let catalogItem = {
     name: data.name,
     description: data.description,

@@ -15,108 +15,108 @@ const MicroservicesService = require('../services/microservices-service')
 const YAMLParserService = require('../services/yaml-parser-service')
 const { rvaluesVarSubstition } = require('../helpers/template-helper')
 
-const createMicroserviceOnFogEndPoint = async function (req) {
+const createMicroserviceOnFogEndPoint = async function (req, user) {
   const microservice = req.body
-  return MicroservicesService.createMicroserviceEndPoint(microservice, false)
+  return MicroservicesService.createMicroserviceEndPoint(microservice, user, false)
 }
 
-const createMicroserviceYAMLEndPoint = async function (req) {
+const createMicroserviceYAMLEndPoint = async function (req, user) {
   const fileContent = req.file.buffer.toString()
   const microservice = await YAMLParserService.parseMicroserviceFile(fileContent)
-  await rvaluesVarSubstition(microservice, { self: microservice })
-  return MicroservicesService.createMicroserviceEndPoint(microservice, false)
+  await rvaluesVarSubstition(microservice, { self: microservice }, user)
+  return MicroservicesService.createMicroserviceEndPoint(microservice, user, false)
 }
 
-const getMicroserviceEndPoint = async function (req) {
+const getMicroserviceEndPoint = async function (req, user) {
   const microserviceUuid = req.params.uuid
-  return MicroservicesService.getMicroserviceEndPoint(microserviceUuid, false)
+  return MicroservicesService.getMicroserviceEndPoint(microserviceUuid, user, false)
 }
 
-const updateMicroserviceEndPoint = async function (req) {
+const updateMicroserviceEndPoint = async function (req, user) {
   const microservice = req.body
   const microserviceUuid = req.params.uuid
-  return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, false)
+  return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, user, false)
 }
 
-const updateMicroserviceYAMLEndPoint = async function (req) {
+const updateMicroserviceYAMLEndPoint = async function (req, user) {
   const microserviceUuid = req.params.uuid
   const fileContent = req.file.buffer.toString()
   const microservice = await YAMLParserService.parseMicroserviceFile(fileContent)
-  await rvaluesVarSubstition(microservice, { self: microservice })
-  return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, false)
+  await rvaluesVarSubstition(microservice, { self: microservice }, user)
+  return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, user, false)
 }
 
-const deleteMicroserviceEndPoint = async function (req) {
+const deleteMicroserviceEndPoint = async function (req, user) {
   const microserviceUuid = req.params.uuid
   const microserviceData = req.body || {}
-  return MicroservicesService.deleteMicroserviceEndPoint(microserviceUuid, microserviceData, false)
+  return MicroservicesService.deleteMicroserviceEndPoint(microserviceUuid, microserviceData, user, false)
 }
 
-const getMicroservicesByApplicationEndPoint = async function (req) {
+const getMicroservicesByApplicationEndPoint = async function (req, user) {
   // API Retro compatibility
   const flowId = req.query.flowId
 
   const applicationName = req.query.application
-  return MicroservicesService.listMicroservicesEndPoint({ applicationName, flowId }, false)
+  return MicroservicesService.listMicroservicesEndPoint({ applicationName, flowId }, user, false)
 }
 
-const createMicroserviceRouteEndPoint = async function (req) {
+const createMicroserviceRouteEndPoint = async function (req, user) {
   const sourceUuid = req.params.uuid
   const destUuid = req.params.receiverUuid
-  return MicroservicesService.createRouteEndPoint(sourceUuid, destUuid, false)
+  return MicroservicesService.createRouteEndPoint(sourceUuid, destUuid, user, false)
 }
 
-const deleteMicroserviceRouteEndPoint = async function (req) {
+const deleteMicroserviceRouteEndPoint = async function (req, user) {
   const sourceUuid = req.params.uuid
   const destUuid = req.params.receiverUuid
-  return MicroservicesService.deleteRouteEndPoint(sourceUuid, destUuid, false)
+  return MicroservicesService.deleteRouteEndPoint(sourceUuid, destUuid, user, false)
 }
 
-const createMicroservicePortMappingEndPoint = async function (req) {
+const createMicroservicePortMappingEndPoint = async function (req, user) {
   const uuid = req.params.uuid
   const portMappingData = req.body
-  return MicroservicesService.createPortMappingEndPoint(uuid, portMappingData, false)
+  return MicroservicesService.createPortMappingEndPoint(uuid, portMappingData, user, false)
 }
 
-const deleteMicroservicePortMappingEndPoint = async function (req) {
+const deleteMicroservicePortMappingEndPoint = async function (req, user) {
   const uuid = req.params.uuid
   const internalPort = req.params.internalPort
-  return MicroservicesService.deletePortMappingEndPoint(uuid, internalPort, false)
+  return MicroservicesService.deletePortMappingEndPoint(uuid, internalPort, user, false)
 }
 
-const listMicroservicePortMappingsEndPoint = async function (req) {
+const listMicroservicePortMappingsEndPoint = async function (req, user) {
   const uuid = req.params.uuid
-  const ports = await MicroservicesService.listMicroservicePortMappingsEndPoint(uuid, false)
+  const ports = await MicroservicesService.listMicroservicePortMappingsEndPoint(uuid, user, false)
   return {
     ports: ports
   }
 }
 
-const createMicroserviceVolumeMappingEndPoint = async function (req) {
+const createMicroserviceVolumeMappingEndPoint = async function (req, user) {
   const microserviceUuid = req.params.uuid
   const volumeMappingData = req.body
-  const volumeMapping = await MicroservicesService.createVolumeMappingEndPoint(microserviceUuid, volumeMappingData, false)
+  const volumeMapping = await MicroservicesService.createVolumeMappingEndPoint(microserviceUuid, volumeMappingData, user, false)
   return {
     id: volumeMapping.id
   }
 }
 
-const listMicroserviceVolumeMappingsEndPoint = async function (req) {
+const listMicroserviceVolumeMappingsEndPoint = async function (req, user) {
   const uuid = req.params.uuid
-  const volumeMappings = await MicroservicesService.listVolumeMappingsEndPoint(uuid, false)
+  const volumeMappings = await MicroservicesService.listVolumeMappingsEndPoint(uuid, user, false)
   return {
     volumeMappings: volumeMappings
   }
 }
 
-const deleteMicroserviceVolumeMappingEndPoint = async function (req) {
+const deleteMicroserviceVolumeMappingEndPoint = async function (req, user) {
   const uuid = req.params.uuid
   const id = req.params.id
-  return MicroservicesService.deleteVolumeMappingEndPoint(uuid, id, false)
+  return MicroservicesService.deleteVolumeMappingEndPoint(uuid, id, user, false)
 }
 
-const listAllPublicPortsEndPoint = async function (req) {
-  return MicroservicesService.listAllPublicPortsEndPoint()
+const listAllPublicPortsEndPoint = async function (req, user) {
+  return MicroservicesService.listAllPublicPortsEndPoint(user)
 }
 
 module.exports = {

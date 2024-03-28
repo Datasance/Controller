@@ -13,24 +13,24 @@
 
 const DiagnosticService = require('../services/diagnostic-service')
 
-const changeMicroserviceStraceStateEndPoint = async function (req) {
-  return DiagnosticService.changeMicroserviceStraceState(req.params.uuid, req.body, false)
+const changeMicroserviceStraceStateEndPoint = async function (req, user) {
+  return DiagnosticService.changeMicroserviceStraceState(req.params.uuid, req.body, user, false)
 }
 
-const getMicroserviceStraceDataEndPoint = async function (req) {
-  return DiagnosticService.getMicroserviceStraceData(req.params.uuid, req.query, false)
+const getMicroserviceStraceDataEndPoint = async function (req, user) {
+  return DiagnosticService.getMicroserviceStraceData(req.params.uuid, req.query, user, false)
 }
 
-const postMicroserviceStraceDataToFtpEndPoint = async function (req) {
-  return DiagnosticService.postMicroserviceStraceDatatoFtp(req.params.uuid, req.body, false)
+const postMicroserviceStraceDataToFtpEndPoint = async function (req, user) {
+  return DiagnosticService.postMicroserviceStraceDatatoFtp(req.params.uuid, req.body, user, false)
 }
 
-const createMicroserviceImageSnapshotEndPoint = async function (req) {
-  return DiagnosticService.postMicroserviceImageSnapshotCreate(req.params.uuid, false)
+const createMicroserviceImageSnapshotEndPoint = async function (req, user) {
+  return DiagnosticService.postMicroserviceImageSnapshotCreate(req.params.uuid, user, false)
 }
 
-const getMicroserviceImageSnapshotEndPoint = async function (req) {
-  return DiagnosticService.getMicroserviceImageSnapshot(req.params.uuid, false)
+const getMicroserviceImageSnapshotEndPoint = async function (req, user) {
+  return DiagnosticService.getMicroserviceImageSnapshot(req.params.uuid, user, false)
 }
 
 module.exports = {

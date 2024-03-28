@@ -13,26 +13,26 @@
 
 const RegistryService = require('../services/registry-service')
 
-const createRegistryEndPoint = async function (req) {
+const createRegistryEndPoint = async function (req, user) {
   const registry = req.body
-  return RegistryService.createRegistry(registry)
+  return RegistryService.createRegistry(registry, user)
 }
 
-const getRegistriesEndPoint = async function (req) {
-  return RegistryService.findRegistries(false)
+const getRegistriesEndPoint = async function (req, user) {
+  return RegistryService.findRegistries(user, false)
 }
 
-const deleteRegistryEndPoint = async function (req) {
+const deleteRegistryEndPoint = async function (req, user) {
   const deleteRegistry = {
     id: parseInt(req.params.id)
   }
-  return RegistryService.deleteRegistry(deleteRegistry, false)
+  return RegistryService.deleteRegistry(deleteRegistry, user, false)
 }
 
-const updateRegistryEndPoint = async function (req) {
+const updateRegistryEndPoint = async function (req, user) {
   const registry = req.body
   const registryId = req.params.id
-  return RegistryService.updateRegistry(registry, registryId, false)
+  return RegistryService.updateRegistry(registry, registryId, user, false)
 }
 
 module.exports = {

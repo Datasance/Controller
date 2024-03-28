@@ -28,11 +28,11 @@ const remove = require('lodash/remove')
 
 const onlyUnique = (value, index, self) => self.indexOf(value) === index
 
-const createApplicationEndPoint = async function (applicationData, isCLI, transaction) {
+const createApplicationEndPoint = async function (applicationData, user, isCLI, transaction) {
   // if template is provided, use template data
   if (applicationData.template && applicationData.template.name) {
     applicationData = {
-      ...await ApplicationTemplateService.getApplicationDataFromTemplate(applicationData.template, isCLI, transaction),
+      ...await ApplicationTemplateService.getApplicationDataFromTemplate(applicationData.template, user, isCLI, transaction),
       isSystem: applicationData.isSystem,
       name: applicationData.name,
       description: applicationData.description,
@@ -72,13 +72,13 @@ const createApplicationEndPoint = async function (applicationData, isCLI, transa
   try {
     if (applicationData.microservices) {
       for (const msvcData of applicationData.microservices) {
-        await MicroserviceService.createMicroserviceEndPoint(msvcData, isCLI, transaction)
+        await MicroserviceService.createMicroserviceEndPoint(msvcData, user, isCLI, transaction)
       }
     }
 
     if (applicationData.routes) {
       for (const routeData of applicationData.routes) {
-        await RoutingService.createRouting(routeData, isCLI, transaction)
+        await RoutingService.createRouting(routeData, user, isCLI, transaction)
       }
     }
 
@@ -88,12 +88,12 @@ const createApplicationEndPoint = async function (applicationData, isCLI, transa
     }
   } catch (e) {
     // If anything failed during creating the application, delete all that was created
-    await deleteApplicationEndPoint({ name: application.name }, isCLI, transaction)
+    await deleteApplicationEndPoint({ name: application.name }, user, isCLI, transaction)
     throw e
   }
 }
 
-const deleteApplicationEndPoint = async function (conditions, isCLI, transaction) {
+const deleteApplicationEndPoint = async function (conditions, user, isCLI, transaction) {
   const whereObj = {
     ...conditions
   }
@@ -105,7 +105,7 @@ const deleteApplicationEndPoint = async function (conditions, isCLI, transaction
 }
 
 // Only patches the metadata (running, name, description, etc.)
-const patchApplicationEndPoint = async function (applicationData, conditions, isCLI, transaction) {
+const patchApplicationEndPoint = async function (applicationData, conditions, user, isCLI, transaction) {
   await Validator.validate(applicationData, Validator.schemas.applicationPatch)
 
   const oldApplication = await ApplicationManager.findOne({ ...conditions }, transaction)
@@ -137,11 +137,11 @@ const patchApplicationEndPoint = async function (applicationData, conditions, is
 }
 
 // Updates the state (microservices, routes, etc.)
-const updateApplicationEndPoint = async function (applicationData, name, isCLI, transaction) {
+const updateApplicationEndPoint = async function (applicationData, name, user, isCLI, transaction) {
   // if template is provided, use template data
   if (applicationData.template && applicationData.template.name) {
     applicationData = {
-      ...await ApplicationTemplateService.getApplicationDataFromTemplate(applicationData.template, isCLI, transaction),
+      ...await ApplicationTemplateService.getApplicationDataFromTemplate(applicationData.template, user, isCLI, transaction),
       isSystem: applicationData.isSystem,
       name: applicationData.name || name,
       description: applicationData.description,
@@ -188,10 +188,10 @@ const updateApplicationEndPoint = async function (applicationData, name, isCLI, 
   await ApplicationManager.update(where, updateApplicationData, transaction)
 
   if (applicationData.microservices) {
-    await _updateMicroservices(application.name, applicationData.microservices, isCLI, transaction)
+    await _updateMicroservices(application.name, applicationData.microservices, user, isCLI, transaction)
   }
   if (applicationData.routes) {
-    await _updateRoutes(application.name, applicationData.routes, isCLI, transaction)
+    await _updateRoutes(application.name, applicationData.routes, user, isCLI, transaction)
   }
 
   if (oldApplication.isActivated !== applicationData.isActivated) {
@@ -199,7 +199,7 @@ const updateApplicationEndPoint = async function (applicationData, name, isCLI, 
   }
 }
 
-const _updateRoutes = async function (application, routes, isCLI, transaction) {
+const _updateRoutes = async function (application, routes, user, isCLI, transaction) {
   // Update routes
   const updatedRoutes = [...routes]
   const oldRoutes = await ApplicationManager.findApplicationRoutes({ name: application }, transaction)
@@ -209,19 +209,19 @@ const _updateRoutes = async function (application, routes, isCLI, transaction) {
   for (const oldRoute of oldRoutes) {
     const removed = remove(updatedRoutes, (n) => oldRoute.name === n.name)
     if (!removed.length) {
-      await RoutingService.deleteRouting(oldRoute.name, isCLI, transaction)
+      await RoutingService.deleteRouting(oldRoute.name, user, isCLI, transaction)
     } else {
       const updatedRoute = removed[0]
-      await RoutingService.updateRouting(application, updatedRoute.name, updatedRoute, isCLI, transaction)
+      await RoutingService.updateRouting(application, updatedRoute.name, updatedRoute, user, isCLI, transaction)
     }
   }
   // Create missing routes
   for (const route of updatedRoutes) {
-    await RoutingService.createRouting(route, isCLI, transaction)
+    await RoutingService.createRouting(route, user, isCLI, transaction)
   }
 }
 
-const _updateMicroservices = async function (application, microservices, isCLI, transaction) {
+const _updateMicroservices = async function (application, microservices, user, isCLI, transaction) {
   const updatedMicroservices = [...microservices]
   // Update microservices
   const oldMicroservices = await ApplicationManager.findApplicationMicroservices({ name: application }, transaction)
@@ -238,14 +238,14 @@ const _updateMicroservices = async function (application, microservices, isCLI, 
       iofogUuids.push(oldMsvc.iofogUuid)
     } else {
       const updatedMsvc = removed[0]
-      const updatedMicroservices = await MicroserviceService.updateMicroserviceEndPoint(oldMsvc.uuid, updatedMsvc, isCLI, transaction, false)
+      const updatedMicroservices = await MicroserviceService.updateMicroserviceEndPoint(oldMsvc.uuid, updatedMsvc, user, isCLI, transaction, false)
       oldMsvcsIofogUuids.push(updatedMicroservices.microserviceIofogUuid)
       updatedMsvcsUuid.push(updatedMicroservices.updatedMicroserviceIofogUuid)
     }
   }
   // Create missing microservices
   for (const microservice of updatedMicroservices) {
-    await MicroserviceService.createMicroserviceEndPoint(microservice, isCLI, transaction)
+    await MicroserviceService.createMicroserviceEndPoint(microservice, user, isCLI, transaction)
   }
   iofogUuids
     .filter(onlyUnique)
@@ -270,7 +270,7 @@ const _updateMicroservices = async function (application, microservices, isCLI, 
     })
 }
 
-const getUserApplicationsEndPoint = async function (isCLI, transaction) {
+const getUserApplicationsEndPoint = async function (user, isCLI, transaction) {
   const application = {
     isSystem: false
   }
@@ -300,7 +300,7 @@ async function _buildApplicationObject (application, transaction) {
   return application
 }
 
-async function getApplication (conditions, isCLI, transaction) {
+async function getApplication (conditions, user, isCLI, transaction) {
   const where = isCLI
     ? { ...conditions }
     : { ...conditions }
@@ -314,8 +314,8 @@ async function getApplication (conditions, isCLI, transaction) {
   return application
 }
 
-const getApplicationEndPoint = async function (conditions, isCLI, transaction) {
-  const application = await getApplication(conditions, isCLI, transaction)
+const getApplicationEndPoint = async function (conditions, user, isCLI, transaction) {
+  const application = await getApplication(conditions, user, isCLI, transaction)
   return application
 }
 

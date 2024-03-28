@@ -21,7 +21,7 @@ const ErrorMessages = require('../helpers/error-messages')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const ChangeTrackingService = require('./change-tracking-service')
 
-const openTunnel = async function (tunnelData, isCli, transaction) {
+const openTunnel = async function (tunnelData, user, isCli, transaction) {
   const iofog = await FogManager.findOne({ uuid: tunnelData.iofogUuid }, transaction)
   if (!iofog) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, tunnelData.iofogUuid))
@@ -47,7 +47,7 @@ const openTunnel = async function (tunnelData, isCli, transaction) {
   await ChangeTrackingService.update(tunnelData.iofogUuid, ChangeTrackingService.events.tunnel, transaction)
 }
 
-const findTunnel = async function (tunnelData, transaction) {
+const findTunnel = async function (tunnelData, user, transaction) {
   const tunnel = await TunnelManager.findOne(tunnelData, transaction)
   if (!tunnel) {
     throw new Errors.NotFoundError('Invalid Tunnel Id')
@@ -68,8 +68,8 @@ const findAll = async function (transaction) {
   }
 }
 
-const closeTunnel = async function (tunnelData, transaction) {
-  await module.exports.findTunnel(tunnelData, transaction)
+const closeTunnel = async function (tunnelData, user, transaction) {
+  await module.exports.findTunnel(tunnelData, user, transaction)
   await TunnelManager.update(tunnelData, { closed: true }, transaction)
   await ChangeTrackingService.update(tunnelData.iofogUuid, ChangeTrackingService.events.tunnel, transaction)
 }

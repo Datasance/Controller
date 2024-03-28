@@ -13,32 +13,32 @@
 
 const RoutingService = require('../services/routing-service')
 
-const createRoutingEndpoint = async function (req) {
+const createRoutingEndpoint = async function (req, user) {
   const routerData = req.body
-  return RoutingService.createRouting(routerData, false)
+  return RoutingService.createRouting(routerData, user, false)
 }
 
-const getRoutingsEndPoint = async function (req) {
-  return RoutingService.getRoutings(false)
+const getRoutingsEndPoint = async function (req, user) {
+  return RoutingService.getRoutings(user, false)
 }
 
-const getRoutingEndPoint = async function (req) {
+const getRoutingEndPoint = async function (req, user) {
   const routeName = req.params.name
   const appName = req.params.appName
-  return RoutingService.getRouting(appName, routeName, false)
+  return RoutingService.getRouting(appName, routeName, user, false)
 }
 
-const updateRoutingEndpoint = async function (req) {
+const updateRoutingEndpoint = async function (req, user) {
   const routeName = req.params.name
   const appName = req.params.appName
   const routeData = req.body
-  return RoutingService.updateRouting(appName, routeName, routeData, false)
+  return RoutingService.updateRouting(appName, routeName, routeData, user, false)
 }
 
-const deleteRoutingEndpoint = async function (req) {
+const deleteRoutingEndpoint = async function (req, user) {
   const routeName = req.params.name
   const appName = req.params.appName
-  return RoutingService.deleteRouting(appName, routeName, false)
+  return RoutingService.deleteRouting(appName, routeName, user, false)
 }
 
 module.exports = {

@@ -13,24 +13,24 @@
 
 const EdgeResourceService = require('../services/edge-resource-service')
 
-const createEdgeResourceEndpoint = async function (req) {
+const createEdgeResourceEndpoint = async function (req, user) {
   const edgeResourceData = req.body
-  return EdgeResourceService.createEdgeResource(edgeResourceData)
+  return EdgeResourceService.createEdgeResource(edgeResourceData, user)
 }
 
-const updateEdgeResourceEndpoint = async function (req) {
+const updateEdgeResourceEndpoint = async function (req, user) {
   const edgeResourceData = req.body
   const { version, name } = req.params
-  return EdgeResourceService.updateEdgeResourceEndpoint(edgeResourceData, { name, version })
+  return EdgeResourceService.updateEdgeResourceEndpoint(edgeResourceData, { name, version }, user)
 }
 
-const listEdgeResourcesEndpoint = async function (req) {
-  return { edgeResources: await EdgeResourceService.listEdgeResources() }
+const listEdgeResourcesEndpoint = async function (req, user) {
+  return { edgeResources: await EdgeResourceService.listEdgeResources(user) }
 }
 
-const getEdgeResourceEndpoint = async function (req) {
+const getEdgeResourceEndpoint = async function (req, user) {
   const { version, name } = req.params
-  const result = await EdgeResourceService.getEdgeResource({ name, version })
+  const result = await EdgeResourceService.getEdgeResource({ name, version }, user)
   if (version) {
     return result
   } else {
@@ -38,27 +38,27 @@ const getEdgeResourceEndpoint = async function (req) {
   }
 }
 
-const getEdgeResourceAllVersionsEndpoint = async function (req) {
+const getEdgeResourceAllVersionsEndpoint = async function (req, user) {
   const { name } = req.params
-  const result = await EdgeResourceService.getEdgeResource({ name })
+  const result = await EdgeResourceService.getEdgeResource({ name }, user)
   return { edgeResources: result }
 }
 
-const deleteEdgeResourceEndpoint = async function (req) {
+const deleteEdgeResourceEndpoint = async function (req, user) {
   const { version, name } = req.params
-  return EdgeResourceService.deleteEdgeResource({ name, version })
+  return EdgeResourceService.deleteEdgeResource({ name, version }, user)
 }
 
-const linkEdgeResourceEndpoint = async function (req) {
+const linkEdgeResourceEndpoint = async function (req, user) {
   const { name, version } = req.params
   const { uuid } = req.body
-  return EdgeResourceService.linkEdgeResource({ name, version }, uuid)
+  return EdgeResourceService.linkEdgeResource({ name, version }, uuid, user)
 }
 
-const unlinkEdgeResourceEndpoint = async function (req) {
+const unlinkEdgeResourceEndpoint = async function (req, user) {
   const { name, version } = req.params
   const { uuid } = req.body
-  return EdgeResourceService.unlinkEdgeResource({ name, version }, uuid)
+  return EdgeResourceService.unlinkEdgeResource({ name, version }, uuid, user)
 }
 
 module.exports = {

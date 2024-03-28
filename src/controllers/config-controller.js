@@ -13,16 +13,16 @@
 
 const ConfigService = require('../services/config-service')
 
-const upsertConfigElementEndpoint = async function (req) {
+const upsertConfigElementEndpoint = async function (req, user) {
   const configData = req.body
   return ConfigService.upsertConfigElement(configData)
 }
 
-const listConfigEndpoint = async function () {
+const listConfigEndpoint = async function (user) {
   return ConfigService.listConfig()
 }
 
-const getConfigEndpoint = async function (req) {
+const getConfigEndpoint = async function (req, user) {
   const key = req.params.key
   return ConfigService.getConfigElement(key)
 }
