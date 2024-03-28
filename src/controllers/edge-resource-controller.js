@@ -24,7 +24,7 @@ const updateEdgeResourceEndpoint = async function (req) {
   return EdgeResourceService.updateEdgeResourceEndpoint(edgeResourceData, { name, version })
 }
 
-const listEdgeResourcesEndpoint = async function (req) {
+const listEdgeResourcesEndpoint = async function () {
   return { edgeResources: await EdgeResourceService.listEdgeResources() }
 }
 
