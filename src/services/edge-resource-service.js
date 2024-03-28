@@ -28,7 +28,7 @@ async function listEdgeResources (transaction) {
   return edgeResources.map(buildGetObject)
 }
 
-async function getEdgeResource ({ name, version }, user, transaction) {
+async function getEdgeResource ({ name, version }, transaction) {
   if (version) {
     const resource = await EdgeResourceManager.findOneWithOrchestrationTags({ name, version }, transaction)
     if (!resource) {
