@@ -189,11 +189,6 @@ async function updateFogEndPoint (fogData, user, isCLI, transaction) {
   // Update tags
   await _setTags(oldFog, fogData.tags, transaction)
 
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!oldFog.isSystem && !isCLI) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
   if (updateFogData.name) {
     const conflictQuery = isCLI
       ? { name: updateFogData.name, uuid: { [Op.not]: fogData.uuid } }
@@ -369,11 +364,6 @@ async function deleteFogEndPoint (fogData, user, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
   await _deleteFogRouter(fogData, transaction)
 
   await _processDeleteCommand(fog, transaction)
@@ -452,11 +442,6 @@ async function getFog (fogData, user, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
   return _getFogExtraInformation(fog, transaction)
 }
 
@@ -501,11 +486,6 @@ async function generateProvisioningKeyEndPoint (fogData, user, isCLI, transactio
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
   const provisioningKeyData = await FogProvisionKeyManager.updateOrCreate({ iofogUuid: fogData.uuid }, newProvision, transaction)
 
   return {
@@ -526,11 +506,6 @@ async function setFogVersionCommandEndPoint (fogVersionData, user, isCLI, transa
 
   const fog = await FogManager.findOne(queryFogData, transaction)
   if (!fog) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, queryFogData.uuid))
-  }
-
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, queryFogData.uuid))
   }
 
@@ -556,11 +531,6 @@ async function setFogRebootCommandEndPoint (fogData, user, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
   await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.reboot, transaction)
 }
 
@@ -571,11 +541,6 @@ async function getHalHardwareInfoEndPoint (uuidObj, user, isCLI, transaction) {
     uuid: uuidObj.uuid
   }, transaction)
   if (!fog) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
-  }
-
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
   }
 
@@ -591,11 +556,6 @@ async function getHalUsbInfoEndPoint (uuidObj, user, isCLI, transaction) {
     uuid: uuidObj.uuid
   }, transaction)
   if (!fog) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
-  }
-
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuidObj.uuid))
   }
 
@@ -701,11 +661,6 @@ async function setFogPruneCommandEndPoint (fogData, user, isCLI, transaction) {
 
   const fog = await FogManager.findOne(queryFogData, transaction)
   if (!fog) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
-  }
-
-  // If using REST API and not system fog. You must be the fog's user to access it
-  if (!fog.isSystem && !isCLI) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
