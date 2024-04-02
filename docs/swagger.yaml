@@ -1,4 +1,4 @@
-openapi: "3.0.0"
+openapi : "3.0.0"
 info:
   version: 1.0.0
   title: Datasance PoT-ioFog Controller
@@ -16,21 +16,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServiceStatusResponse"
-        "500":
-          description: Internal Server Error
-  /email-activation:
-    get:
-      tags:
-        - Controller
-      summary: Returns email activation status
-      operationId: getEmailActivationStatus
-      responses:
-        "200":
-          description: Email activation status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmailActivationStatusResponse"
         "500":
           description: Internal Server Error
   /fog-types:
@@ -424,38 +409,6 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-    post:
-      tags:
-        - Application
-      summary: Creates an application
-      operationId: createApplication
-      deprecated: true
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              oneOf:
-                - $ref: "#/components/schemas/ApplicationCreateRequest"
-                - $ref: "#/components/schemas/ApplicationCreateFromTemplateRequest"
-        required: true
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationCreateResponse"
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
   /application/yaml:
     post:
       tags:
@@ -490,43 +443,7 @@ paths:
           description: Bad Request
         "500":
           description: Internal Server Error
-
   "/application/{name}":
-    put:
-      tags:
-        - Application
-      summary: Updates an application
-      deprecated: true
-      operationId: updateApplication
-      parameters:
-        - in: path
-          name: name
-          description: Application name
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ApplicationCreateRequest"
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
     patch:
       tags:
         - Application
@@ -693,33 +610,6 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  /applicationTemplate:
-    post:
-      tags:
-        - Application Template
-      summary: Creates an application template
-      operationId: createApplicationTemplate
-      deprecated: true
-      security:
-        - userToken: []
-      requestBody:
-        $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationTemplateCreateResponse"
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
   /applicationTemplate/yaml:
     post:
       tags:
@@ -755,39 +645,6 @@ paths:
         "500":
           description: Internal Server Error
   "/applicationTemplate/{name}":
-    put:
-      tags:
-        - Application Template
-      summary: Updates or creates an application template
-      operationId: updateOrCreateApplicationTemplate
-      deprecated: true
-      parameters:
-        - in: path
-          name: name
-          description: Application template name
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      requestBody:
-        $ref: "#/components/requestBodies/ApplicationTemplateCreateRequest"
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApplicationTemplateCreateResponse"
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
     patch:
       tags:
         - Application Template
@@ -1614,158 +1471,6 @@ paths:
           description: Invalid Catalog Item Id
         "500":
           description: Internal Server Error
-  /flow:
-    get:
-      tags:
-        - Flow
-      summary: Gets list of flows
-      deprecated: true
-      operationId: getFlowsList
-      security:
-        - userToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetFlowsResponse"
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    post:
-      tags:
-        - Flow
-      summary: Creates a new flow
-      deprecated: true
-      operationId: createFlow
-      security:
-        - userToken: []
-      requestBody:
-        $ref: "#/components/requestBodies/NewFlowRequest"
-      responses:
-        "201":
-          description: Created
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-  "/flow/{id}":
-    get:
-      tags:
-        - Flow
-      summary: Gets flow info
-      operationId: getFlowInfo
-      deprecated: true
-      parameters:
-        - in: path
-          name: id
-          description: Flow Id
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowInfoResponse"
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Flow Id
-        "500":
-          description: Internal Server Error
-    patch:
-      tags:
-        - Flow
-      summary: Updates a flow
-      operationId: updateFlow
-      deprecated: true
-      parameters:
-        - in: path
-          name: id
-          description: Flow Id
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      requestBody:
-        $ref: "#/components/requestBodies/NewFlowRequest"
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Flow Id
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - Flow
-      summary: Deletes a flow
-      operationId: deleteFlow
-      deprecated: true
-      parameters:
-        - in: path
-          name: id
-          description: Flow Id
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Flow Id
-        "500":
-          description: Internal Server Error
   /microservices:
     get:
       tags:
@@ -1802,44 +1507,6 @@ paths:
                 $ref: "#/components/schemas/GetMicroservicesResponse"
         "401":
           description: Not Authorized
-        "500":
-          description: Internal Server Error
-    post:
-      tags:
-        - Microservices
-      summary: Creates a new microservice on an ioFog node
-      operationId: createMicroservice
-      deprecated: true
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewMicroserviceRequest"
-        description: New Microservice Info
-        required: true
-      responses:
-        "201":
-          description: Created
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  uuid:
-                    type: string
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "409":
-          description: Duplicate Name
         "500":
           description: Internal Server Error
   /microservices/yaml:
@@ -1916,46 +1583,6 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-    patch:
-      tags:
-        - Microservices
-      summary: Updates a microservice
-      deprecated: true
-      operationId: updateMicroservice
-      parameters:
-        - in: path
-          name: uuid
-          description: Microservice Uuid
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMicroserviceRequest"
-        description: Microservice Info
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "404":
-          description: Not Found
-        "409":
-          description: Duplicate Name
-        "500":
-          description: Internal Server Error
     delete:
       tags:
         - Microservices
@@ -2027,82 +1654,6 @@ paths:
           description: Not Found
         "409":
           description: Duplicate Name
-        "500":
-          description: Internal Server Error
-
-  "/microservices/{uuid}/routes/{receiverUuid}":
-    post:
-      tags:
-        - Microservices
-      summary: Creates a route from microservice to receiver
-      operationId: createMicroserviceRoute
-      deprecated: true
-      parameters:
-        - in: path
-          name: uuid
-          description: Microservice Uuid
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: receiverUuid
-          description: Receiver Microservice Uuid
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      responses:
-        "204":
-          description: Created
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Not Valid
-        "401":
-          description: Not Authorized
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - Microservices
-      summary: Deletes a route microservice
-      operationId: deleteMicroserviceRoute
-      deprecated: true
-      parameters:
-        - in: path
-          name: uuid
-          description: Microservice Uuid
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: receiverUuid
-          description: Receiver Microservice Uuid
-          required: true
-          schema:
-            type: string
-      security:
-        - userToken: []
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Not Valid
-        "401":
-          description: Not Authorized
-        "404":
-          description: Not Found
         "500":
           description: Internal Server Error
   "/microservices/{uuid}/port-mapping":
@@ -2744,88 +2295,6 @@ paths:
           description: Not Authorized
         "500":
           description: Internal Server Error
-  /user/signup:
-    post:
-      tags:
-        - User
-      summary: Signup
-      operationId: signup
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignupRequest"
-        description: new user data
-        required: true
-      responses:
-        "201":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SignupSuccessResponse"
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-  /user/signup/resend-activation:
-    get:
-      tags:
-        - User
-      summary: Resend activation email
-      operationId: resendActivationEmail
-      parameters:
-        - in: query
-          name: email
-          required: true
-          schema:
-            type: string
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "500":
-          description: Internal Server Error
-  /user/activate:
-    post:
-      tags:
-        - User
-      summary: Activate account
-      operationId: activateAccount
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserActivateRequest"
-        description: activation code
-        required: true
-      responses:
-        "303":
-          description: Redirect to login page
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-            Location:
-              description: Login page url
-              schema:
-                type: string
-        "404":
-          description: Not Found
-        "500":
-          description: Internal Server Error
   /user/profile:
     get:
       tags:
@@ -2848,116 +2317,6 @@ paths:
                 $ref: "#/components/schemas/UserProfileDetailsResponse"
         "401":
           description: Not Authorized
-        "500":
-          description: Internal Server Error
-    patch:
-      tags:
-        - User
-      summary: Update user profile
-      operationId: updateUserProfile
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UserProfileUpdatesRequest"
-        description: Updated profile data
-        required: true
-      responses:
-        "200":
-          description: Updated user profile
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserProfileDetailsResponse"
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - User
-      summary: Delete account
-      operationId: deleteAccount
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DeleteParameters"
-        description: parameters for delete
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-  /user/password:
-    patch:
-      tags:
-        - User
-      summary: change password
-      operationId: changePassword
-      security:
-        - userToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PasswordChangeRequest"
-        description: current and new password
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - User
-      summary: Reset password
-      operationId: resetPassword
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PasswordResetRequest"
-        description: email
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "404":
-          description: Not Found
         "500":
           description: Internal Server Error
   /routes:
@@ -3437,9 +2796,9 @@ servers:
 components:
   securitySchemes:
     userToken:
-      type: apiKey
-      in: header
-      name: Authorization
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     agentToken:
       type: apiKey
       in: header
@@ -3683,8 +3042,6 @@ components:
           type: string
         isActivated:
           type: boolean
-        userId:
-          type: number
         microservices:
           type: array
           items:
@@ -3813,8 +3170,6 @@ components:
           type: string
         description:
           type: string
-        userId:
-          type: number
         application:
           type: object
           properties:
@@ -3847,11 +3202,6 @@ components:
           example: ok
         timestamp:
           type: number
-    EmailActivationStatusResponse:
-      type: object
-      properties:
-        isEmailActivationEnabled:
-          type: boolean
     IOFogTypesResponse:
       type: object
       properties:
@@ -4002,8 +3352,6 @@ components:
         updatedAt:
           type: number
         fogTypeId:
-          type: number
-        userId:
           type: number
         routerMode:
           type: string
@@ -4577,8 +3925,6 @@ components:
           type: string
         userEmail:
           type: string
-        userId:
-          type: string
     RegistryBody:
       type: object
       properties:
@@ -4869,11 +4215,14 @@ components:
       required:
         - email
         - password
+        - totp
       properties:
         email:
           type: string
         password:
           type: string
+        totp:
+          type: string 
     LoginSuccessResponse:
       type: object
       required:
@@ -4881,103 +4230,31 @@ components:
       properties:
         accessToken:
           type: string
-    SignupSuccessResponse:
-      type: object
-      required:
-        - userId
-        - firstName
-        - lastName
-        - email
-        - subscriptionKey
-        - emailActivated
-      properties:
-        userId:
-          type: number
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        subscriptionKey:
-          type: string
-        emailActivated:
-          type: boolean
     UserProfileDetailsResponse:
       type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - subscriptionKey
       properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        subscriptionKey:
-          type: string
-    UserProfileUpdatesRequest:
-      type: object
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        subscriptionKey:
-          type: string
-    UserActivateRequest:
-      type: object
-      required:
-        - activationCode
-      properties:
-        activationCode:
-          type: string
-    PasswordResetRequest:
-      type: object
-      required:
-        - email
-      properties:
-        email:
-          type: string
-    PasswordChangeRequest:
-      type: object
-      required:
-        - oldPassword
-        - newPassword
-      properties:
-        oldPassword:
-          type: string
-        newPassword:
-          type: string
-    DeleteParameters:
-      type: object
-      required:
-        - force
-      properties:
-        force:
-          type: boolean
-    SignupRequest:
-      type: object
-      required:
-        - firstName
-        - lastName
-        - email
-        - password
-        - subscriptionKey
-      properties:
-        firstName:
-          type: string
-        lastName:
-          type: string
-        email:
-          type: string
-        password:
-          type: string
-        subscriptionKey:
-          type: string
+        userinfo:
+          type: array
+          items:
+            properties:
+              sub:
+                type: string
+              SubscriptionKey:
+                type: string
+              email_verified:
+                type: string
+              name:
+                type: string
+              preferred_username:
+                type: string
+              locale:
+                type: string
+              given_name:
+                type: string
+              family_name:
+                type: string
+              email:
+                type: string
     VersionCommandResponse:
       type: object
       required:

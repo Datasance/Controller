@@ -108,15 +108,6 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'cascade'
     })
 
-    Microservice.belongsTo(models.User, {
-      foreignKey: {
-        name: 'userId',
-        field: 'user_id'
-      },
-      as: 'user',
-      onDelete: 'cascade'
-    })
-
     Microservice.hasMany(models.CatalogItemImage, {
       foreignKey: 'microservice_uuid',
       as: 'images'

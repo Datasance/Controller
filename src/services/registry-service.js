@@ -22,7 +22,7 @@ const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
 
-const createRegistry = async function (registry, user, transaction) {
+const createRegistry = async function (registry, transaction) {
   await Validator.validate(registry, Validator.schemas.registryCreate)
   if (registry.requiresCert && registry.certificate === undefined) {
     throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
@@ -35,30 +35,26 @@ const createRegistry = async function (registry, user, transaction) {
     isPublic: registry.isPublic,
     userEmail: registry.email,
     requiresCert: registry.requiresCert,
-    certificate: registry.certificate,
-    userId: user.id
+    certificate: registry.certificate
   }
 
   registryCreate = AppHelper.deleteUndefinedFields(registryCreate)
 
   const createdRegistry = await RegistryManager.create(registryCreate, transaction)
 
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 
   return {
     id: createdRegistry.id
   }
 }
 
-const findRegistries = async function (user, isCLI, transaction) {
+const findRegistries = async function (isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
     : {
       [Op.or]:
         [
-          {
-            userId: user.id
-          },
           {
             isPublic: true
           }
@@ -71,23 +67,20 @@ const findRegistries = async function (user, isCLI, transaction) {
   }
 }
 
-const deleteRegistry = async function (registryData, user, isCLI, transaction) {
+const deleteRegistry = async function (registryData, isCLI, transaction) {
   await Validator.validate(registryData, Validator.schemas.registryDelete)
   const queryData = isCLI
     ? { id: registryData.id }
-    : { id: registryData.id, userId: user.id }
+    : { id: registryData.id }
   const registry = await RegistryManager.findOne(queryData, transaction)
   if (!registry) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryData.id))
   }
-  if (isCLI) {
-    user = { id: registry.userId }
-  }
   await RegistryManager.delete(queryData, transaction)
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 }
 
-const updateRegistry = async function (registry, registryId, user, isCLI, transaction) {
+const updateRegistry = async function (registry, registryId, isCLI, transaction) {
   await Validator.validate(registry, Validator.schemas.registryUpdate)
 
   if (registry.requiresCert && registry.certificate === undefined) {
@@ -119,21 +112,16 @@ const updateRegistry = async function (registry, registryId, user, isCLI, transa
       id: registryId
     }
     : {
-      id: registryId,
-      userId: user.id
+      id: registryId
     }
 
   await RegistryManager.update(where, registryUpdate, transaction)
 
-  if (isCLI) {
-    user = { id: existingRegistry.userId }
-  }
-
-  await _updateChangeTracking(user, transaction)
+  await _updateChangeTracking(transaction)
 }
 
-const _updateChangeTracking = async function (user, transaction) {
-  const fogs = await FogManager.findAll({ userId: user.id }, transaction)
+const _updateChangeTracking = async function (transaction) {
+  const fogs = await FogManager.findAll(transaction)
   for (const fog of fogs) {
     await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)
   }

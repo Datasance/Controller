@@ -16,7 +16,6 @@ const constants = require('../helpers/constants')
 const fs = require('fs')
 const logger = require('../logger')
 const TunnelService = require('../services/tunnel-service')
-const CliDecorator = require('../decorators/cli-decorator')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const CliDataTypes = require('./cli-data-types')
@@ -147,13 +146,7 @@ async function _tunnelList () {
 async function _executeCase (commands, commandName, f, isUserRequired) {
   try {
     const obj = commands[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = CliDecorator.prepareUserById(f)
-      await decoratedFunction(obj)
-    } else {
-      await f(obj)
-    }
+    await f(obj)
   } catch (error) {
     logger.error(error.message)
   }

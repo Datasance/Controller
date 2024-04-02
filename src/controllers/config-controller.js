@@ -11,25 +11,24 @@
  *
  */
 
-const AuthDecorator = require('./../decorators/authorization-decorator')
 const ConfigService = require('../services/config-service')
 
-const upsertConfigElementEndpoint = async function (req, user) {
+const upsertConfigElementEndpoint = async function (req) {
   const configData = req.body
   return ConfigService.upsertConfigElement(configData)
 }
 
-const listConfigEndpoint = async function (user) {
+const listConfigEndpoint = async function () {
   return ConfigService.listConfig()
 }
 
-const getConfigEndpoint = async function (req, user) {
+const getConfigEndpoint = async function (req) {
   const key = req.params.key
   return ConfigService.getConfigElement(key)
 }
 
 module.exports = {
-  upsertConfigElementEndpoint: AuthDecorator.checkAuthToken(upsertConfigElementEndpoint),
-  listConfigEndpoint: AuthDecorator.checkAuthToken(listConfigEndpoint),
-  getConfigEndpoint: AuthDecorator.checkAuthToken(getConfigEndpoint)
+  upsertConfigElementEndpoint: (upsertConfigElementEndpoint),
+  listConfigEndpoint: (listConfigEndpoint),
+  getConfigEndpoint: (getConfigEndpoint)
 }

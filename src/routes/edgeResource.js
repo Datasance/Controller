@@ -15,6 +15,7 @@ const EdgeResourceController = require('../controllers/edge-resource-controller'
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -30,14 +31,18 @@ module.exports = [
           errors: [Errors.AuthenticationError]
         }
       ]
-      const getEdgeResourcesEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.listEdgeResourcesEndpoint, successCode, errorCodes)
-      const responseObject = await getEdgeResourcesEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getEdgeResourcesEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.listEdgeResourcesEndpoint, successCode, errorCodes)
+        const responseObject = await getEdgeResourcesEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -58,14 +63,17 @@ module.exports = [
         }
       ]
 
-      const getEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await getEdgeResourceEndpoint(req)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await getEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -86,14 +94,17 @@ module.exports = [
         }
       ]
 
-      const getEdgeResourceAllVersionsEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceAllVersionsEndpoint, successCode, errorCodes)
-      const responseObject = await getEdgeResourceAllVersionsEndpoint(req)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getEdgeResourceAllVersionsEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceAllVersionsEndpoint, successCode, errorCodes)
+        const responseObject = await getEdgeResourceAllVersionsEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -118,14 +129,18 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const updateEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.updateEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await updateEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const updateEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.updateEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await updateEdgeResourceEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -149,14 +164,18 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const deleteEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.deleteEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await deleteEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const deleteEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.deleteEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await deleteEdgeResourceEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -177,14 +196,18 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const createEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.createEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await createEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const createEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.createEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await createEdgeResourceEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -204,14 +227,18 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const linkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.linkEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await linkEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const linkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.linkEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await linkEdgeResourceEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -231,14 +258,18 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const unlinkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.unlinkEdgeResourceEndpoint, successCode, errorCodes)
-      const responseObject = await unlinkEdgeResourceEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const unlinkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.unlinkEdgeResourceEndpoint, successCode, errorCodes)
+        const responseObject = await unlinkEdgeResourceEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

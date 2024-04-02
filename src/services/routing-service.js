@@ -21,7 +21,7 @@ const RoutingManager = require('../data/managers/routing-manager')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const Validator = require('../schemas')
 
-async function getRoutings (user, isCLI, transaction) {
+async function getRoutings (isCLI, transaction) {
   const routes = await RoutingManager.findAllPopulated({}, transaction)
   return { routes: routes.map(r => ({
     application: r.application.name,
@@ -34,7 +34,7 @@ async function getRoutings (user, isCLI, transaction) {
   })) }
 }
 
-async function getRouting (appName, name, user, isCLI, transaction) {
+async function getRouting (appName, name, isCLI, transaction) {
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_NAME, appName))
@@ -54,7 +54,7 @@ async function getRouting (appName, name, user, isCLI, transaction) {
   }
 }
 
-async function _validateRouteMsvc (routingData, user, isCLI, transaction) {
+async function _validateRouteMsvc (routingData, isCLI, transaction) {
   // Retro compatibility logic
   if (routingData.sourceMicroserviceUuid) {
     const sourceWhere = { uuid: routingData.sourceMicroserviceUuid }
@@ -70,7 +70,7 @@ async function _validateRouteMsvc (routingData, user, isCLI, transaction) {
     }
     return { sourceMicroservice, destMicroservice }
   } else {
-    const applicationWhere = isCLI ? { name: routingData.application } : { name: routingData.application, userId: user.id }
+    const applicationWhere = isCLI ? { name: routingData.application } : { name: routingData.application }
     const application = await ApplicationManager.findOne(applicationWhere, transaction)
     if (!application) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, routingData.application))
@@ -91,15 +91,15 @@ async function _validateRouteMsvc (routingData, user, isCLI, transaction) {
   }
 }
 
-async function createRouting (routingData, user, isCLI, transaction) {
+async function createRouting (routingData, isCLI, transaction) {
   await Validator.validate(routingData, Validator.schemas.routingCreate)
 
-  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc(routingData, user, isCLI, transaction)
+  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc(routingData, isCLI, transaction)
 
-  return _createRoute(sourceMicroservice, destMicroservice, routingData, user, transaction)
+  return _createRoute(sourceMicroservice, destMicroservice, routingData, transaction)
 }
 
-async function updateRouting (appName, routeName, routeData, user, isCLI, transaction) {
+async function updateRouting (appName, routeName, routeData, isCLI, transaction) {
   await Validator.validate(routeData, Validator.schemas.routingUpdate)
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
@@ -111,7 +111,7 @@ async function updateRouting (appName, routeName, routeData, user, isCLI, transa
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTING_NAME, routeName))
   }
 
-  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc({ ...routeData, application: oldRoute.application.name }, user, isCLI, transaction)
+  const { sourceMicroservice, destMicroservice } = await _validateRouteMsvc({ ...routeData, application: oldRoute.application.name }, isCLI, transaction)
 
   const updateRebuildMs = {
     rebuild: true
@@ -143,7 +143,7 @@ async function updateRouting (appName, routeName, routeData, user, isCLI, transa
   await RoutingManager.update({ id: oldRoute.id }, updateRouteData, transaction)
 }
 
-async function _createRoute (sourceMicroservice, destMicroservice, routeData, user, transaction) {
+async function _createRoute (sourceMicroservice, destMicroservice, routeData, transaction) {
   if (!sourceMicroservice.iofogUuid || !destMicroservice.iofogUuid) {
     throw new Errors.ValidationError('fog not set')
   }
@@ -162,7 +162,7 @@ async function _createRoute (sourceMicroservice, destMicroservice, routeData, us
   return _createSimpleRoute(sourceMicroservice, destMicroservice, routeData, transaction)
 }
 
-async function deleteRouting (appName, name, user, isCLI, transaction) {
+async function deleteRouting (appName, name, isCLI, transaction) {
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   if (!application) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_NAME, appName))

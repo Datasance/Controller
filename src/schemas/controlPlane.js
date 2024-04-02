@@ -11,15 +11,16 @@
  *
  */
 
-const BaseManager = require('./base-manager')
-const models = require('../models')
-const SchedulerAccessToken = models.SchedulerAccessToken
-
-class SchedulerAccessTokenManager extends BaseManager {
-  getEntity () {
-    return SchedulerAccessToken
-  }
+const details = {
+  id: '/profile',
+  type: 'object',
+  properties: {
+  },
+  required: [],
+  additionalProperties: true
 }
 
-const instance = new SchedulerAccessTokenManager()
-module.exports = instance
+module.exports = {
+  mainSchemas: [details],
+  innerSchemas: []
+}

@@ -60,34 +60,6 @@ class Config extends BaseCLIHandler {
         group: constants.CMD_ADD
       },
       {
-        name: 'home-url',
-        alias: 'h',
-        type: String,
-        description: 'Home page url for email activation links',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-address',
-        alias: 'a',
-        type: String,
-        description: 'Email address to send activations from',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-password',
-        alias: 'w',
-        type: String,
-        description: 'Email password to send activations from',
-        group: constants.CMD_ADD
-      },
-      {
-        name: 'email-service',
-        alias: 's',
-        type: String,
-        description: 'Email service to send activations',
-        group: constants.CMD_ADD
-      },
-      {
         name: 'log-dir',
         alias: 'd',
         type: String,
@@ -107,34 +79,12 @@ class Config extends BaseCLIHandler {
         type: CliDataTypes.Integer,
         description: 'Log files count',
         group: constants.CMD_ADD
-      },
-      {
-        name: 'on',
-        alias: 'o',
-        type: Boolean,
-        description: 'Enable',
-        group: [constants.CMD_DEV_MODE, constants.CMD_EMAIL_ACTIVATION]
-      },
-      {
-        name: 'off',
-        alias: 'f',
-        type: Boolean,
-        description: 'Disable',
-        group: [constants.CMD_DEV_MODE, constants.CMD_EMAIL_ACTIVATION]
-      },
-      {
-        name: 'kubelet',
-        alias: 't',
-        type: String,
-        description: 'iofog-kubelet url',
-        group: constants.CMD_ADD
       }
     ]
     this.commands = {
       [constants.CMD_ADD]: 'Add a new config value.',
       [constants.CMD_LIST]: 'Display current config.',
-      [constants.CMD_DEV_MODE]: 'Dev mode config.',
-      [constants.CMD_EMAIL_ACTIVATION]: 'Email activation config.'
+      [constants.CMD_DEV_MODE]: 'Dev mode config.'
     }
   }
 
@@ -155,9 +105,6 @@ class Config extends BaseCLIHandler {
           break
         case constants.CMD_DEV_MODE:
           await _executeCase(configCommand, constants.CMD_DEV_MODE, _changeDevModeState)
-          break
-        case constants.CMD_EMAIL_ACTIVATION:
-          await _executeCase(configCommand, constants.CMD_EMAIL_ACTIVATION, _changeEmailActivationState)
           break
         case constants.CMD_HELP:
         default:
@@ -222,26 +169,6 @@ const _addConfigOption = async function (options) {
     onSuccess()
   })
 
-  await updateConfig(options.homeUrl, 'home-url', 'Email:HomeUrl', (onSuccess) => {
-    config.set('Email:HomeUrl', options.homeUrl)
-    onSuccess()
-  })
-
-  await updateConfig(options.emailAddress, 'email-address', 'Email:Address', (onSuccess) => {
-    config.set('Email:Address', options.emailAddress)
-    onSuccess()
-  })
-
-  if (options.emailPassword) {
-    config.set('Email:Password', AppHelper.encryptText(options.emailPassword, config.get('Email:Address')))
-    logger.cliRes('Config option email-password has been updated.')
-  }
-
-  await updateConfig(options.emailService, 'email-service', 'Email:Service', (onSuccess) => {
-    config.set('Email:Service', options.emailService)
-    onSuccess()
-  })
-
   await updateConfig(options.logDir, 'log-dir', 'Service:LogsDirectory', (onSuccess) => {
     config.set('Service:LogsDirectory', options.logDir)
     onSuccess()
@@ -254,11 +181,6 @@ const _addConfigOption = async function (options) {
 
   await updateConfig(options.logSize, 'log-file-counr', 'Service:LogsFileCount', (onSuccess) => {
     config.set('Service:LogsFileCount', options.logFileCount)
-    onSuccess()
-  })
-
-  await updateConfig(options.kubelet, 'kubelet', 'Kubelet:Uri', (onSuccess) => {
-    config.set('Kubelet:Uri', options.kubelet)
     onSuccess()
   })
 }
@@ -283,16 +205,10 @@ const _listConfigOptions = function () {
     'SSL key directory': config.get('Server:SslKey'),
     'SSL certificate directory': config.get('Server:SslCert'),
     'Intermediate key directory': config.get('Server:IntermediateCert'),
-    'Home url': config.get('Email:HomeUrl'),
-    'Email activation': config.get('Email:ActivationEnabled'),
-    'Email address': config.get('Email:Address'),
-    'Email password': config.get('Email:Password'),
-    'Email service': config.get('Email:Service'),
     'Log files directory': config.get('Service:LogsDirectory'),
     'Log files size': config.get('Service:LogsFileSize'),
     'Log files count': config.get('Service:LogsFileCount'),
-    'Dev mode': config.get('Server:DevMode'),
-    'Kubelet Url': config.get('Kubelet:Uri')
+    'Dev mode': config.get('Server:DevMode')
   }
 
   const result = Object.keys(configuration)
@@ -306,12 +222,6 @@ const _changeDevModeState = async function (options) {
   const enableDevMode = AppHelper.validateBooleanCliOptions(options.on, options.off)
   config.set('Server:DevMode', enableDevMode)
   logger.cliRes('Dev mode state updated successfully.')
-}
-
-const _changeEmailActivationState = function (options) {
-  const enableEmailActivation = AppHelper.validateBooleanCliOptions(options.on, options.off)
-  config.set('Email:ActivationEnabled', enableEmailActivation)
-  logger.cliRes('Email activation state updated successfully.')
 }
 
 module.exports = new Config()

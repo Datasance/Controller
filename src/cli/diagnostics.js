@@ -16,7 +16,6 @@ const constants = require('../helpers/constants')
 const logger = require('../logger')
 const DiagnosticService = require('../services/diagnostic-service')
 const AppHelper = require('../helpers/app-helper')
-const AuthDecorator = require('../decorators/cli-decorator')
 const CliDataTypes = require('./cli-data-types')
 
 class Diagnostics extends BaseCLIHandler {
@@ -141,13 +140,7 @@ class Diagnostics extends BaseCLIHandler {
 const _executeCase = async function (diagnosticCommand, commandName, f, isUserRequired) {
   try {
     const item = diagnosticCommand[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = AuthDecorator.prepareUserById(f)
-      await decoratedFunction(item)
-    } else {
-      await f(item)
-    }
+    await f(item)
   } catch (error) {
     logger.error(error.message)
   }

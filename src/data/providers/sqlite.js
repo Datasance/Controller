@@ -3,13 +3,13 @@ const fs = require('fs')
 const Sequelize = require('sequelize')
 
 const config = require('../../config')
-const DatabaseProvider = require(`./database-provider`)
+const DatabaseProvider = require('./database-provider')
 
 class SqliteDatabaseProvider extends DatabaseProvider {
   constructor () {
     super()
 
-    const sqliteConfig = config.get('Database:Config', {})
+    const sqliteConfig = config.get('Database:Config:sqlite', {})
     sqliteConfig.dialect = 'sqlite'
     sqliteConfig.databaseName = process.env.DB_NAME || sqliteConfig.databaseName
     if (!sqliteConfig.databaseName.endsWith('.sqlite')) {

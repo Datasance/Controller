@@ -18,7 +18,7 @@ const db = require('./data/models')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const express = require('express')
-const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@iofog/ecn-viewer')
+const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@datasance/ecn-viewer')
 const fs = require('fs')
 const helmet = require('helmet')
 const cors = require('cors')
@@ -34,6 +34,9 @@ const multerMemStorage = multer.memoryStorage()
 const uploadFile = (fileName) => multer({
   storage: multerMemStorage
 }).single(fileName)
+const keycloak = require('./config/keycloak.js').initKeycloak()
+const session = require('express-session')
+const memoryStore = require('./config/keycloak.js').getMemoryStore()
 
 const viewerApp = express()
 
@@ -46,7 +49,13 @@ app.use(xss())
 
 // express logs
 // app.use(morgan('combined'));
-
+app.use(session({
+  secret: 'pot-controller',
+  resave: false,
+  saveUninitialized: true,
+  store: memoryStore
+}))
+app.use(keycloak.middleware())
 app.use(bodyParser.urlencoded({
   extended: true
 }))
@@ -173,6 +182,9 @@ const viewerURL = process.env.VIEWER_URL || config.get('Viewer:Url')
 const sslKey = config.get('Server:SslKey')
 const sslCert = config.get('Server:SslCert')
 const intermedKey = config.get('Server:IntermediateCert')
+const kcRealm = process.env.KC_REALM
+const kcURL = `${process.env.KC_URL}`
+const kcClient = process.env.KC_VIEWER_CLIENT
 
 viewerApp.use('/', ecnViewer.middleware(express))
 
@@ -198,10 +210,13 @@ const initState = async () => {
     })
   }
   // Set up controller-config.js for ECN Viewer
-  const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@iofog', 'ecn-viewer', 'build', 'controller-config.js')
+  const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@datasance', 'ecn-viewer', 'build', 'controller-config.js')
   const ecnViewerControllerConfig = {
     port: apiPort,
-    user: {}
+    user: {},
+    keycloakURL: kcURL,
+    keycloakRealm: kcRealm,
+    keycloakClientid: kcClient
   }
   if (viewerURL) {
     ecnViewerControllerConfig.url = viewerURL

@@ -15,6 +15,7 @@ const FlowController = require('../controllers/application-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -31,14 +32,17 @@ module.exports = [
         }
       ]
 
-      const getFlowsByUserEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationsByUserEndPoint, successCode, errorCodes)
-      const responseObject = await getFlowsByUserEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getFlowsByUserEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationsByUserEndPoint, successCode, errorCodes)
+        const responseObject = await getFlowsByUserEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send({ flows: responseObject.body.applications })
+        res
+          .status(responseObject.code)
+          .send({ flows: responseObject.body.applications })
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -59,14 +63,17 @@ module.exports = [
         }
       ]
 
-      const createFlowEndPoint = ResponseDecorator.handleErrors(FlowController.createApplicationEndPoint, successCode, errorCodes)
-      const responseObject = await createFlowEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createFlowEndPoint = ResponseDecorator.handleErrors(FlowController.createApplicationEndPoint, successCode, errorCodes)
+        const responseObject = await createFlowEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -87,14 +94,17 @@ module.exports = [
         }
       ]
 
-      const getFlowEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationByIdEndPoint, successCode, errorCodes)
-      const responseObject = await getFlowEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getFlowEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationByIdEndPoint, successCode, errorCodes)
+        const responseObject = await getFlowEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -119,14 +129,17 @@ module.exports = [
         }
       ]
 
-      const updateFlowEndPoint = ResponseDecorator.handleErrors(FlowController.patchApplicationByIdEndPoint, successCode, errorCodes)
-      const responseObject = await updateFlowEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const updateFlowEndPoint = ResponseDecorator.handleErrors(FlowController.patchApplicationByIdEndPoint, successCode, errorCodes)
+        const responseObject = await updateFlowEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -147,14 +160,17 @@ module.exports = [
         }
       ]
 
-      const deleteFlowEndPoint = ResponseDecorator.handleErrors(FlowController.deleteApplicationByIdEndPoint, successCode, errorCodes)
-      const responseObject = await deleteFlowEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteFlowEndPoint = ResponseDecorator.handleErrors(FlowController.deleteApplicationByIdEndPoint, successCode, errorCodes)
+        const responseObject = await deleteFlowEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

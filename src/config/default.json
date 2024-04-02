@@ -5,16 +5,9 @@
   "Viewer": {
     "Port": 80
   },
-  "Kubelet": {
-    "Uri": "http://localhost:1234"
-  },
   "Server": {
     "Port": 51121,
     "DevMode": false
-  },
-  "Email": {
-    "ActivationEnabled": false,
-    "HomeUrl": "https://google.com"
   },
   "Service": {
     "LogsDirectory": "/var/log/iofog-controller",
@@ -23,7 +16,6 @@
   },
   "Settings": {
     "DefaultJobIntervalSeconds": 120,
-    "UserTokenExpirationIntervalSeconds": 3600,
     "FogTokenExpirationIntervalSeconds": 3600,
     "FogStatusUpdateIntervalSeconds": 30,
     "FogStatusUpdateTolerance": 3
@@ -32,7 +24,7 @@
     "DiagnosticDir": "diagnostic"
   },
   "PublicPorts": {
-    "Range": "6000-7000",
+    "Range": "6001-7999",
     "ProxyBrokerUrl": "http://localhost:3000",
     "ProxyBrokerToken": ""
   },

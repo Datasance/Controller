@@ -1,6 +1,7 @@
 FROM node:hydrogen-bookworm AS builder
 
 ARG PKG_VERSION
+ARG GITHUB_TOKEN
 
 WORKDIR /tmp
 
@@ -9,6 +10,11 @@ RUN npm i -g npm
 COPY package.json .
 
 COPY . .
+
+# Set GitHub npm registry with authentication token
+RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
+
+RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i --build-from-source
 
@@ -35,7 +41,7 @@ COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /tmp/iofog-controller.t
 RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
-# RUN sudo rm -rf /usr/local/lib/node_modules/iofogcontroller/src/data/sqlite_files
+
 LABEL org.opencontainers.image.description controller
 LABEL org.opencontainers.image.source=https://github.com/datasance/controller
 LABEL org.opencontainers.image.licenses=EPL2.0

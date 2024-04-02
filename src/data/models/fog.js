@@ -324,16 +324,6 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     })
 
-    Fog.belongsTo(models.User, {
-      foreignKey: {
-        name: 'userId',
-        field: 'user_id'
-      },
-      as: 'user',
-      defaultValue: 0,
-      onDelete: 'cascade'
-    })
-
     Fog.hasOne(models.FogAccessToken, {
       foreignKey: 'iofog_uuid',
       as: 'accessToken'

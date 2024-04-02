@@ -17,16 +17,11 @@ const statusControllerEndPoint = async function (req) {
   return ControllerService.statusController(false)
 }
 
-const emailActivationEndPoint = async function (req) {
-  return ControllerService.emailActivation(false)
-}
-
 const fogTypesEndPoint = async function (req) {
   return ControllerService.getFogTypes(false)
 }
 
 module.exports = {
   statusControllerEndPoint: statusControllerEndPoint,
-  emailActivationEndPoint: emailActivationEndPoint,
   fogTypesEndPoint: fogTypesEndPoint
 }

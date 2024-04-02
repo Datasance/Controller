@@ -24,7 +24,6 @@ const CatalogItem = models.CatalogItem
 const CatalogItemImage = models.CatalogItemImage
 const Fog = models.Fog
 const Application = models.Application
-const User = models.User
 const Routing = models.Routing
 const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
@@ -347,14 +346,6 @@ class MicroserviceManager extends BaseManager {
           model: Application,
           as: 'application',
           required: true,
-          include: [
-            {
-              model: User,
-              as: 'user',
-              required: true,
-              attributes: ['id']
-            }
-          ],
           attributes: ['id']
         }
       ],

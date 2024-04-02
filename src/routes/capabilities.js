@@ -11,6 +11,7 @@
  *
  */
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -18,7 +19,11 @@ module.exports = [
     path: '/api/v1/capabilities/edgeResources',
     middleware: async (req, res) => {
       logger.apiReq(req)
-      res.sendStatus(204)
+
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        res.sendStatus(204)
+      })
     }
   },
   {
@@ -26,7 +31,11 @@ module.exports = [
     path: '/api/v1/capabilities/applicationTemplates',
     middleware: async (req, res) => {
       logger.apiReq(req)
-      res.sendStatus(204)
+
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        res.sendStatus(204)
+      })
     }
   }
 ]

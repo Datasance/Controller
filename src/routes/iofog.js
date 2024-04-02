@@ -15,6 +15,7 @@ const FogController = require('../controllers/iofog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -35,14 +36,17 @@ module.exports = [
         }
       ]
 
-      const getFogList = ResponseDecorator.handleErrors(FogController.getFogListEndPoint, successCode, errCodes)
-      const responseObject = await getFogList(req)
+      // Add keycloak.protect() middleware to protect the route for SRE, Developer, and Viewer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getFogList = ResponseDecorator.handleErrors(FogController.getFogListEndPoint, successCode, errCodes)
+        const responseObject = await getFogList(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -64,14 +68,17 @@ module.exports = [
         }
       ]
 
-      const createFog = ResponseDecorator.handleErrors(FogController.createFogEndPoint, successCode, errCodes)
-      const responseObject = await createFog(req)
+      // Protect the route with SRE access control
+      await keycloak.protect('SRE')(req, res, async () => {
+        const createFog = ResponseDecorator.handleErrors(FogController.createFogEndPoint, successCode, errCodes)
+        const responseObject = await createFog(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -97,14 +104,17 @@ module.exports = [
         }
       ]
 
-      const updateFog = ResponseDecorator.handleErrors(FogController.updateFogEndPoint, successCode, errCodes)
-      const responseObject = await updateFog(req)
+      // Protect the route with SRE access control
+      await keycloak.protect('SRE')(req, res, async () => {
+        const updateFog = ResponseDecorator.handleErrors(FogController.updateFogEndPoint, successCode, errCodes)
+        const responseObject = await updateFog(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -125,14 +135,17 @@ module.exports = [
         }
       ]
 
-      const deleteFog = ResponseDecorator.handleErrors(FogController.deleteFogEndPoint, successCode, errCodes)
-      const responseObject = await deleteFog(req)
+      // Protect the route with SRE access control
+      await keycloak.protect('SRE')(req, res, async () => {
+        const deleteFog = ResponseDecorator.handleErrors(FogController.deleteFogEndPoint, successCode, errCodes)
+        const responseObject = await deleteFog(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -153,14 +166,17 @@ module.exports = [
         }
       ]
 
-      const getFog = ResponseDecorator.handleErrors(FogController.getFogEndPoint, successCode, errCodes)
-      const responseObject = await getFog(req)
+      // Protect the route with SRE, Developer, and Viewer access control
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getFog = ResponseDecorator.handleErrors(FogController.getFogEndPoint, successCode, errCodes)
+        const responseObject = await getFog(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -181,15 +197,17 @@ module.exports = [
         }
       ]
 
-      const generateFogProvisioningKey = ResponseDecorator.handleErrors(FogController.generateProvisioningKeyEndPoint,
-        successCode, errCodes)
-      const responseObject = await generateFogProvisioningKey(req)
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const generateFogProvisioningKey = ResponseDecorator.handleErrors(FogController.generateProvisioningKeyEndPoint,
+          successCode, errCodes)
+        const responseObject = await generateFogProvisioningKey(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -214,15 +232,17 @@ module.exports = [
         }
       ]
 
-      const setFogVersionCommand = ResponseDecorator.handleErrors(FogController.setFogVersionCommandEndPoint,
-        successCode, errCodes)
-      const responseObject = await setFogVersionCommand(req)
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const setFogVersionCommand = ResponseDecorator.handleErrors(FogController.setFogVersionCommandEndPoint,
+          successCode, errCodes)
+        const responseObject = await setFogVersionCommand(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -247,15 +267,17 @@ module.exports = [
         }
       ]
 
-      const setFogRebootCommand = ResponseDecorator.handleErrors(FogController.setFogRebootCommandEndPoint,
-        successCode, errCodes)
-      const responseObject = await setFogRebootCommand(req)
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const setFogRebootCommand = ResponseDecorator.handleErrors(FogController.setFogRebootCommandEndPoint,
+          successCode, errCodes)
+        const responseObject = await setFogRebootCommand(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -276,15 +298,17 @@ module.exports = [
         }
       ]
 
-      const getHalHardwareInfo = ResponseDecorator.handleErrors(FogController.getHalHardwareInfoEndPoint,
-        successCode, errCodes)
-      const responseObject = await getHalHardwareInfo(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getHalHardwareInfo = ResponseDecorator.handleErrors(FogController.getHalHardwareInfoEndPoint,
+          successCode, errCodes)
+        const responseObject = await getHalHardwareInfo(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -305,14 +329,16 @@ module.exports = [
         }
       ]
 
-      const getHalUsbInfo = ResponseDecorator.handleErrors(FogController.getHalUsbInfoEndPoint, successCode, errCodes)
-      const responseObject = await getHalUsbInfo(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getHalUsbInfo = ResponseDecorator.handleErrors(FogController.getHalUsbInfoEndPoint, successCode, errCodes)
+        const responseObject = await getHalUsbInfo(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -337,15 +363,17 @@ module.exports = [
         }
       ]
 
-      const setFogPruneCommand = ResponseDecorator.handleErrors(FogController.setFogPruneCommandEndPoint,
-        successCode, errCodes)
-      const responseObject = await setFogPruneCommand(req)
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const setFogPruneCommand = ResponseDecorator.handleErrors(FogController.setFogPruneCommandEndPoint,
+          successCode, errCodes)
+        const responseObject = await setFogPruneCommand(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

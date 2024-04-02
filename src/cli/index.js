@@ -13,7 +13,6 @@
 
 const BaseCLIHandler = require('./base-cli-handler')
 const Start = require('./start')
-const User = require('./user')
 const Config = require('./config')
 const Tunnel = require('./tunnel')
 const IOFog = require('./iofog')
@@ -65,8 +64,6 @@ class Cli extends BaseCLIHandler {
         return
       case constants.CMD_CONTROLLER:
         return Controller.run({ argv })
-      case constants.CMD_USER:
-        return User.run({ argv })
       case constants.CMD_CONFIG:
         return Config.run({ argv })
       case constants.CMD_TUNNEL:

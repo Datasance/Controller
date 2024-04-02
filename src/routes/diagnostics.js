@@ -16,6 +16,7 @@ const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const fs = require('fs')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -36,18 +37,21 @@ module.exports = [
         }
       ]
 
-      const createMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
-        DiagnosticController.createMicroserviceImageSnapshotEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await createMicroserviceImageSnapshotEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
+          DiagnosticController.createMicroserviceImageSnapshotEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createMicroserviceImageSnapshotEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -68,26 +72,29 @@ module.exports = [
         }
       ]
 
-      const getMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
-        DiagnosticController.getMicroserviceImageSnapshotEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await getMicroserviceImageSnapshotEndPoint(req)
-      if (responseObject.code !== successCode) {
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const getMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
+          DiagnosticController.getMicroserviceImageSnapshotEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getMicroserviceImageSnapshotEndPoint(req)
+        if (responseObject.code !== successCode) {
+          res
+            .status(responseObject.code)
+            .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
-      } else {
-        res.writeHead(successCode, {
-          'Content-Length': responseObject.body['Content-Length'],
-          'Content-Type': responseObject.body['Content-Type'],
-          'Content-Disposition': 'attachment; filename=' + responseObject.body.fileName
-        })
-        fs.createReadStream(responseObject.body.filePath).pipe(res)
-      }
+          logger.apiRes({ req: req, res: responseObject })
+        } else {
+          res.writeHead(successCode, {
+            'Content-Length': responseObject.body['Content-Length'],
+            'Content-Type': responseObject.body['Content-Type'],
+            'Content-Disposition': 'attachment; filename=' + responseObject.body.fileName
+          })
+          fs.createReadStream(responseObject.body.filePath).pipe(res)
+        }
+      })
     }
   },
   {
@@ -112,18 +119,21 @@ module.exports = [
         }
       ]
 
-      const changeMicroserviceStraceStateEndPoint = ResponseDecorator.handleErrors(
-        DiagnosticController.changeMicroserviceStraceStateEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await changeMicroserviceStraceStateEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const changeMicroserviceStraceStateEndPoint = ResponseDecorator.handleErrors(
+          DiagnosticController.changeMicroserviceStraceStateEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await changeMicroserviceStraceStateEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -144,18 +154,21 @@ module.exports = [
         }
       ]
 
-      const getMicroserviceStraceDataEndPoint = ResponseDecorator.handleErrors(
-        DiagnosticController.getMicroserviceStraceDataEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await getMicroserviceStraceDataEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const getMicroserviceStraceDataEndPoint = ResponseDecorator.handleErrors(
+          DiagnosticController.getMicroserviceStraceDataEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getMicroserviceStraceDataEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -184,18 +197,21 @@ module.exports = [
         }
       ]
 
-      const postMicroserviceStraceDataToFtpEndPoint = ResponseDecorator.handleErrors(
-        DiagnosticController.postMicroserviceStraceDataToFtpEndPoint,
-        successCode,
-        errorCodes
-      )
-      const responseObject = await postMicroserviceStraceDataToFtpEndPoint(req)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const postMicroserviceStraceDataToFtpEndPoint = ResponseDecorator.handleErrors(
+          DiagnosticController.postMicroserviceStraceDataToFtpEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await postMicroserviceStraceDataToFtpEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

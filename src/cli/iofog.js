@@ -15,7 +15,6 @@ const BaseCLIHandler = require('./base-cli-handler')
 const constants = require('../helpers/constants')
 const logger = require('../logger')
 const fs = require('fs')
-const CliDecorator = require('../decorators/cli-decorator')
 const AppHelper = require('../helpers/app-helper')
 const FogService = require('../services/iofog-service')
 const CliDataTypes = require('./cli-data-types')
@@ -249,13 +248,6 @@ class IOFog extends BaseCLIHandler {
         group: [constants.CMD_VERSION]
       },
       {
-        name: 'user-id',
-        alias: 'u',
-        type: CliDataTypes.Integer,
-        description: 'User\'s id',
-        group: [constants.CMD_ADD, constants.CMD_UPDATE, constants.CMD_REMOVE]
-      },
-      {
         name: 'log-level',
         alias: 'L',
         type: String,
@@ -365,13 +357,7 @@ class IOFog extends BaseCLIHandler {
 async function _executeCase (commands, commandName, f, isUserRequired) {
   try {
     const obj = commands[commandName]
-
-    if (isUserRequired) {
-      const decoratedFunction = CliDecorator.prepareUserById(f)
-      await decoratedFunction(obj)
-    } else {
-      await f(obj)
-    }
+    await f(obj)
   } catch (error) {
     logger.error(error.message)
   }
@@ -507,7 +493,6 @@ function _createFogObject (cliData) {
     abstractedHardwareEnabled: AppHelper.validateBooleanCliOptions(cliData.absHwEnable, cliData.absHwDisable),
 
     fogType: cliData.fogType,
-    userId: cliData.userId,
     dockerPruningFrequency: cliData.dockerPruningFrequency,
     availableDiskThreshold: cliData.availableDiskThreshold,
     logLevel: cliData.logLevel,

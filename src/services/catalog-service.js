@@ -26,11 +26,11 @@ const RegistryManager = require('../data/managers/registry-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroseriveStates = require('../enums/microservice-state')
 
-const createCatalogItemEndPoint = async function (data, user, transaction) {
+const createCatalogItemEndPoint = async function (data, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemCreate)
-  await _checkForDuplicateName(data.name, { userId: user.id }, transaction)
+  await _checkForDuplicateName(data.name, transaction)
   await _checkForRestrictedPublisher(data.publisher)
-  const catalogItem = await _createCatalogItem(data, user, transaction)
+  const catalogItem = await _createCatalogItem(data, transaction)
   await _createCatalogImages(data, catalogItem, transaction)
   await _createCatalogItemInputType(data, catalogItem, transaction)
   await _createCatalogItemOutputType(data, catalogItem, transaction)
@@ -40,7 +40,7 @@ const createCatalogItemEndPoint = async function (data, user, transaction) {
   }
 }
 
-const updateCatalogItemEndPoint = async function (id, data, user, isCLI, transaction) {
+const updateCatalogItemEndPoint = async function (id, data, isCLI, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemUpdate)
 
   const where = isCLI
@@ -48,8 +48,7 @@ const updateCatalogItemEndPoint = async function (id, data, user, isCLI, transac
       id: id
     }
     : {
-      id: id,
-      userId: user.id
+      id: id
     }
 
   data.id = id
@@ -58,17 +57,16 @@ const updateCatalogItemEndPoint = async function (id, data, user, isCLI, transac
   await _updateCatalogItemIOTypes(data, where, transaction)
 }
 
-const listCatalogItemsEndPoint = async function (user, isCLI, transaction) {
+const listCatalogItemsEndPoint = async function (isCLI, transaction) {
   const where = isCLI
     ? {}
     : {
-      [Op.or]: [{ userId: user.id }, { userId: null }],
       [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
     }
 
   const attributes = isCLI
     ? {}
-    : { exclude: ['userId'] }
+    : {}
 
   const catalogItems = await CatalogItemManager.findAllWithDependencies(where, attributes, transaction)
   return {
@@ -76,18 +74,17 @@ const listCatalogItemsEndPoint = async function (user, isCLI, transaction) {
   }
 }
 
-async function getCatalogItem (id, user, isCLI, transaction) {
+async function getCatalogItem (id, isCLI, transaction) {
   const where = isCLI
     ? { id: id }
     : {
       id: id,
-      [Op.or]: [{ userId: user.id }, { userId: null }],
       [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
     }
 
   const attributes = isCLI
     ? {}
-    : { exclude: ['userId'] }
+    : {}
 
   const item = await CatalogItemManager.findOneWithDependencies(where, attributes, transaction)
   if (!item) {
@@ -96,17 +93,16 @@ async function getCatalogItem (id, user, isCLI, transaction) {
   return item
 }
 
-const getCatalogItemEndPoint = async function (id, user, isCLI, transaction) {
-  return getCatalogItem(id, user, isCLI, transaction)
+const getCatalogItemEndPoint = async function (id, isCLI, transaction) {
+  return getCatalogItem(id, isCLI, transaction)
 }
 
-const deleteCatalogItemEndPoint = async function (id, user, isCLI, transaction) {
+const deleteCatalogItemEndPoint = async function (id, isCLI, transaction) {
   const where = isCLI
     ? {
       id: id
     }
     : {
-      userId: user.id,
       id: id
     }
 
@@ -128,8 +124,7 @@ async function getNetworkCatalogItem (transaction) {
     name: 'Networking Tool',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -138,8 +133,7 @@ async function getRouterCatalogItem (transaction) {
     name: DBConstants.ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -148,8 +142,7 @@ async function getProxyCatalogItem (transaction) {
     name: DBConstants.PROXY_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -158,8 +151,7 @@ async function getPortRouterCatalogItem (transaction) {
     name: DBConstants.PORT_ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -168,8 +160,7 @@ async function getBluetoothCatalogItem (transaction) {
     name: 'RESTBlue',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
@@ -178,16 +169,15 @@ async function getHalCatalogItem (transaction) {
     name: 'HAL',
     category: 'SYSTEM',
     publisher: 'Eclipse ioFog',
-    registry_id: 1,
-    user_id: null
+    registry_id: 1
   }, transaction)
 }
 
 const _checkForDuplicateName = async function (name, item, transaction) {
   if (name) {
     const where = item.id
-      ? { [Op.or]: [{ userId: item.userId }, { userId: null }], name: name, id: { [Op.ne]: item.id } }
-      : { [Op.or]: [{ userId: item.userId }, { userId: null }], name: name }
+      ? { name: name, id: { [Op.ne]: item.id } }
+      : { name: name }
 
     const result = await CatalogItemManager.findOne(where, transaction)
     if (result) {
@@ -210,7 +200,7 @@ const _checkIfItemExists = async function (where, transaction) {
   return item
 }
 
-const _createCatalogItem = async function (data, user, transaction) {
+const _createCatalogItem = async function (data, transaction) {
   let catalogItem = {
     name: data.name,
     description: data.description,
@@ -221,8 +211,7 @@ const _createCatalogItem = async function (data, user, transaction) {
     ramRequired: data.ramRequired,
     picture: data.picture,
     isPublic: data.isPublic,
-    registryId: data.registryId,
-    userId: user.id
+    registryId: data.registryId
   }
 
   catalogItem = AppHelper.deleteUndefinedFields(catalogItem)

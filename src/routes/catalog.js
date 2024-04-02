@@ -15,6 +15,7 @@ const CatalogController = require('../controllers/catalog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -36,13 +37,17 @@ module.exports = [
         successCode,
         errorCodes
       )
-      const responseObject = await listCatalogItemsEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await listCatalogItemsEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -73,13 +78,17 @@ module.exports = [
         successCode,
         errorCodes
       )
-      const responseObject = await createCatalogItemEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await createCatalogItemEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req, res: responseObject })
+      })
     }
   },
   {
@@ -105,13 +114,17 @@ module.exports = [
         successCode,
         errorCodes
       )
-      const responseObject = await listCatalogItemEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await listCatalogItemEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req, res: responseObject })
+      })
     }
   },
   {
@@ -146,13 +159,17 @@ module.exports = [
         successCode,
         errorCodes
       )
-      const responseObject = await updateCatalogItemEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route for SRE and Developer
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await updateCatalogItemEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req, res: responseObject })
+      })
     }
   },
   {
@@ -178,13 +195,18 @@ module.exports = [
         successCode,
         errorCodes
       )
-      const responseObject = await deleteCatalogItemEndPoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const responseObject = await deleteCatalogItemEndPoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req, res: responseObject })
+      })
     }
   }
+
 ]

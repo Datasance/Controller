@@ -52,6 +52,13 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: 18
+    - name: Replace values
+      shell: bash
+      env: 
+          PAT: ${{ secrets.PAT }}
+      run: |
+        sed -i.back "s|PAT|${PAT}|g" .npmrc
+    - run: npm config set @datasance:registry https://npm.pkg.github.com/    
     - run: npm install
     - run: npm run standard
     - run: |
@@ -87,7 +94,7 @@ jobs:
           PAT: ${{ secrets.PAT }}
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
-
+    - run: npm config set @datasance:registry https://npm.pkg.github.com/ 
     - run: npm install
 
     - name: npm version
@@ -132,7 +139,7 @@ jobs:
         registry: "ghcr.io"
         username: ${{ github.actor }}
         password: ${{ secrets.PAT }}
-
+        
     - name: Build and Push to ghcr
       uses: docker/build-push-action@v3
       id: build_push_ghcr
@@ -140,6 +147,7 @@ jobs:
         file: Dockerfile.dev
         push: true
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Controller
+        build-args: GITHUB_TOKEN=${{ secrets.PAT }}
         tags: |
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
           ghcr.io/datasance/${{ env.IMAGE_NAME }}:latest

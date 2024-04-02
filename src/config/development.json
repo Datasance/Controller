@@ -5,16 +5,9 @@
   "Viewer": {
     "Port": 80
   },
-  "Kubelet": {
-    "Uri": "http://localhost:1234"
-  },
   "Server": {
     "Port": 51121,
     "DevMode": true
-  },
-  "Email": {
-    "ActivationEnabled": false,
-    "HomeUrl": "https://google.com"
   },
   "Service": {
     "LogsDirectory": "/var/log/iofog-controller",
@@ -22,8 +15,7 @@
     "LogsFileCount": 10
   },
   "Settings": {
-    "UserTokenExpirationIntervalSeconds": 360000,
-    "FogTokenExpirationIntervalSeconds": 3600000,
+    "FogTokenExpirationIntervalSeconds": 3600,
     "FogStatusUpdateIntervalSeconds": 30,
     "FogStatusUpdateTolerance": 3
   },
@@ -41,15 +33,24 @@
   "Database": {
     "Provider": "sqlite",
     "Config": {
-      "databaseName": "dev_database.sqlite",
-      "logging": false,
-      "transactionType": "IMMEDIATE",
-      "pool": {
-        "maxactive": 1,
-        "max": 1,
-        "min": 0,
-        "idle": 20000
+      "sqlite": { 
+        "databaseName": "dev_database.sqlite",
+        "logging": false,
+        "transactionType": "IMMEDIATE",
+        "pool": {
+          "maxactive": 1,
+          "max": 1,
+          "min": 0,
+          "idle": 20000
+        }
+      },
+      "mysql": {  
+        "host": "",
+        "port": "",
+        "username": "",
+        "password": "",
+        "databaseName": ""
       }
     }
-  }
+  } 
 }

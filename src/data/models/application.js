@@ -36,15 +36,6 @@ module.exports = (sequelize, DataTypes) => {
     underscored: true
   })
   Application.associate = function (models) {
-    Application.belongsTo(models.User, {
-      foreignKey: {
-        name: 'userId',
-        field: 'user_id'
-      },
-      as: 'user',
-      onDelete: 'cascade'
-    })
-
     Application.hasMany(models.Microservice, {
       foreignKey: {
         name: 'applicationId',

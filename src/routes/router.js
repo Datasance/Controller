@@ -15,6 +15,7 @@ const Router = require('../controllers/router-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -34,14 +35,22 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const getRouterEndpoint = ResponseDecorator.handleErrors(Router.getRouterEndPoint, successCode, errorCodes)
-      const responseObject = await getRouterEndpoint(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Protecting for SRE, Developer, and Viewer roles
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getRouterEndpoint = ResponseDecorator.handleErrors(
+          Router.getRouterEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await getRouterEndpoint(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -62,14 +71,22 @@ module.exports = [
           errors: [Errors.ValidationError]
         }
       ]
-      const upsertDefaultRouter = ResponseDecorator.handleErrors(Router.upsertDefaultRouter, successCode, errorCodes)
-      const responseObject = await upsertDefaultRouter(req)
 
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
+      // Protecting for SRE role
+      await keycloak.protect('SRE')(req, res, async () => {
+        const upsertDefaultRouter = ResponseDecorator.handleErrors(
+          Router.upsertDefaultRouter,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await upsertDefaultRouter(req)
 
-      logger.apiRes({ req: req, res: responseObject })
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]

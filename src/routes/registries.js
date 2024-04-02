@@ -15,6 +15,7 @@ const RegistryController = require('../controllers/registry-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
@@ -35,13 +36,16 @@ module.exports = [
           errors: [Errors.AuthenticationError]
         }
       ]
-      const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.createRegistryEndPoint, successCode, errorCodes)
-      const responseObject = await registriesEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.createRegistryEndPoint, successCode, errorCodes)
+        const responseObject = await registriesEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -61,13 +65,16 @@ module.exports = [
           errors: [Errors.AuthenticationError]
         }
       ]
-      const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.getRegistriesEndPoint, successCode, errorCodes)
-      const responseObject = await registriesEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.getRegistriesEndPoint, successCode, errorCodes)
+        const responseObject = await registriesEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -91,13 +98,16 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.deleteRegistryEndPoint, successCode, errorCodes)
-      const responseObject = await registriesEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      await keycloak.protect('SRE', 'Developer')(req, res, async () => {
+        const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.deleteRegistryEndPoint, successCode, errorCodes)
+        const responseObject = await registriesEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   },
   {
@@ -122,14 +132,17 @@ module.exports = [
           errors: [Errors.NotFoundError]
         }
       ]
-      const updateRegistryEndPoint = ResponseDecorator.handleErrors(RegistryController.updateRegistryEndPoint,
-        successCode, errorCodes)
-      const responseObject = await updateRegistryEndPoint(req)
-      res
-        .status(responseObject.code)
-        .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      // Protecting for both SRE and Developer roles
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const updateRegistryEndPoint = ResponseDecorator.handleErrors(RegistryController.updateRegistryEndPoint, successCode, errorCodes)
+        const responseObject = await updateRegistryEndPoint(req)
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, res: responseObject })
+      })
     }
   }
 ]
