@@ -214,15 +214,7 @@ async function createPortMapping (microservice, portMappingData, transaction) {
 
   const msPorts = await MicroservicePortManager.findOne({
     microserviceUuid: microservice.uuid,
-    [Op.or]:
-      [
-        {
-          portInternal: portMappingData.internal
-        },
-        {
-          portExternal: portMappingData.external
-        }
-      ]
+    [Op.or]: []
   }, transaction)
   if (msPorts) {
     throw new Errors.ValidationError(ErrorMessages.PORT_MAPPING_ALREADY_EXISTS)
