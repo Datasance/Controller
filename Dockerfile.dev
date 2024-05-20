@@ -1,4 +1,4 @@
-FROM node:hydrogen-bookworm AS builder
+FROM node:iron-bookworm AS builder
 
 ARG PKG_VERSION
 ARG GITHUB_TOKEN
@@ -16,13 +16,13 @@ RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
 
 RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
-RUN npm i --build-from-source
+RUN npm i --build-from-source --force
 
 RUN npm version $PKG_VERSION --allow-same-version --no-git-tag-version
 
 RUN npm pack
 
-FROM node:hydrogen-alpine3.17
+FROM node:iron-alpine3.18
 
 RUN apk add sudo logrotate g++ make
 

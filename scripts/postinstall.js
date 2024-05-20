@@ -14,7 +14,7 @@
 // const sqlite3 = require('sqlite3') // .verbose() //use verbose in dev to get stack traces
 const execSync = require('child_process').execSync
 const fs = require('fs')
-const semver = require('semver')
+const compareVersions = require('compare-versions')
 
 const config = require('../src/config')
 const currentVersion = require('../package').version
@@ -34,16 +34,16 @@ function postinstall () {
     console.log(`previous version - ${prevVersion}`)
     console.log(`new version - ${currentVersion}`)
 
-    if (semver.satisfies(prevVersion, '<=1.0.0')) {
+    if (compareVersions(prevVersion, '<=1.0.0')) {
       console.log('upgrading from version <= 1.0.0 :')
       insertSeeds()
     }
 
-    if (semver.satisfies(prevVersion, '<=1.0.30')) {
+    if (compareVersions(prevVersion, '<=1.0.30')) {
       console.log('upgrading from version <= 1.0.30 :')
       updateEncryptionMethod()
     }
-    if (semver.satisfies(prevVersion, '<=1.0.37')) {
+    if (compareVersions(prevVersion, '<=1.0.37')) {
       console.log('upgrading from version <= 1.0.37 :')
       updateLogName()
     }
@@ -56,8 +56,8 @@ function postinstall () {
   // init db
   const options = {
     env: {
-      'NODE_ENV': 'production',
-      'PATH': process.env.PATH
+      NODE_ENV: 'production',
+      PATH: process.env.PATH
     },
     stdio: [process.stdin, process.stdout, process.stderr]
   }
@@ -184,5 +184,5 @@ function updateLogName () {
 }
 
 module.exports = {
-  postinstall: postinstall
+  postinstall
 }
