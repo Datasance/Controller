@@ -51,7 +51,7 @@ jobs:
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
     - run: npm config set @datasance:registry https://npm.pkg.github.com/    
-    - run: npm install
+    - run: npm install --build-from-source --force
     - run: npm run standard
     - run: |
         npm i -g better-npm-audit
@@ -124,7 +124,7 @@ jobs:
             VERSION=${{ steps.previoustag.outputs.tag }}
             echo "VERSION=${VERSION:1}-${{ github.run_number }}" >> "${GITHUB_OUTPUT}"
         fi
-        
+
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
