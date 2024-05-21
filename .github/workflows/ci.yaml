@@ -87,7 +87,7 @@ jobs:
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
     - run: npm config set @datasance:registry https://npm.pkg.github.com/ 
-    - run: npm install
+    - run: npm install --build-from-source --force
 
     - name: npm version
       id: package-version
