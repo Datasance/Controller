@@ -45,12 +45,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await createMicroserviceImageSnapshotEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -80,12 +80,13 @@ module.exports = [
           errorCodes
         )
         const responseObject = await getMicroserviceImageSnapshotEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
         if (responseObject.code !== successCode) {
           res
             .status(responseObject.code)
             .send(responseObject.body)
 
-          logger.apiRes({ req: req, res: responseObject })
+          logger.apiRes({ req: req, user: user, res: responseObject })
         } else {
           res.writeHead(successCode, {
             'Content-Length': responseObject.body['Content-Length'],
@@ -127,12 +128,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await changeMicroserviceStraceStateEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -162,12 +163,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await getMicroserviceStraceDataEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -205,12 +206,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await postMicroserviceStraceDataToFtpEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

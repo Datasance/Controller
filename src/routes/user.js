@@ -66,12 +66,12 @@ module.exports = [
         errorCodes
       )
       const responseObject = await getUserProfileEndPoint(req)
-
+      const user = req.kauth.grant.access_token.content.preferred_username
       res
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes({ req: req, res: responseObject })
+      logger.apiRes({ req: req, user: user, res: responseObject })
     }
   },
   {

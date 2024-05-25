@@ -36,12 +36,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getEdgeResourcesEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.listEdgeResourcesEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourcesEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -67,12 +67,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -98,12 +98,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getEdgeResourceAllVersionsEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceAllVersionsEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourceAllVersionsEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -134,12 +134,12 @@ module.exports = [
       await keycloak.protect(['SRE'])(req, res, async () => {
         const updateEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.updateEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await updateEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -169,12 +169,12 @@ module.exports = [
       await keycloak.protect(['SRE'])(req, res, async () => {
         const deleteEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.deleteEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await deleteEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -201,12 +201,12 @@ module.exports = [
       await keycloak.protect(['SRE'])(req, res, async () => {
         const createEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.createEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await createEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -232,12 +232,12 @@ module.exports = [
       await keycloak.protect(['SRE'])(req, res, async () => {
         const linkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.linkEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await linkEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -263,12 +263,12 @@ module.exports = [
       await keycloak.protect(['SRE'])(req, res, async () => {
         const unlinkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.unlinkEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await unlinkEdgeResourceEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

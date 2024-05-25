@@ -39,12 +39,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await listAllPublicPortsEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -66,12 +66,12 @@ module.exports = [
         const getMicroservicesByApplicationEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroservicesByApplicationEndPoint,
           successCode, errorCodes)
         const responseObject = await getMicroservicesByApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -98,12 +98,12 @@ module.exports = [
         const createMicroservicesOnFogEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.createMicroserviceOnFogEndPoint, successCode, errorCodes)
         const responseObject = await createMicroservicesOnFogEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -131,12 +131,12 @@ module.exports = [
         const createMicroservicesYAMLEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.createMicroserviceYAMLEndPoint, successCode, errorCodes)
         const responseObject = await createMicroservicesYAMLEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -162,12 +162,12 @@ module.exports = [
         const getMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.getMicroserviceEndPoint,
           successCode, errorCodes)
         const responseObject = await getMicroserviceEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -198,12 +198,12 @@ module.exports = [
         const updateMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceEndPoint,
           successCode, errorCodes)
         const responseObject = await updateMicroserviceEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -236,12 +236,12 @@ module.exports = [
         const updateMicroserviceYAMLEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateMicroserviceYAMLEndPoint,
           successCode, errorCodes)
         const responseObject = await updateMicroserviceYAMLEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -267,12 +267,12 @@ module.exports = [
         const deleteMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.deleteMicroserviceEndPoint,
           successCode, errorCodes)
         const responseObject = await deleteMicroserviceEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -302,12 +302,12 @@ module.exports = [
         const createMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.createMicroserviceRouteEndPoint, successCode, errorCodes)
         const responseObject = await createMicroserviceRouteEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -337,12 +337,12 @@ module.exports = [
         const deleteMicroserviceRouteEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.deleteMicroserviceRouteEndPoint, successCode, errorCodes)
         const responseObject = await deleteMicroserviceRouteEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -372,12 +372,12 @@ module.exports = [
         const createMicroservicePortMappingEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.createMicroservicePortMappingEndPoint, successCode, errorCodes)
         const responseObject = await createMicroservicePortMappingEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -403,12 +403,12 @@ module.exports = [
         const deleteMicroservicePortMapping = ResponseDecorator.handleErrors(
           MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
         const responseObject = await deleteMicroservicePortMapping(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -434,12 +434,12 @@ module.exports = [
         const getMicroservicePortMapping = ResponseDecorator.handleErrors(
           MicroservicesController.getMicroservicePortMappingListEndPoint, successCode, errorCodes)
         const responseObject = await getMicroservicePortMapping(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -468,12 +468,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await listMicroserviceVolumeMappingEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -506,12 +506,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await createMicroserviceVolumeMappingEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -544,12 +544,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await deleteMicroserviceVolumeMappingEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

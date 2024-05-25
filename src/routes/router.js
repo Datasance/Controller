@@ -44,12 +44,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await getRouterEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -80,12 +80,12 @@ module.exports = [
           errorCodes
         )
         const responseObject = await upsertDefaultRouter(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

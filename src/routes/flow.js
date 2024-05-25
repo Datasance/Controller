@@ -36,12 +36,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getFlowsByUserEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationsByUserEndPoint, successCode, errorCodes)
         const responseObject = await getFlowsByUserEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send({ flows: responseObject.body.applications })
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -67,12 +67,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const createFlowEndPoint = ResponseDecorator.handleErrors(FlowController.createApplicationEndPoint, successCode, errorCodes)
         const responseObject = await createFlowEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -98,12 +98,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getFlowEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await getFlowEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -133,12 +133,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const updateFlowEndPoint = ResponseDecorator.handleErrors(FlowController.patchApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await updateFlowEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -164,12 +164,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const deleteFlowEndPoint = ResponseDecorator.handleErrors(FlowController.deleteApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await deleteFlowEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }
