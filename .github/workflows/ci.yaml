@@ -23,7 +23,7 @@ env:
 
 jobs:
   Build:
-    runs-on: ubuntu-20.04  
+    runs-on: ubuntu-22.04  
     permissions:
       actions: write
       checks: write
@@ -59,7 +59,7 @@ jobs:
 
   Publish:
     needs: [Build]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       actions: write
       checks: write
