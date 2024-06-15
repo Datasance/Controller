@@ -37,12 +37,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const responseObject = await getApplicationsByUserEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -70,12 +70,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await createApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -103,12 +103,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await createApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -135,12 +135,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const responseObject = await getApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
         return null
       })
     }
@@ -173,12 +173,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -210,12 +210,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -247,12 +247,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -279,12 +279,12 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await deleteApplicationEndPoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

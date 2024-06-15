@@ -3826,6 +3826,9 @@ components:
         accessMode:
           type: string
           example: rw
+        type: 
+          type: string
+          example: bind
     PortMappingsResponse:
       type: object
       properties:

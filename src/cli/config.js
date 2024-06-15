@@ -79,6 +79,20 @@ class Config extends BaseCLIHandler {
         type: CliDataTypes.Integer,
         description: 'Log files count',
         group: constants.CMD_ADD
+      },
+      {
+        name: 'on',
+        alias: 'o',
+        type: Boolean,
+        description: 'Enable',
+        group: [constants.CMD_DEV_MODE]
+      },
+      {
+        name: 'off',
+        alias: 'f',
+        type: Boolean,
+        description: 'Disable',
+        group: [constants.CMD_DEV_MODE]
       }
     ]
     this.commands = {

@@ -36,12 +36,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getConfigEndpoint = ResponseDecorator.handleErrors(ConfigController.listConfigEndpoint, successCode, errorCodes)
         const responseObject = await getConfigEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -67,12 +67,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getConfigEndpoint = ResponseDecorator.handleErrors(ConfigController.getConfigEndpoint, successCode, errorCodes)
         const responseObject = await getConfigEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -99,12 +99,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const upsertConfigElementEndpoint = ResponseDecorator.handleErrors(ConfigController.upsertConfigElementEndpoint, successCode, errorCodes)
         const responseObject = await upsertConfigElementEndpoint(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

@@ -53,7 +53,8 @@ const defaultFormat = {
           {
             params: log.req.params,
             query: log.req.query,
-            body: log.req.body
+            body: log.req.body,
+            username: log.req.kauth && log.req.kauth.grant && log.req.kauth.grant.access_token && log.req.kauth.grant.access_token.content && log.req.kauth.grant.access_token.content.preferred_username
           }
         )
       }

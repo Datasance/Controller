@@ -40,11 +40,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.createRegistryEndPoint, successCode, errorCodes)
         const responseObject = await registriesEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -69,11 +70,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.getRegistriesEndPoint, successCode, errorCodes)
         const responseObject = await registriesEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -102,11 +104,12 @@ module.exports = [
       await keycloak.protect('SRE', 'Developer')(req, res, async () => {
         const registriesEndPoint = ResponseDecorator.handleErrors(RegistryController.deleteRegistryEndPoint, successCode, errorCodes)
         const responseObject = await registriesEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -137,11 +140,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const updateRegistryEndPoint = ResponseDecorator.handleErrors(RegistryController.updateRegistryEndPoint, successCode, errorCodes)
         const responseObject = await updateRegistryEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

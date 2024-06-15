@@ -40,12 +40,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getFogList = ResponseDecorator.handleErrors(FogController.getFogListEndPoint, successCode, errCodes)
         const responseObject = await getFogList(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -72,12 +72,12 @@ module.exports = [
       await keycloak.protect('SRE')(req, res, async () => {
         const createFog = ResponseDecorator.handleErrors(FogController.createFogEndPoint, successCode, errCodes)
         const responseObject = await createFog(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -108,12 +108,12 @@ module.exports = [
       await keycloak.protect('SRE')(req, res, async () => {
         const updateFog = ResponseDecorator.handleErrors(FogController.updateFogEndPoint, successCode, errCodes)
         const responseObject = await updateFog(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -139,12 +139,12 @@ module.exports = [
       await keycloak.protect('SRE')(req, res, async () => {
         const deleteFog = ResponseDecorator.handleErrors(FogController.deleteFogEndPoint, successCode, errCodes)
         const responseObject = await deleteFog(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -170,12 +170,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getFog = ResponseDecorator.handleErrors(FogController.getFogEndPoint, successCode, errCodes)
         const responseObject = await getFog(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -201,12 +201,12 @@ module.exports = [
         const generateFogProvisioningKey = ResponseDecorator.handleErrors(FogController.generateProvisioningKeyEndPoint,
           successCode, errCodes)
         const responseObject = await generateFogProvisioningKey(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -236,12 +236,12 @@ module.exports = [
         const setFogVersionCommand = ResponseDecorator.handleErrors(FogController.setFogVersionCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogVersionCommand(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -271,12 +271,12 @@ module.exports = [
         const setFogRebootCommand = ResponseDecorator.handleErrors(FogController.setFogRebootCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogRebootCommand(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -302,12 +302,12 @@ module.exports = [
         const getHalHardwareInfo = ResponseDecorator.handleErrors(FogController.getHalHardwareInfoEndPoint,
           successCode, errCodes)
         const responseObject = await getHalHardwareInfo(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -332,12 +332,12 @@ module.exports = [
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
         const getHalUsbInfo = ResponseDecorator.handleErrors(FogController.getHalUsbInfoEndPoint, successCode, errCodes)
         const responseObject = await getHalUsbInfo(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   },
@@ -367,12 +367,12 @@ module.exports = [
         const setFogPruneCommand = ResponseDecorator.handleErrors(FogController.setFogPruneCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogPruneCommand(req)
-
+        const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: responseObject })
       })
     }
   }

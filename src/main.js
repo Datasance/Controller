@@ -17,7 +17,7 @@ const Cli = require('./cli')
 const daemon = require('./daemon')
 const config = require('./config')
 const isElevated = require('is-elevated')
-const request = require('request-promise')
+const fetch = require('node-fetch-npm')
 
 const isHTTPS = () => {
   const sslKey = config.get('Server:SslKey', '')
@@ -27,10 +27,13 @@ const isHTTPS = () => {
   return !devMode && sslKey && sslCert && intermedKey
 }
 
-const getJSONFromURL = async (uri) => request({
-  uri,
-  json: true
-})
+const getJSONFromURL = async (uri) => {
+  const response = await fetch(uri)
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`)
+  }
+  return response.json()
+}
 
 const apiPort = +(config.get('Server:Port', 51121))
 const viewerPort = +(process.env.VIEWER_PORT || config.get('Viewer:Port', 80))
