@@ -84,7 +84,7 @@
     "moment-timezone": "0.5.45",
     "morgan": "1.10.0",
     "multer": "1.4.5-lts.1",
-    "mysql2": "3.9.7",
+    "mysql2": "3.9.8",
     "nconf": "0.12.1",
     "node-fetch-npm": "^2.0.4",
     "npm-check-updates": "^16.14.20",
@@ -99,7 +99,7 @@
     "sqlite3": "^5.1.7",
     "string-format": "2.0.0",
     "swagger-ui-express": "^5.0.0",
-    "umzug": "3.8.0",
+    "umzug": "3.8.1",
     "underscore": "1.13.6",
     "xss-clean": "0.1.1"
   },
