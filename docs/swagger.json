@@ -488,6 +488,71 @@
         }
       }
     },
+    "/application/system" : {
+      "get" : {
+        "tags" : [ "Application" ],
+        "summary" : "Lists all system applications",
+        "operationId" : "listSystemApplication",
+        "parameters" : [ ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/application/system/{name}" : {
+      "delete" : {
+        "tags" : [ "Application" ],
+        "summary" : "Deletes a system application",
+        "operationId" : "deleteSystemApplication",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "path",
+          "description" : "Application name",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
     "/application/yaml" : {
       "post" : {
         "tags" : [ "Application" ],
@@ -1750,6 +1815,36 @@
             "description" : "Internal Server Error"
           }
         }
+      },
+      "patch" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Updates a microservice",
+        "operationId" : "updateMicroservice",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ]
+      }
+    },
+    "/microservices/system/{uuid}\"" : {
+      "patch" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Updates a system microservice",
+        "operationId" : "updateSystemMicroservice",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ]
       }
     },
     "/microservices/yaml/{uuid}" : {
@@ -1864,11 +1959,89 @@
         }
       }
     },
+    "/microservices/system/{uuid}/port-mapping" : {
+      "post" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Creates a port mapping for system microservice",
+        "operationId" : "createSystemMicroservicePortMapping",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Not Valid"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
     "/microservices/{uuid}/port-mapping/{internalPort}" : {
       "delete" : {
         "tags" : [ "Microservices" ],
         "summary" : "Deletes a port mapping for microservice",
         "operationId" : "deleteMicroservicePortMapping",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        }, {
+          "name" : "internalPort",
+          "in" : "path",
+          "description" : "Internal Port",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/microservices/system/{uuid}/port-mapping/{internalPort}" : {
+      "delete" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Deletes a port mapping for system microservice",
+        "operationId" : "deleteSystemMicroservicePortMapping",
         "parameters" : [ {
           "name" : "uuid",
           "in" : "path",
@@ -1975,11 +2148,92 @@
         }
       }
     },
+    "/microservices/system/{uuid}/volume-mapping" : {
+      "post" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Creates a volume mapping for system microservice",
+        "operationId" : "createSystemMicroserviceVolumeMapping",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Not Valid"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
     "/microservices/{uuid}/volume-mapping/{id}" : {
       "delete" : {
         "tags" : [ "Microservices" ],
         "summary" : "Deletes a volume mapping for microservice",
         "operationId" : "deleteMicroserviceVolumeMapping",
+        "parameters" : [ {
+          "name" : "uuid",
+          "in" : "path",
+          "description" : "Microservice Uuid",
+          "required" : true
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "description" : "Volume id",
+          "required" : true
+        } ],
+        "security" : [ {
+          "userToken" : [ ]
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Success",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Not Valid"
+          },
+          "401" : {
+            "description" : "Not Authorized"
+          },
+          "404" : {
+            "description" : "Not Found"
+          },
+          "500" : {
+            "description" : "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/microservices/system/{uuid}/volume-mapping/{id}" : {
+      "delete" : {
+        "tags" : [ "Microservices" ],
+        "summary" : "Deletes a volume mapping for system microservice",
+        "operationId" : "deleteSystemMicroserviceVolumeMapping",
         "parameters" : [ {
           "name" : "uuid",
           "in" : "path",

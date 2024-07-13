@@ -47,6 +47,34 @@ module.exports = [
     }
   },
   {
+    method: 'get',
+    path: '/api/v1/application/system',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      const getApplicationsBySystemEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsBySystemEndPoint, successCode, errorCodes)
+
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getApplicationsBySystemEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
     method: 'post',
     path: '/api/v1/application',
     supportSubstitution: true,
@@ -279,6 +307,38 @@ module.exports = [
       // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
         const responseObject = await deleteApplicationEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v1/application/system/:name',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      const deleteSystemApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteSystemApplicationEndPoint, successCode, errorCodes)
+
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const responseObject = await deleteSystemApplicationEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)

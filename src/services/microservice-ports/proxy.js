@@ -44,7 +44,7 @@ async function _createOrUpdatePortRouterMicroservice (existingProxy, localPort, 
 
   const proxyMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
-    name: 'Proxy',
+    name: `proxy-${hostUuid}`,
     config: JSON.stringify({
       fetch_config_interval: 5,
       proxies: [proxyConfig]

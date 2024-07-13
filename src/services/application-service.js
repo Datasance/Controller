@@ -99,6 +99,23 @@ const deleteApplicationEndPoint = async function (conditions, isCLI, transaction
   }
   const where = AppHelper.deleteUndefinedFields(whereObj)
 
+  const application = await ApplicationManager.findOne({ ...conditions }, transaction)
+
+  if (application.isSystem) {
+    throw new Errors.ValidationError('Cannot delete system application.')
+  }
+
+  await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId(conditions, true, transaction)
+
+  await ApplicationManager.delete(where, transaction)
+}
+
+const deleteSystemApplicationEndPoint = async function (conditions, isCLI, transaction) {
+  const whereObj = {
+    ...conditions
+  }
+  const where = AppHelper.deleteUndefinedFields(whereObj)
+
   await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId(conditions, true, transaction)
 
   await ApplicationManager.delete(where, transaction)
@@ -283,6 +300,19 @@ const getUserApplicationsEndPoint = async function (isCLI, transaction) {
   }
 }
 
+const getSystemApplicationsEndPoint = async function (isCLI, transaction) {
+  const application = {
+    isSystem: true
+  }
+
+  const attributes = { exclude: ['created_at', 'updated_at'] }
+  const applications = await ApplicationManager.findAllPopulated(application, attributes, transaction)
+
+  return {
+    applications: await Promise.all(applications.map(async (app) => _buildApplicationObject(app, transaction)))
+  }
+}
+
 const getAllApplicationsEndPoint = async function (isCLI, transaction) {
   const attributes = { exclude: ['created_at', 'updated_at'] }
   const applications = await ApplicationManager.findAllPopulated({}, attributes, transaction)
@@ -302,8 +332,8 @@ async function _buildApplicationObject (application, transaction) {
 
 async function getApplication (conditions, isCLI, transaction) {
   const where = isCLI
-    ? { ...conditions }
-    : { ...conditions }
+    ? { ...conditions, isSystem: false }
+    : { ...conditions, isSystem: false }
   const attributes = { exclude: ['created_at', 'updated_at'] }
 
   const applicationRaw = await ApplicationManager.findOnePopulated(where, attributes, transaction)
@@ -355,9 +385,11 @@ async function _updateChangeTrackingsAndDeleteMicroservicesByApplicationId (cond
 module.exports = {
   createApplicationEndPoint: TransactionDecorator.generateTransaction(createApplicationEndPoint),
   deleteApplicationEndPoint: TransactionDecorator.generateTransaction(deleteApplicationEndPoint),
+  deleteSystemApplicationEndPoint: TransactionDecorator.generateTransaction(deleteSystemApplicationEndPoint),
   updateApplicationEndPoint: TransactionDecorator.generateTransaction(updateApplicationEndPoint),
   patchApplicationEndPoint: TransactionDecorator.generateTransaction(patchApplicationEndPoint),
   getUserApplicationsEndPoint: TransactionDecorator.generateTransaction(getUserApplicationsEndPoint),
+  getSystemApplicationsEndPoint: TransactionDecorator.generateTransaction(getSystemApplicationsEndPoint),
   getAllApplicationsEndPoint: TransactionDecorator.generateTransaction(getAllApplicationsEndPoint),
   getApplicationEndPoint: TransactionDecorator.generateTransaction(getApplicationEndPoint),
   getApplication: getApplication

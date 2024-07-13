@@ -207,7 +207,42 @@ module.exports = [
       })
     }
   },
+  {
+    method: 'patch',
+    path: '/api/v1/microservices/system/:uuid',
+    supportSubstitution: true,
+    middleware: async (req, res) => {
+      logger.apiReq(req)
 
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const updateSystemMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.updateSystemMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await updateSystemMicroserviceEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
   {
     method: 'patch',
     path: '/api/v1/microservices/yaml/:uuid',
@@ -382,6 +417,41 @@ module.exports = [
     }
   },
   {
+    method: 'post',
+    path: '/api/v1/microservices/sytem/:uuid/port-mapping',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const createSystemMicroservicePortMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createSystemMicroservicePortMappingEndPoint, successCode, errorCodes)
+        const responseObject = await createSystemMicroservicePortMappingEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
     method: 'delete',
     path: '/api/v1/microservices/:uuid/port-mapping/:internalPort',
     middleware: async (req, res) => {
@@ -403,6 +473,37 @@ module.exports = [
         const deleteMicroservicePortMapping = ResponseDecorator.handleErrors(
           MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
         const responseObject = await deleteMicroservicePortMapping(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v1/microservices/system/:uuid/port-mapping/:internalPort',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const deleteSystemMicroservicePortMapping = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
+        const responseObject = await deleteSystemMicroservicePortMapping(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
@@ -516,6 +617,44 @@ module.exports = [
     }
   },
   {
+    method: 'post',
+    path: '/api/v1/microservices/system/:uuid/volume-mapping',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const createSystemMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createSystemMicroserviceVolumeMappingEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createSystemMicroserviceVolumeMappingEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
     method: 'delete',
     path: '/api/v1/microservices/:uuid/volume-mapping/:id',
     middleware: async (req, res) => {
@@ -544,6 +683,44 @@ module.exports = [
           errorCodes
         )
         const responseObject = await deleteMicroserviceVolumeMappingEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v1/microservices/system/:uuid/volume-mapping/:id',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteSystemMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteSystemMicroserviceVolumeMappingEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await deleteSystemMicroserviceVolumeMappingEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
