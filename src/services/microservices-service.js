@@ -823,12 +823,12 @@ async function deleteRouteEndPoint (sourceMicroserviceUuid, destMicroserviceUuid
 
 async function createPortMappingEndPoint (microserviceUuid, portMappingData, isCLI, transaction) {
   await Validator.validate(portMappingData, Validator.schemas.portsCreate)
-
+  await _validateMicroserviceOnGet(microserviceUuid, transaction)
   const where = isCLI
     ? { uuid: microserviceUuid }
     : { uuid: microserviceUuid }
 
-  const microservice = await MicroserviceManager.findMicroserviceOnGet(where, transaction)
+  const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
   }
@@ -1277,7 +1277,7 @@ async function _checkForDuplicateName (name, item, applicationId, transaction) {
 
 async function _validateMicroserviceOnGet (microserviceUuid, transaction) {
   const where = {
-    'uuid': microserviceUuid
+    uuid: microserviceUuid
   }
   const microservice = await MicroserviceManager.findMicroserviceOnGet(where, transaction)
   if (!microservice) {
