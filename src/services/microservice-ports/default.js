@@ -29,7 +29,7 @@ const MicroserviceExtraHostManager = require('../../data/managers/microservice-e
 const controllerConfig = require('../../config')
 const Proxy = require('./proxy')
 
-const { DEFAULT_ROUTER_NAME, DEFAULT_PROXY_HOST, RESERVED_PORTS } = require('../../helpers/constants')
+const { MICROSERVICE_DEFAULT_LOG_SIZE, DEFAULT_ROUTER_NAME, DEFAULT_PROXY_HOST, RESERVED_PORTS } = require('../../helpers/constants')
 
 const lget = require('lodash/get')
 
@@ -255,6 +255,7 @@ async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUui
     iofogUuid: hostUuid,
     rootHostAccess: true,
     registryId: 1,
+    logSize: MICROSERVICE_DEFAULT_LOG_SIZE,
     configLastUpdated: Date.now()
   }
   const application = await ApplicationManager.findOne({ name: `system-${hostUuid.toLowerCase()}` }, transaction)
