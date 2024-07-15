@@ -1683,7 +1683,7 @@ paths:
             type: string
       security:
         - userToken: []
-  /microservices/system/{uuid}":
+  /microservices/system/{uuid}:
     patch:
       tags:
         - Microservices

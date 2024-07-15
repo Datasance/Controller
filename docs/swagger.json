@@ -1831,7 +1831,7 @@
         } ]
       }
     },
-    "/microservices/system/{uuid}\"" : {
+    "/microservices/system/{uuid}" : {
       "patch" : {
         "tags" : [ "Microservices" ],
         "summary" : "Updates a system microservice",
