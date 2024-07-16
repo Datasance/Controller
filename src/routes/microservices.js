@@ -418,7 +418,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/sytem/:uuid/port-mapping',
+    path: '/api/v1/microservices/system/:uuid/port-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -502,7 +502,7 @@ module.exports = [
 
       await keycloak.protect(['SRE'])(req, res, async () => {
         const deleteSystemMicroservicePortMapping = ResponseDecorator.handleErrors(
-          MicroservicesController.deleteMicroservicePortMappingEndPoint, successCode, errorCodes)
+          MicroservicesController.deleteSystemMicroservicePortMappingEndPoint, successCode, errorCodes)
         const responseObject = await deleteSystemMicroservicePortMapping(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
@@ -714,7 +714,7 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await keycloak.protect(['SRE'])(req, res, async () => {
         const deleteSystemMicroserviceVolumeMappingEndPoint = ResponseDecorator.handleErrors(
           MicroservicesController.deleteSystemMicroserviceVolumeMappingEndPoint,
           successCode,

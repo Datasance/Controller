@@ -433,7 +433,7 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 
   const iofogUuid = microserviceDataUpdate.iofogUuid || microservice.iofogUuid
   if (microserviceDataUpdate.catalogItemId) {
-    const catalogItem = await CatalogService.getCatalogItem(microserviceDataUpdate.catalogItemId, isCLI, transaction)
+    const catalogItem = await CatalogService.getSystemCatalogItem(microserviceDataUpdate.catalogItemId, isCLI, transaction)
     _validateImagesAgainstCatalog(catalogItem, microserviceDataUpdate.images || [])
     if (microserviceDataUpdate.catalogItemId !== undefined && microserviceDataUpdate.catalogItemId !== microservice.catalogItemId) {
       // Catalog item changed or removed, set rebuild flag
@@ -468,12 +468,12 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     // Validate image type
     let images = []
     if (microserviceDataUpdate.catalogItemId) {
-      const catalogItem = await CatalogService.getCatalogItem(microserviceDataUpdate.catalogItemId, isCLI, transaction)
+      const catalogItem = await CatalogService.getSystemCatalogItem(microserviceDataUpdate.catalogItemId, isCLI, transaction)
       images = catalogItem.images
     } else if (microserviceDataUpdate.images) {
       images = microserviceDataUpdate.images
     } else if (microservice.catalogItemId) {
-      const catalogItem = await CatalogService.getCatalogItem(microservice.catalogItemId, isCLI, transaction)
+      const catalogItem = await CatalogService.getSystemCatalogItem(microservice.catalogItemId, isCLI, transaction)
       images = catalogItem.images
     } else {
       images = await microservice.getImages()
@@ -1041,7 +1041,7 @@ async function deleteSystemVolumeMappingEndPoint (microserviceUuid, volumeMappin
     ? { uuid: microserviceUuid }
     : { uuid: microserviceUuid }
 
-  const microservice = await MicroserviceManager.findMicroserviceOnGet(where, transaction)
+  const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
   }
