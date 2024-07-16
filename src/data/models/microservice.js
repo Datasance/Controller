@@ -42,6 +42,18 @@ module.exports = (sequelize, DataTypes) => {
       field: 'root_host_access',
       defaultValue: false
     },
+    runAsUser: {
+      type: DataTypes.TEXT,
+      field: 'run_as_user'
+    },
+    platform: {
+      type: DataTypes.TEXT,
+      field: 'platform'
+    },
+    runtime: {
+      type: DataTypes.TEXT,
+      field: 'runtime'
+    },
     logSize: {
       type: DataTypes.BIGINT,
       get () {

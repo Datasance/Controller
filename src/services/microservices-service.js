@@ -371,6 +371,10 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    devices: microserviceData.devices,
+    runAsUser: microserviceData.runAsUser,
+    platform: microserviceData.platform,
+    runtime: microserviceData.runtime,
     logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     registryId: microserviceData.registryId,
     volumeMappings: microserviceData.volumeMappings,
@@ -482,6 +486,10 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
+    microserviceDataUpdate.devices ||
+    microserviceDataUpdate.runAsUser ||
+    microserviceDataUpdate.platform ||
+    microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
     extraHosts
@@ -565,6 +573,10 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    devices: microserviceData.devices,
+    runAsUser: microserviceData.runAsUser,
+    platform: microserviceData.platform,
+    runtime: microserviceData.runtime,
     logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     registryId: microserviceData.registryId,
     volumeMappings: microserviceData.volumeMappings,
@@ -680,6 +692,10 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
+    microserviceDataUpdate.devices ||
+    microserviceDataUpdate.runAsUser ||
+    microserviceDataUpdate.platform ||
+    microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
     extraHosts
@@ -1076,6 +1092,10 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
     catalogItemId: microserviceData.catalogItemId,
     iofogUuid: microserviceData.iofogUuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    devices: microserviceData.devices,
+    runAsUser: microserviceData.runAsUser,
+    platform: microserviceData.platform,
+    runtime: microserviceData.runtime,
     registryId: microserviceData.registryId || 1,
     logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1
   }
