@@ -13,6 +13,8 @@
 
 const MicroservicePortManager = require('../../data/managers/microservice-port-manager')
 const MicroserviceManager = require('../../data/managers/microservice-manager')
+const MicroserviceStatusManager = require('../../data/managers/microservice-status-manager')
+const ApplicationManager = require('../../data/managers/application-manager')
 const ConfigManager = require('../../data/managers/config-manager')
 const ChangeTrackingService = require('../change-tracking-service')
 const AppHelper = require('../../helpers/app-helper')
@@ -27,7 +29,7 @@ const MicroserviceExtraHostManager = require('../../data/managers/microservice-e
 const controllerConfig = require('../../config')
 const Proxy = require('./proxy')
 
-const { DEFAULT_ROUTER_NAME, DEFAULT_PROXY_HOST, RESERVED_PORTS } = require('../../helpers/constants')
+const { MICROSERVICE_DEFAULT_LOG_SIZE, DEFAULT_ROUTER_NAME, DEFAULT_PROXY_HOST, RESERVED_PORTS } = require('../../helpers/constants')
 
 const lget = require('lodash/get')
 
@@ -244,7 +246,7 @@ async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUui
 
   const proxyMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
-    name: 'Proxy',
+    name: `proxy-${hostUuid.toLowerCase()}`,
     config: JSON.stringify({
       mappings: [mapping],
       networkRouter
@@ -252,9 +254,14 @@ async function _createOrUpdateProxyMicroservice (mapping, networkRouter, hostUui
     catalogItemId: proxyCatalogId,
     iofogUuid: hostUuid,
     rootHostAccess: true,
-    registryId: 1
+    registryId: 1,
+    logSize: MICROSERVICE_DEFAULT_LOG_SIZE,
+    configLastUpdated: Date.now()
   }
+  const application = await ApplicationManager.findOne({ name: `system-${hostUuid.toLowerCase()}` }, transaction)
+  proxyMicroserviceData.applicationId = application.id
   const res = await MicroserviceManager.create(proxyMicroserviceData, transaction)
+  await MicroserviceStatusManager.create({ microserviceUuid: proxyMicroserviceData.uuid }, transaction)
   await ChangeTrackingService.update(hostUuid, ChangeTrackingService.events.microserviceCommon, transaction)
   return res
 }
@@ -265,7 +272,8 @@ async function _createPublicPortMapping (microservice, portMappingData, transact
   const localAgent = portMappingData.localAgent // This is populated by validating the ports
   const localAgentsRouter = localAgent.routerId ? await RouterManager.findOne({ id: localAgent.routerId }, transaction) : await RouterManager.findOne({ iofogUuid: localAgent.uuid }, transaction)
   const localNetworkRouter = {
-    host: localAgentsRouter.host,
+    // host: localAgentsRouter.host,
+    host: 'localhost',
     port: localAgentsRouter.messagingPort
   }
 
@@ -288,7 +296,8 @@ async function _createPublicPortMapping (microservice, portMappingData, transact
   if (portMappingData.publicHost) {
     const hostRouter = portMappingData.publicHost.routerId ? await RouterManager.findOne({ id: portMappingData.publicHost.routerId }, transaction) : await RouterManager.findOne({ iofogUuid: portMappingData.publicHost.uuid }, transaction)
     const remoteNetworkRouter = {
-      host: hostRouter.host,
+      // host: hostRouter.host,
+      host: 'localhost',
       port: hostRouter.messagingPort
     }
 
@@ -478,6 +487,31 @@ async function deletePortMapping (microserviceUuid, internalPort, isCLI, transac
     ? { uuid: microserviceUuid }
     : { uuid: microserviceUuid }
 
+  const microservice = await MicroserviceManager.findMicroserviceOnGet(where, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+
+  if (!internalPort) {
+    throw new Errors.ValidationError(ErrorMessages.PORT_MAPPING_INTERNAL_PORT_NOT_PROVIDED)
+  }
+
+  const msPorts = await MicroservicePortManager.findOne({
+    microserviceUuid: microservice.uuid,
+    portInternal: internalPort
+  }, transaction)
+  if (!msPorts) {
+    throw new Errors.NotFoundError('port mapping not exists')
+  }
+
+  await _deletePortMapping(microservice, msPorts, transaction)
+}
+
+async function deleteSystemPortMapping (microserviceUuid, internalPort, isCLI, transaction) {
+  const where = isCLI
+    ? { uuid: microserviceUuid }
+    : { uuid: microserviceUuid }
+
   const microservice = await MicroserviceManager.findOne(where, transaction)
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
@@ -523,6 +557,7 @@ module.exports = {
   buildPublicPortMapping,
   listPortMappings,
   deletePortMapping,
+  deleteSystemPortMapping,
   deletePortMappings,
   getPortMappings,
   listAllPublicPorts

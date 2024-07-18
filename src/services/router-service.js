@@ -18,6 +18,8 @@ const Constants = require('../helpers/constants')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const MicroserviceManager = require('../data/managers/microservice-manager')
+const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const ApplicationManager = require('../data/managers/application-manager')
 const MicroservicePortManager = require('../data/managers/microservice-port-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
 const RouterManager = require('../data/managers/router-manager')
@@ -219,9 +221,15 @@ function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
 
 async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
+
+  const routerApplicationData = {
+    name: `system-${uuid.toLowerCase()}`,
+    isActivated: true,
+    isSystem: true
+  }
   const routerMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
-    name: `Router for Fog ${uuid}`,
+    name: `router-${uuid.toLowerCase()}`,
     config: JSON.stringify(microserviceConfig),
     catalogItemId: routerCatalog.id,
     iofogUuid: uuid,
@@ -229,7 +237,12 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
     logSize: constants.MICROSERVICE_DEFAULT_LOG_SIZE,
     configLastUpdated: Date.now()
   }
-  return MicroserviceManager.create(routerMicroserviceData, transaction)
+  await ApplicationManager.create(routerApplicationData, transaction)
+  const application = await ApplicationManager.findOne({ name: routerApplicationData.name }, transaction)
+  routerMicroserviceData.applicationId = application.id
+  const routerMicroservice = await MicroserviceManager.create(routerMicroserviceData, transaction)
+  await MicroserviceStatusManager.create({ microserviceUuid: routerMicroserviceData.uuid }, transaction)
+  return routerMicroservice
 }
 
 function _getRouterConnectorConfig (isEdge, dest) {

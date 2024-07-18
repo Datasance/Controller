@@ -38,6 +38,12 @@ const updateMicroserviceEndPoint = async function (req) {
   return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, false)
 }
 
+const updateSystemMicroserviceEndPoint = async function (req) {
+  const microservice = req.body
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.updateSystemMicroserviceEndPoint(microserviceUuid, microservice, false)
+}
+
 const updateMicroserviceYAMLEndPoint = async function (req) {
   const microserviceUuid = req.params.uuid
   const fileContent = req.file.buffer.toString()
@@ -78,10 +84,22 @@ const createMicroservicePortMappingEndPoint = async function (req) {
   return MicroservicesService.createPortMappingEndPoint(uuid, portMappingData, false)
 }
 
+const createSystemMicroservicePortMappingEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  const portMappingData = req.body
+  return MicroservicesService.createSystemPortMappingEndPoint(uuid, portMappingData, false)
+}
+
 const deleteMicroservicePortMappingEndPoint = async function (req) {
   const uuid = req.params.uuid
   const internalPort = req.params.internalPort
   return MicroservicesService.deletePortMappingEndPoint(uuid, internalPort, false)
+}
+
+const deleteSystemMicroservicePortMappingEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  const internalPort = req.params.internalPort
+  return MicroservicesService.deleteSystemPortMappingEndPoint(uuid, internalPort, false)
 }
 
 const listMicroservicePortMappingsEndPoint = async function (req) {
@@ -101,6 +119,15 @@ const createMicroserviceVolumeMappingEndPoint = async function (req) {
   }
 }
 
+const createSystemMicroserviceVolumeMappingEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  const volumeMappingData = req.body
+  const volumeMapping = await MicroservicesService.createSystemVolumeMappingEndPoint(microserviceUuid, volumeMappingData, false)
+  return {
+    id: volumeMapping.id
+  }
+}
+
 const listMicroserviceVolumeMappingsEndPoint = async function (req) {
   const uuid = req.params.uuid
   const volumeMappings = await MicroservicesService.listVolumeMappingsEndPoint(uuid, false)
@@ -115,6 +142,12 @@ const deleteMicroserviceVolumeMappingEndPoint = async function (req) {
   return MicroservicesService.deleteVolumeMappingEndPoint(uuid, id, false)
 }
 
+const deleteSystemMicroserviceVolumeMappingEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  const id = req.params.id
+  return MicroservicesService.deleteSystemVolumeMappingEndPoint(uuid, id, false)
+}
+
 const listAllPublicPortsEndPoint = async function (req) {
   return MicroservicesService.listAllPublicPortsEndPoint()
 }
@@ -123,16 +156,21 @@ module.exports = {
   createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
   getMicroserviceEndPoint: (getMicroserviceEndPoint),
   updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
+  updateSystemMicroserviceEndPoint: (updateSystemMicroserviceEndPoint),
   deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),
   getMicroservicesByApplicationEndPoint: (getMicroservicesByApplicationEndPoint),
   createMicroserviceRouteEndPoint: (createMicroserviceRouteEndPoint),
   deleteMicroserviceRouteEndPoint: (deleteMicroserviceRouteEndPoint),
   createMicroservicePortMappingEndPoint: (createMicroservicePortMappingEndPoint),
+  createSystemMicroservicePortMappingEndPoint: (createSystemMicroservicePortMappingEndPoint),
   deleteMicroservicePortMappingEndPoint: (deleteMicroservicePortMappingEndPoint),
+  deleteSystemMicroservicePortMappingEndPoint: (deleteSystemMicroservicePortMappingEndPoint),
   getMicroservicePortMappingListEndPoint: (listMicroservicePortMappingsEndPoint),
   createMicroserviceVolumeMappingEndPoint: (createMicroserviceVolumeMappingEndPoint),
+  createSystemMicroserviceVolumeMappingEndPoint: (createSystemMicroserviceVolumeMappingEndPoint),
   listMicroserviceVolumeMappingsEndPoint: (listMicroserviceVolumeMappingsEndPoint),
   deleteMicroserviceVolumeMappingEndPoint: (deleteMicroserviceVolumeMappingEndPoint),
+  deleteSystemMicroserviceVolumeMappingEndPoint: (deleteSystemMicroserviceVolumeMappingEndPoint),
   listAllPublicPortsEndPoint: (listAllPublicPortsEndPoint),
   createMicroserviceYAMLEndPoint: (createMicroserviceYAMLEndPoint),
   updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint)

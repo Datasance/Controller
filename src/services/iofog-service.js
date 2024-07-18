@@ -24,6 +24,7 @@ const HWInfoManager = require('../data/managers/hw-info-manager')
 const USBInfoManager = require('../data/managers/usb-info-manager')
 const CatalogService = require('./catalog-service')
 const MicroserviceManager = require('../data/managers/microservice-manager')
+const ApplicationManager = require('../data/managers/application-manager')
 const TagsManager = require('../data/managers/tags-manager')
 const MicroserviceService = require('./microservices-service')
 const EdgeResourceService = require('./edge-resource-service')
@@ -352,6 +353,7 @@ async function _deleteFogRouter (fogData, transaction) {
   // Delete router msvc
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   await MicroserviceManager.delete({ catalogItemId: routerCatalog.id, iofogUuid: fogData.uuid }, transaction)
+  await ApplicationManager.delete({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
 }
 
 async function deleteFogEndPoint (fogData, isCLI, transaction) {

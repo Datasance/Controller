@@ -409,6 +409,62 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /application/system:
+    get:
+      tags:
+        - Application
+      summary: Lists all system applications
+      operationId: listSystemApplication
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationListResponse"
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /application/system/{name}:
+    delete:
+      tags:
+        - Application
+      summary: Deletes a system application
+      operationId: deleteSystemApplication
+      parameters:
+        - in: path
+          name: name
+          description: Application name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+
   /application/yaml:
     post:
       tags:
@@ -1613,6 +1669,35 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+    patch:
+      tags:
+        - Microservices
+      summary: Updates a microservice
+      operationId: updateMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+  /microservices/system/{uuid}:
+    patch:
+      tags:
+        - Microservices
+      summary: Updates a system microservice
+      operationId: updateSystemMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
   /microservices/yaml/{uuid}:
     patch:
       tags:
@@ -1730,12 +1815,89 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /microservices/system/{uuid}/port-mapping:
+    post:
+      tags:
+        - Microservices
+      summary: Creates a port mapping for system microservice
+      operationId: createSystemMicroservicePortMapping
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortMappingsRequest"
+        description: information about port mapping
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortMappingsPublicResponse"
+        "400":
+          description: Not Valid
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/port-mapping/{internalPort}":
     delete:
       tags:
         - Microservices
       summary: Deletes a port mapping for microservice
       operationId: deleteMicroservicePortMapping
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: internalPort
+          description: Internal Port
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /microservices/system/{uuid}/port-mapping/{internalPort}:
+    delete:
+      tags:
+        - Microservices
+      summary: Deletes a port mapping for system microservice
+      operationId: deleteSystemMicroservicePortMapping
       parameters:
         - in: path
           name: uuid
@@ -1842,12 +2004,94 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/microservices/system/{uuid}/volume-mapping":
+    post:
+      tags:
+        - Microservices
+      summary: Creates a volume mapping for system microservice
+      operationId: createSystemMicroserviceVolumeMapping
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeMapping"
+        description: information about volume mapping
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+        "400":
+          description: Not Valid
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/volume-mapping/{id}":
     delete:
       tags:
         - Microservices
       summary: Deletes a volume mapping for microservice
       operationId: deleteMicroserviceVolumeMapping
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          description: Volume id
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "400":
+          description: Not Valid
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  "/microservices/system/{uuid}/volume-mapping/{id}":
+    delete:
+      tags:
+        - Microservices
+      summary: Deletes a volume mapping for system microservice
+      operationId: deleteSystemMicroserviceVolumeMapping
       parameters:
         - in: path
           name: uuid

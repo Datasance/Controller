@@ -346,6 +346,9 @@ class MicroserviceManager extends BaseManager {
           model: Application,
           as: 'application',
           required: true,
+          where: {
+            isSystem: false
+          },
           attributes: ['id']
         }
       ],
@@ -366,6 +369,16 @@ class MicroserviceManager extends BaseManager {
 
   async findAllExcludeFields (where, transaction) {
     return Microservice.findAll({
+      include: [
+        {
+          model: Application,
+          as: 'application',
+          required: true,
+          where: {
+            isSystem: false
+          }
+        }
+      ],
       where: where,
       order: [ [ 'name', 'ASC' ] ],
       attributes: {

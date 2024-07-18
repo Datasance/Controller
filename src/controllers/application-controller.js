@@ -38,6 +38,10 @@ const getApplicationsByUserEndPoint = async function (req) {
   return ApplicationService.getUserApplicationsEndPoint(false)
 }
 
+const getApplicationsBySystemEndPoint = async function (req) {
+  return ApplicationService.getSystemApplicationsEndPoint(false)
+}
+
 const getApplicationEndPoint = async function (req) {
   const name = req.params.name
 
@@ -77,6 +81,12 @@ const deleteApplicationEndPoint = async function (req) {
   return ApplicationService.deleteApplicationEndPoint({ name }, false)
 }
 
+const deleteSystemApplicationEndPoint = async function (req) {
+  const name = req.params.name
+
+  return ApplicationService.deleteSystemApplicationEndPoint({ name }, false)
+}
+
 // Legacy
 
 const deleteApplicationByIdEndPoint = async function (req) {
@@ -103,6 +113,7 @@ module.exports = {
   createApplicationEndPoint: (createApplicationEndPoint),
   createApplicationYAMLEndPoint: (createApplicationYAMLEndPoint),
   getApplicationsByUserEndPoint: (getApplicationsByUserEndPoint),
+  getApplicationsBySystemEndPoint: (getApplicationsBySystemEndPoint),
   getApplicationEndPoint: (getApplicationEndPoint),
   getApplicationByIdEndPoint: (getApplicationByIdEndPoint),
   updateApplicationEndPoint: (updateApplicationEndPoint),
@@ -110,5 +121,6 @@ module.exports = {
   patchApplicationEndPoint: (patchApplicationEndPoint),
   patchApplicationByIdEndPoint: (patchApplicationByIdEndPoint),
   deleteApplicationEndPoint: (deleteApplicationEndPoint),
+  deleteSystemApplicationEndPoint: (deleteSystemApplicationEndPoint),
   deleteApplicationByIdEndPoint: (deleteApplicationByIdEndPoint)
 }

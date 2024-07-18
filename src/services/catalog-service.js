@@ -93,6 +93,21 @@ async function getCatalogItem (id, isCLI, transaction) {
   return item
 }
 
+async function getSystemCatalogItem (id, isCLI, transaction) {
+  const where = {
+    id: id,
+    category: 'SYSTEM'
+  }
+
+  const attributes = {}
+
+  const item = await CatalogItemManager.findOneWithDependencies(where, attributes, transaction)
+  if (!item) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_CATALOG_ITEM_ID, id))
+  }
+  return item
+}
+
 const getCatalogItemEndPoint = async function (id, isCLI, transaction) {
   return getCatalogItem(id, isCLI, transaction)
 }
@@ -368,6 +383,7 @@ module.exports = {
   deleteCatalogItemEndPoint: TransactionDecorator.generateTransaction(deleteCatalogItemEndPoint),
   updateCatalogItemEndPoint: TransactionDecorator.generateTransaction(updateCatalogItemEndPoint),
   getCatalogItem: getCatalogItem,
+  getSystemCatalogItem: getSystemCatalogItem,
   getNetworkCatalogItem: getNetworkCatalogItem,
   getBluetoothCatalogItem: getBluetoothCatalogItem,
   getHalCatalogItem: getHalCatalogItem,
