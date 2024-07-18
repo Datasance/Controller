@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       field: 'cdi_devices'
     }
   }, {
-    tableName: 'MicroservicecdiDevices',
+    tableName: 'MicroserviceCdiDevices',
     timestamps: false,
     underscored: true
   })
