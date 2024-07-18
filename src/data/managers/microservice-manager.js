@@ -18,6 +18,7 @@ const MicroservicePort = models.MicroservicePort
 const MicroserviceEnv = models.MicroserviceEnv
 const MicroserviceExtraHost = models.MicroserviceExtraHost
 const MicroserviceArg = models.MicroserviceArg
+const MicroserviceCdiDev = models.MicroserviceCdiDev
 const VolumeMapping = models.VolumeMapping
 const StraceDiagnostics = models.StraceDiagnostics
 const CatalogItem = models.CatalogItem
@@ -66,6 +67,12 @@ class MicroserviceManager extends BaseManager {
           as: 'cmd',
           required: false,
           attributes: ['cmd']
+        },
+        {
+          model: MicroserviceCdiDev,
+          as: 'cdiDevices',
+          required: false,
+          attributes: ['cdiDevices']
         },
         {
           model: MicroservicePort,
@@ -154,6 +161,12 @@ class MicroserviceManager extends BaseManager {
           attributes: ['cmd', 'id']
         },
         {
+          model: MicroserviceCdiDev,
+          as: 'cdiDevices',
+          required: false,
+          attributes: ['cdiDevices']
+        },
+        {
           model: MicroservicePort,
           as: 'ports',
           required: false,
@@ -240,6 +253,12 @@ class MicroserviceManager extends BaseManager {
           as: 'cmd',
           required: false,
           attributes: ['cmd']
+        },
+        {
+          model: MicroserviceCdiDev,
+          as: 'cdiDevices',
+          required: false,
+          attributes: ['cdiDevices']
         },
         {
           model: MicroservicePort,

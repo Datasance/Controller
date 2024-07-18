@@ -1,6 +1,6 @@
 'use strict'
 module.exports = (sequelize, DataTypes) => {
-  const MicroserviceDev = sequelize.define('MicroserviceDev', {
+  const MicroserviceCdiDev = sequelize.define('MicroserviceCdiDev', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -8,17 +8,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'id'
     },
-    devices: {
+    cdiDevices: {
       type: DataTypes.TEXT,
-      field: 'devices'
+      field: 'cdi_devices'
     }
   }, {
-    tableName: 'MicroserviceDevs',
+    tableName: 'MicroservicecdiDevices',
     timestamps: false,
     underscored: true
   })
-  MicroserviceArg.associate = function (models) {
-    MicroserviceArg.belongsTo(models.Microservice, {
+  MicroserviceCdiDev.associate = function (models) {
+    MicroserviceCdiDev.belongsTo(models.Microservice, {
       foreignKey: {
         name: 'microserviceUuid',
         field: 'microservice_uuid'
@@ -27,5 +27,5 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'cascade'
     })
   }
-  return MicroserviceDev
+  return MicroserviceCdiDev
 }

@@ -15,6 +15,7 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
 const MicroserviceArgManager = require('../data/managers/microservice-arg-manager')
+const MicroserviceCdiDevManager = require('../data/managers/microservice-cdi-device-manager')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
 const MicroservicePortService = require('../services/microservice-ports/factory')
 const CatalogItemImageManager = require('../data/managers/catalog-item-image-manager')
@@ -286,6 +287,11 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
       await _createArg(microservice, arg, transaction)
     }
   }
+  if (microserviceData.cdiDevices) {
+    for (const cdiDevices of microserviceData.cdiDevices) {
+      await _createCdiDevices(microservice, cdiDevices, transaction)
+    }
+  }
   if (microserviceData.volumeMappings) {
     await _createVolumeMappings(microservice, microserviceData.volumeMappings, transaction)
   }
@@ -371,7 +377,7 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
-    devices: microserviceData.devices,
+    cdiDevices: microserviceData.cdiDevices,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
@@ -486,7 +492,7 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
-    microserviceDataUpdate.devices ||
+    microserviceDataUpdate.cdiDevices ||
     microserviceDataUpdate.runAsUser ||
     microserviceDataUpdate.platform ||
     microserviceDataUpdate.runtime ||
@@ -513,6 +519,10 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 
   if (microserviceDataUpdate.cmd) {
     await _updateArg(microserviceDataUpdate.cmd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.cdiDevices) {
+    await _updateCdiDevices(microserviceDataUpdate.cdiDevices, microserviceUuid, transaction)
   }
 
   if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid) {
@@ -573,7 +583,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
-    devices: microserviceData.devices,
+    cdiDevices: microserviceData.cdiDevices,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
@@ -692,7 +702,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
-    microserviceDataUpdate.devices ||
+    microserviceDataUpdate.cdiDevices ||
     microserviceDataUpdate.runAsUser ||
     microserviceDataUpdate.platform ||
     microserviceDataUpdate.runtime ||
@@ -719,6 +729,10 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
   if (microserviceDataUpdate.cmd) {
     await _updateArg(microserviceDataUpdate.cmd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.cdiDevices) {
+    await _updateCdiDevices(microserviceDataUpdate.cdiDevices, microserviceUuid, transaction)
   }
 
   if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid) {
@@ -917,6 +931,20 @@ async function _createArg (microservice, arg, transaction) {
   await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
 }
 
+async function _createCdiDevices (microservice, cdiDevices, transaction) {
+  if (!microservice.iofogUuid) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.REQUIRED_FOG_NODE))
+  }
+
+  const mscdiDevicesData = {
+    cdiDevices: cdiDevices,
+    microserviceUuid: microservice.uuid
+  }
+
+  await MicroserviceCdiDevManager.create(mscdiDevicesData, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
+}
+
 async function deletePortMappingEndPoint (microserviceUuid, internalPort, isCLI, transaction) {
   return MicroservicePortService.deletePortMapping(microserviceUuid, internalPort, isCLI, transaction)
 }
@@ -1092,7 +1120,7 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
     catalogItemId: microserviceData.catalogItemId,
     iofogUuid: microserviceData.iofogUuid,
     rootHostAccess: microserviceData.rootHostAccess,
-    devices: microserviceData.devices,
+    cdiDevices: microserviceData.cdiDevices,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
@@ -1248,6 +1276,20 @@ async function _updateArg (arg, microserviceUuid, transaction) {
     }
 
     await MicroserviceArgManager.create(envObj, transaction)
+  }
+}
+
+async function _updateCdiDevices (cdiDevices, microserviceUuid, transaction) {
+  await MicroserviceCdiDevManager.delete({
+    microserviceUuid: microserviceUuid
+  }, transaction)
+  for (const cdiDevicesData of cdiDevices) {
+    const envObj = {
+      microserviceUuid: microserviceUuid,
+      cdiDevices: cdiDevicesData
+    }
+
+    await MicroserviceCdiDevManager.create(envObj, transaction)
   }
 }
 

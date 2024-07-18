@@ -50,7 +50,7 @@ const microserviceCreate = {
     'cmd': {
       'type': 'array',
       'items': { 'type': 'string' } },
-    'devices': {
+    'cdiDevices': {
       'type': 'array',
       'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
@@ -97,7 +97,7 @@ const microserviceUpdate = {
     'cmd': {
       'type': 'array',
       'items': { 'type': 'string' } },
-    'devices': {
+    'cdiDevices': {
       'type': 'array',
       'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },

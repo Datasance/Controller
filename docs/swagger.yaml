@@ -3255,7 +3255,7 @@ components:
                 type: string
               runtime:
                 type: string           
-              devices:
+              cdiDevices:
                 type: array
                 items:
                   type: string
@@ -3388,7 +3388,7 @@ components:
                     type: string
                   runtime:
                     type: string           
-                  devices:
+                  cdiDevices:
                     type: array
                     items:
                       type: string
@@ -4046,7 +4046,7 @@ components:
           type: string
         runtime:
           type: string           
-        devices:
+        cdiDevices:
           type: array
           items:
             type: string
@@ -4387,7 +4387,7 @@ components:
           type: string
         runtime:
           type: string           
-        devices:
+        cdiDevices:
           type: array
           items:
             type: string
@@ -4459,7 +4459,7 @@ components:
           type: string
         runtime:
           type: string           
-        devices:
+        cdiDevices:
           type: array
           items:
             type: string
@@ -4504,7 +4504,7 @@ components:
           type: string
         runtime:
           type: string           
-        devices:
+        cdiDevices:
           type: array
           items:
             type: string

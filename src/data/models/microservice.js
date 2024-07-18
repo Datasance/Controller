@@ -160,6 +160,11 @@ module.exports = (sequelize, DataTypes) => {
       as: 'cmd'
     })
 
+    Microservice.hasMany(models.MicroserviceCdiDev, {
+      foreignKey: 'microservice_uuid',
+      as: 'cdiDevices'
+    })
+
     Microservice.hasMany(models.MicroserviceExtraHost, {
       foreignKey: 'microservice_uuid',
       as: 'extraHosts'

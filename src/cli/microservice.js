@@ -63,7 +63,7 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
     cmd: [
       'string'
     ],
-    devices: [
+    cdiDevices: [
       'string'
     ],
     runAsUser: [
@@ -111,7 +111,7 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
     cmd: [
       'string'
     ],
-    devices: [
+    cdiDevices: [
       'string'
     ],
     runAsUser: [
@@ -313,10 +313,10 @@ class Microservice extends BaseCLIHandler {
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
       {
-        name: 'devices',
+        name: 'cdiDevices',
         alias: 'd',
         type: String,
-        description: 'Map devices to microservice container',
+        description: 'Map CDI devices to microservice container',
         multiple: true,
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
@@ -641,7 +641,7 @@ const _updateMicroserviceObject = function (obj) {
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     rebuild: obj.rebuild,
     cmd: obj.cmd,
-    devices: obj.devices,
+    cdiDevices: obj.cdiDevices,
     runAsUser: obj.runAsUser,
     platform: obj.platform,
     runtime: obj.runtime,
@@ -706,7 +706,7 @@ const _createMicroserviceObject = function (obj) {
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     routes: obj.routes,
     cmd: obj.cmd,
-    devices: obj.devices,
+    cdiDevices: obj.cdiDevices,
     runAsUser: obj.runAsUser,
     platform: obj.platform,
     runtime: obj.runtime,
