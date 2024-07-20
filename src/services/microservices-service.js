@@ -1395,6 +1395,8 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const env = await MicroserviceEnvManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const cmd = await MicroserviceArgManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const arg = cmd.map((it) => it.cmd)
+  const cdiDevices = await MicroserviceCdiDevManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const cdiDevs = cdiDevices.map((it) => it.cdiDevices)
   const status = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
 
   // build microservice response
@@ -1409,9 +1411,9 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   res.routes = routes.map((r) => r.destMicroserviceUuid)
   res.env = env
   res.cmd = arg
+  res.cdiDevices = cdiDevs
   res.extraHosts = extraHosts.map(eH => ({ name: eH.name, address: eH.template, value: eH.value }))
   res.images = images.map(i => ({ containerImage: i.containerImage, fogTypeId: i.fogTypeId }))
-
   if (status && status.length) {
     res.status = status[0]
   }

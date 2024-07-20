@@ -3250,7 +3250,7 @@ components:
                     value:
                       type: string
               runAsUser:
-                type: number
+                type: string
               platform:
                 type: string
               runtime:
