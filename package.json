@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "ioFog Controller project for Eclipse IoFog @ iofog.org \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
