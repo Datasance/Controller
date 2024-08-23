@@ -42,6 +42,18 @@ module.exports = (sequelize, DataTypes) => {
       field: 'root_host_access',
       defaultValue: false
     },
+    runAsUser: {
+      type: DataTypes.TEXT,
+      field: 'run_as_user'
+    },
+    platform: {
+      type: DataTypes.TEXT,
+      field: 'platform'
+    },
+    runtime: {
+      type: DataTypes.TEXT,
+      field: 'runtime'
+    },
     logSize: {
       type: DataTypes.BIGINT,
       get () {
@@ -146,6 +158,11 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasMany(models.MicroserviceArg, {
       foreignKey: 'microservice_uuid',
       as: 'cmd'
+    })
+
+    Microservice.hasMany(models.MicroserviceCdiDev, {
+      foreignKey: 'microservice_uuid',
+      as: 'cdiDevices'
     })
 
     Microservice.hasMany(models.MicroserviceExtraHost, {

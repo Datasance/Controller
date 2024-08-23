@@ -3249,6 +3249,16 @@ components:
                       type: string
                     value:
                       type: string
+              runAsUser:
+                type: string
+              platform:
+                type: string
+              runtime:
+                type: string           
+              cdiDevices:
+                type: array
+                items:
+                  type: string
               cmd:
                 type: array
                 items:
@@ -3372,6 +3382,16 @@ components:
                           type: string
                         value:
                           type: string
+                  runAsUser:
+                    type: number
+                  platform:
+                    type: string
+                  runtime:
+                    type: string           
+                  cdiDevices:
+                    type: array
+                    items:
+                      type: string
                   cmd:
                     type: array
                     items:
@@ -4020,6 +4040,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AgentEnvRequest"
+        runAsUser:
+          type: string
+        platform:
+          type: string
+        runtime:
+          type: string           
+        cdiDevices:
+          type: array
+          items:
+            type: string
         cmd:
           type: array
           items:
@@ -4351,6 +4381,16 @@ components:
                 type: string
               value:
                 type: string
+        runAsUser:
+          type: string
+        platform:
+          type: string
+        runtime:
+          type: string           
+        cdiDevices:
+          type: array
+          items:
+            type: string
         cmd:
           type: array
           items:
@@ -4413,6 +4453,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PortMappingsRequest"
+        runAsUser:
+          type: string
+        platform:
+          type: string
+        runtime:
+          type: string           
+        cdiDevices:
+          type: array
+          items:
+            type: string
+        cmd:
+          type: array
+          items:
+            type: string
     UpdateMicroserviceRequest:
       type: object
       required:
@@ -4444,6 +4498,20 @@ components:
                 type: string
               fogTypeId:
                 type: string
+        runAsUser:
+          type: string
+        platform:
+          type: string
+        runtime:
+          type: string           
+        cdiDevices:
+          type: array
+          items:
+            type: string
+        cmd:
+          type: array
+          items:
+            type: string
     IOFogNodeTunnelStatusInfoResponse:
       type: object
       properties:

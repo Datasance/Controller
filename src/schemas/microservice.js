@@ -49,7 +49,13 @@ const microserviceCreate = {
       'items': { '$ref': '/env' } },
     'cmd': {
       'type': 'array',
-      'items': { 'type': 'string' } }
+      'items': { 'type': 'string' } },
+    'cdiDevices': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'runAsUser': { 'type': 'string' },
+    'platform': { 'type': 'string' },
+    'runtime': { 'type': 'string' }
   },
   'required': ['name'],
   'additionalProperties': true
@@ -90,7 +96,13 @@ const microserviceUpdate = {
       'items': { '$ref': '/env' } },
     'cmd': {
       'type': 'array',
-      'items': { 'type': 'string' } }
+      'items': { 'type': 'string' } },
+    'cdiDevices': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'runAsUser': { 'type': 'string' },
+    'platform': { 'type': 'string' },
+    'runtime': { 'type': 'string' }
   },
   'additionalProperties': true
 }

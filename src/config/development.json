@@ -50,6 +50,13 @@
         "username": "",
         "password": "",
         "databaseName": ""
+      },
+      "postgres": {  
+        "host": "",
+        "port": "",
+        "username": "",
+        "password": "",
+        "databaseName": ""
       }
     }
   } 

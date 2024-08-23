@@ -62,6 +62,18 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
     ],
     cmd: [
       'string'
+    ],
+    cdiDevices: [
+      'string'
+    ],
+    runAsUser: [
+      'string'
+    ],
+    platform: [
+      'string'
+    ],
+    runtime: [
+      'string'
     ]
   }
 )
@@ -97,6 +109,18 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
       }
     ],
     cmd: [
+      'string'
+    ],
+    cdiDevices: [
+      'string'
+    ],
+    runAsUser: [
+      'string'
+    ],
+    platform: [
+      'string'
+    ],
+    runtime: [
       'string'
     ]
   }
@@ -285,6 +309,38 @@ class Microservice extends BaseCLIHandler {
         alias: 'C',
         type: String,
         description: 'Microservice container command and argument(s)',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'cdiDevices',
+        alias: 'd',
+        type: String,
+        description: 'Map CDI devices to microservice container',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'user',
+        alias: 'u',
+        type: String,
+        description: 'Run Microservice as a user)',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'platform',
+        alias: 'o',
+        type: String,
+        description: 'Microservice image platform to be used',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'runtime',
+        alias: 'y',
+        type: String,
+        description: 'Microservice container runtime definition',
         multiple: true,
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       }
@@ -585,6 +641,10 @@ const _updateMicroserviceObject = function (obj) {
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     rebuild: obj.rebuild,
     cmd: obj.cmd,
+    cdiDevices: obj.cdiDevices,
+    runAsUser: obj.runAsUser,
+    platform: obj.platform,
+    runtime: obj.runtime,
     env,
     images: obj.images,
     catalogItemId: parseInt(obj.catalogItemId) || undefined,
@@ -646,6 +706,10 @@ const _createMicroserviceObject = function (obj) {
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     routes: obj.routes,
     cmd: obj.cmd,
+    cdiDevices: obj.cdiDevices,
+    runAsUser: obj.runAsUser,
+    platform: obj.platform,
+    runtime: obj.runtime,
     env,
     images: []
   }

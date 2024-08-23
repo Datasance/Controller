@@ -94,18 +94,18 @@ module.exports = (sequelize, DataTypes) => {
       get () {
         return convertToInt(this.getDataValue('systemAvailableDisk'))
       },
-      field: 'system-available-disk'
+      field: 'system_available_disk'
     },
     systemAvailableMemory: {
       type: DataTypes.BIGINT,
       get () {
         return convertToInt(this.getDataValue('systemAvailableMemory'))
       },
-      field: 'system-available-memory'
+      field: 'system_available_memory'
     },
     systemTotalCpu: {
       type: DataTypes.FLOAT,
-      field: 'system-total-cpu'
+      field: 'system_total_cpu'
     },
     securityStatus: {
       type: DataTypes.TEXT,
