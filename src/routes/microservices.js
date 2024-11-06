@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/microservices/public-ports',
+    path: '/api/v3/microservices/public-ports',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -50,7 +50,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/',
+    path: '/api/v3/microservices/',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -77,7 +77,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices',
+    path: '/api/v3/microservices',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -109,7 +109,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/yaml',
+    path: '/api/v3/microservices/yaml',
     supportSubstitution: true,
     fileInput: 'microservice',
     middleware: async (req, res) => {
@@ -142,7 +142,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/:uuid',
+    path: '/api/v3/microservices/:uuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -173,7 +173,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/microservices/:uuid',
+    path: '/api/v3/microservices/:uuid',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -209,7 +209,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/microservices/system/:uuid',
+    path: '/api/v3/microservices/system/:uuid',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -245,7 +245,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/microservices/yaml/:uuid',
+    path: '/api/v3/microservices/yaml/:uuid',
     supportSubstitution: true,
     fileInput: 'microservice',
     middleware: async (req, res) => {
@@ -282,7 +282,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/:uuid',
+    path: '/api/v3/microservices/:uuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -313,7 +313,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/:uuid/routes/:receiverUuid',
+    path: '/api/v3/microservices/:uuid/routes/:receiverUuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -348,7 +348,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/:uuid/routes/:receiverUuid',
+    path: '/api/v3/microservices/:uuid/routes/:receiverUuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -383,7 +383,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/:uuid/port-mapping',
+    path: '/api/v3/microservices/:uuid/port-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -418,7 +418,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/system/:uuid/port-mapping',
+    path: '/api/v3/microservices/system/:uuid/port-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -453,7 +453,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/:uuid/port-mapping/:internalPort',
+    path: '/api/v3/microservices/:uuid/port-mapping/:internalPort',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -484,7 +484,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/system/:uuid/port-mapping/:internalPort',
+    path: '/api/v3/microservices/system/:uuid/port-mapping/:internalPort',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -515,7 +515,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/:uuid/port-mapping',
+    path: '/api/v3/microservices/:uuid/port-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -546,7 +546,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/:uuid/volume-mapping',
+    path: '/api/v3/microservices/:uuid/volume-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -580,7 +580,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/:uuid/volume-mapping',
+    path: '/api/v3/microservices/:uuid/volume-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -618,7 +618,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/microservices/system/:uuid/volume-mapping',
+    path: '/api/v3/microservices/system/:uuid/volume-mapping',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -656,7 +656,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/:uuid/volume-mapping/:id',
+    path: '/api/v3/microservices/:uuid/volume-mapping/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -694,7 +694,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/microservices/system/:uuid/volume-mapping/:id',
+    path: '/api/v3/microservices/system/:uuid/volume-mapping/:id',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

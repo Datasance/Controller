@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/application',
+    path: '/api/v3/application',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -48,7 +48,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/application/system',
+    path: '/api/v3/application/system',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -76,7 +76,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/application',
+    path: '/api/v3/application',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -109,7 +109,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/application/yaml',
+    path: '/api/v3/application/yaml',
     fileInput: 'application',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -142,7 +142,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/application/:name',
+    path: '/api/v3/application/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -175,7 +175,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/application/:name',
+    path: '/api/v3/application/:name',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -212,7 +212,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/application/yaml/:name',
+    path: '/api/v3/application/yaml/:name',
     fileInput: 'application',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -249,7 +249,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/application/:name',
+    path: '/api/v3/application/:name',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -286,7 +286,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/application/:name',
+    path: '/api/v3/application/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -318,7 +318,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/application/system/:name',
+    path: '/api/v3/application/system/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

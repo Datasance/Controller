@@ -42,7 +42,7 @@ RUN npm i -g /tmp/iofog-controller.tgz && \
   rm -rf /tmp/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
 
-LABEL org.opencontainers.image.description controller
+LABEL org.opencontainers.image.description=controller
 LABEL org.opencontainers.image.source=https://github.com/datasance/controller
 LABEL org.opencontainers.image.licenses=EPL2.0
 CMD [ "node", "/usr/local/lib/node_modules/@datasance/iofogcontroller/src/server.js" ]

@@ -18,7 +18,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/status',
+    path: '/api/v3/status',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -36,7 +36,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/fog-types/',
+    path: '/api/v3/fog-types/',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

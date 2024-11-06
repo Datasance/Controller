@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/router',
+    path: '/api/v3/router',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -55,7 +55,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/router',
+    path: '/api/v3/router',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)

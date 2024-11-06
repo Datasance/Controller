@@ -3035,8 +3035,8 @@ tags:
   - name: User
     description: Manage your users
 servers:
-  - url: http://localhost:51121/api/v1
-  - url: https://localhost:51121/api/v1
+  - url: http://localhost:51121/api/v3
+  - url: https://localhost:51121/api/v3
 components:
   securitySchemes:
     userToken:

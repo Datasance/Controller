@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/iofog-list',
+    path: '/api/v3/iofog-list',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -51,7 +51,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/iofog',
+    path: '/api/v3/iofog',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -83,7 +83,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/iofog/:uuid',
+    path: '/api/v3/iofog/:uuid',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -119,7 +119,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/iofog/:uuid',
+    path: '/api/v3/iofog/:uuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -150,7 +150,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/iofog/:uuid',
+    path: '/api/v3/iofog/:uuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -181,7 +181,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/iofog/:uuid/provisioning-key',
+    path: '/api/v3/iofog/:uuid/provisioning-key',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -212,7 +212,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/iofog/:uuid/version/:versionCommand',
+    path: '/api/v3/iofog/:uuid/version/:versionCommand',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -247,7 +247,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/iofog/:uuid/reboot',
+    path: '/api/v3/iofog/:uuid/reboot',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -282,7 +282,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/iofog/:uuid/hal/hw',
+    path: '/api/v3/iofog/:uuid/hal/hw',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -313,7 +313,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/iofog/:uuid/hal/usb',
+    path: '/api/v3/iofog/:uuid/hal/usb',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -343,7 +343,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/iofog/:uuid/prune',
+    path: '/api/v3/iofog/:uuid/prune',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

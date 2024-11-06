@@ -20,9 +20,9 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'patch',
-    path: '/api/v1/iofog/:id/tunnel',
+    path: '/api/v3/iofog/:id/tunnel',
     middleware: async (req, res) => {
-      logger.apiReq('POST /api/v1/iofog/:id/tunnel') // don't use req as arg, because password not encrypted
+      logger.apiReq('POST /api/v3/iofog/:id/tunnel') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_NO_CONTENT
       const errorCodes = [
@@ -59,7 +59,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/iofog/:id/tunnel',
+    path: '/api/v3/iofog/:id/tunnel',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

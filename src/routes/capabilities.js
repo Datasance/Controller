@@ -16,7 +16,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'head',
-    path: '/api/v1/capabilities/edgeResources',
+    path: '/api/v3/capabilities/edgeResources',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -28,7 +28,7 @@ module.exports = [
   },
   {
     method: 'head',
-    path: '/api/v1/capabilities/applicationTemplates',
+    path: '/api/v3/capabilities/applicationTemplates',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
