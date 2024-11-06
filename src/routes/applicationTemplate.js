@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/applicationTemplates',
+    path: '/api/v3/applicationTemplates',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -48,7 +48,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/applicationTemplate',
+    path: '/api/v3/applicationTemplate',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -80,7 +80,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/applicationTemplate/yaml',
+    path: '/api/v3/applicationTemplate/yaml',
     fileInput: 'template',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -113,7 +113,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/applicationTemplate/:name',
+    path: '/api/v3/applicationTemplate/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -145,7 +145,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/applicationTemplate/:name',
+    path: '/api/v3/applicationTemplate/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -181,7 +181,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/applicationTemplate/yaml/:name',
+    path: '/api/v3/applicationTemplate/yaml/:name',
     fileInput: 'template',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -218,7 +218,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/applicationTemplate/:name',
+    path: '/api/v3/applicationTemplate/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -254,7 +254,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/applicationTemplate/:name',
+    path: '/api/v3/applicationTemplate/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

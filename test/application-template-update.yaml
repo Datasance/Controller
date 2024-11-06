@@ -1,5 +1,5 @@
 kind: ApplicationTemplate
-apiVersion: datasance.com/v1
+apiVersion: datasance.com/v3
 metadata:
   name: 'app-template-from-yaml'
 spec:

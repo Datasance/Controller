@@ -19,9 +19,9 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'post',
-    path: '/api/v1/user/login',
+    path: '/api/v3/user/login',
     middleware: async (req, res) => {
-      logger.apiReq('POST /api/v1/user/login') // don't use req as arg, because password not encrypted
+      logger.apiReq('POST /api/v3/user/login') // don't use req as arg, because password not encrypted
 
       const successCode = constants.HTTP_CODE_SUCCESS
       const errorCodes = [
@@ -42,13 +42,13 @@ module.exports = [
         .status(responseObject.code)
         .send(responseObject.body)
 
-      logger.apiRes('POST /api/v1/user/login', { args: { statusCode: responseObject.code } })
+      logger.apiRes('POST /api/v3/user/login', { args: { statusCode: responseObject.code } })
       // don't use req and responseObject as args, because they have password and token
     }
   },
   {
     method: 'get',
-    path: '/api/v1/user/profile',
+    path: '/api/v3/user/profile',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -76,7 +76,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/user/logout',
+    path: '/api/v3/user/logout',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

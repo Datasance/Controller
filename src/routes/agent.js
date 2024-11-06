@@ -21,7 +21,7 @@ const logger = require('../logger')
 module.exports = [
   {
     method: 'post',
-    path: '/api/v1/agent/provision',
+    path: '/api/v3/agent/provision',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -53,7 +53,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/agent/deprovision',
+    path: '/api/v3/agent/deprovision',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -82,7 +82,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/config',
+    path: '/api/v3/agent/config',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -106,7 +106,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/agent/config',
+    path: '/api/v3/agent/config',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -135,7 +135,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/config/changes',
+    path: '/api/v3/agent/config/changes',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -164,7 +164,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/agent/config/changes',
+    path: '/api/v3/agent/config/changes',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -193,7 +193,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/agent/status',
+    path: '/api/v3/agent/status',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -222,7 +222,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/edgeResources',
+    path: '/api/v3/agent/edgeResources',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -247,7 +247,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/microservices',
+    path: '/api/v3/agent/microservices',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -272,7 +272,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/microservices/:microserviceUuid',
+    path: '/api/v3/agent/microservices/:microserviceUuid',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -301,7 +301,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/registries',
+    path: '/api/v3/agent/registries',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -326,7 +326,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/tunnel',
+    path: '/api/v3/agent/tunnel',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -355,7 +355,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/strace',
+    path: '/api/v3/agent/strace',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -384,7 +384,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/agent/strace',
+    path: '/api/v3/agent/strace',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -417,7 +417,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/version',
+    path: '/api/v3/agent/version',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -446,7 +446,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/agent/hal/hw',
+    path: '/api/v3/agent/hal/hw',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -475,7 +475,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/agent/hal/usb',
+    path: '/api/v3/agent/hal/usb',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -504,7 +504,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/agent/delete-node',
+    path: '/api/v3/agent/delete-node',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -529,7 +529,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/agent/image-snapshot',
+    path: '/api/v3/agent/image-snapshot',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -558,7 +558,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/agent/image-snapshot',
+    path: '/api/v3/agent/image-snapshot',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

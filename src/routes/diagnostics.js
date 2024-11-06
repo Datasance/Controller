@@ -21,7 +21,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'post',
-    path: '/api/v1/microservices/:uuid/image-snapshot',
+    path: '/api/v3/microservices/:uuid/image-snapshot',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -56,7 +56,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/:uuid/image-snapshot',
+    path: '/api/v3/microservices/:uuid/image-snapshot',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -100,7 +100,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/microservices/:uuid/strace',
+    path: '/api/v3/microservices/:uuid/strace',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -139,7 +139,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/microservices/:uuid/strace',
+    path: '/api/v3/microservices/:uuid/strace',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -174,7 +174,7 @@ module.exports = [
   },
   {
     method: 'put',
-    path: '/api/v1/microservices/:uuid/strace',
+    path: '/api/v3/microservices/:uuid/strace',
     middleware: async (req, res) => {
       logger.apiReq(req)
 

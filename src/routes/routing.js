@@ -20,7 +20,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v1/routes',
+    path: '/api/v3/routes',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -55,7 +55,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v1/routes/:appName/:name',
+    path: '/api/v3/routes/:appName/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -90,7 +90,7 @@ module.exports = [
   },
   {
     method: 'post',
-    path: '/api/v1/routes',
+    path: '/api/v3/routes',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -134,7 +134,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v1/routes/:appName/:name',
+    path: '/api/v3/routes/:appName/:name',
     supportSubstitution: true,
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -174,7 +174,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v1/routes/:appName/:name',
+    path: '/api/v3/routes/:appName/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
