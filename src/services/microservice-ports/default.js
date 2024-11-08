@@ -27,7 +27,6 @@ const RouterManager = require('../../data/managers/router-manager')
 const MicroservicePublicPortManager = require('../../data/managers/microservice-public-port-manager')
 const MicroserviceExtraHostManager = require('../../data/managers/microservice-extra-host-manager')
 const controllerConfig = require('../../config')
-const Proxy = require('./proxy')
 
 const { MICROSERVICE_DEFAULT_LOG_SIZE, DEFAULT_ROUTER_NAME, DEFAULT_PROXY_HOST, RESERVED_PORTS } = require('../../helpers/constants')
 
@@ -185,10 +184,7 @@ async function validatePublicPortAppHostTemplate (extraHost, templateArgs, msvc,
 async function movePublicPortsToNewFog (updatedMicroservice, transaction) {
   const portMappings = await updatedMicroservice.getPorts()
   for (const portMapping of portMappings) {
-    if (portMapping.isProxy) {
-      Proxy.moveProxyPortsToNewFog(updatedMicroservice, portMapping, transaction)
-      continue
-    } else if (!portMapping.isPublic) {
+    if (!portMapping.isPublic) {
       continue
     }
 
@@ -226,8 +222,6 @@ async function createPortMapping (microservice, portMappingData, transaction) {
 
   if (portMappingData.public) {
     return _createPublicPortMapping(microservice, portMappingData, transaction)
-  } else if (portMappingData.proxy) {
-    return Proxy.createProxyPortMapping(microservice, portMappingData, transaction)
   } else {
     return _createSimplePortMapping(microservice, portMappingData, transaction)
   }
@@ -347,8 +341,6 @@ async function _createPublicPortMapping (microservice, portMappingData, transact
 async function _deletePortMapping (microservice, portMapping, transaction) {
   if (portMapping.isPublic) {
     await _deletePublicPortMapping(microservice, portMapping, transaction)
-  } else if (portMapping.isProxy) {
-    return Proxy.deleteProxyPortMapping(microservice, portMapping, transaction)
   } else {
     await _deleteSimplePortMapping(microservice, portMapping, transaction)
   }
@@ -429,9 +421,7 @@ function _buildLink (protocol, host, port) {
 }
 
 async function buildPublicPortMapping (pm, mapping, transaction) {
-  if (pm.isProxy) {
-    return Proxy.buildProxyPortMapping(pm, mapping, transaction)
-  } else if (!pm.isPublic) {
+  if (!pm.isPublic) {
     return
   }
 

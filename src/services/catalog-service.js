@@ -161,15 +161,6 @@ async function getProxyCatalogItem (transaction) {
   }, transaction)
 }
 
-async function getPortRouterCatalogItem (transaction) {
-  return CatalogItemManager.findOne({
-    name: DBConstants.PORT_ROUTER_CATALOG_NAME,
-    category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
-    registry_id: 1
-  }, transaction)
-}
-
 async function getBluetoothCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'RESTBlue',
@@ -388,6 +379,5 @@ module.exports = {
   getBluetoothCatalogItem: getBluetoothCatalogItem,
   getHalCatalogItem: getHalCatalogItem,
   getRouterCatalogItem: getRouterCatalogItem,
-  getProxyCatalogItem: getProxyCatalogItem,
-  getPortRouterCatalogItem: getPortRouterCatalogItem
+  getProxyCatalogItem: getProxyCatalogItem
 }

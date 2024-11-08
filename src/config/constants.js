@@ -13,12 +13,12 @@
 
 module.exports = {
   'App:Name': 'iofog-controller',
-  'Viewer:Port': 80,
+  'Viewer:Port': 8008,
 
   'Server:Port': 51121,
   'Server:DevMode': false,
 
-  'Service:LogsDirectory': '/var/log/iofog-controller',
+  'Service:LogsDirectory': process.env.PID_BASE ? `${process.env.PID_BASE}/iofog-controller` : '/var/log/iofog-controller',
   'Service:LogsFileSize': 10485760,
   'Service:LogsFileCount': 10,
 

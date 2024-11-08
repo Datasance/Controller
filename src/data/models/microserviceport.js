@@ -47,11 +47,6 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'port_id',
       as: 'publicPort'
     })
-
-    MicroservicePort.hasOne(models.MicroserviceProxyPort, {
-      foreignKey: 'port_id',
-      as: 'proxyPort'
-    })
   }
   return MicroservicePort
 }
