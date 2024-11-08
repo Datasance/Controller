@@ -20,7 +20,6 @@ const MicroserviceEnvManager = require('../../../src/data/managers/microservice-
 const MicroserviceArgManager = require('../../../src/data/managers/microservice-arg-manager')
 const RegistryManager = require('../../../src/data/managers/registry-manager')
 const Op = require('sequelize').Op
-const MicroservicePublicModeManager = require('../../../src/data/managers/microservice-public-mode-manager')
 const MicroservicePublicPortManager = require('../../../src/data/managers/microservice-public-port-manager')
 const ioFogManager = require('../../../src/data/managers/iofog-manager')
 const ioFogService = require('../../../src/services/iofog-service')
@@ -118,7 +117,6 @@ describe('Microservices Service', () => {
       $sandbox.stub(MicroserviceExtraHostManager, 'findAll').returns($findExtraHostsResponse)
       $sandbox.stub(MicroserviceEnvManager, 'findAllExcludeFields').returns($envResponse)
       $sandbox.stub(MicroserviceArgManager, 'findAllExcludeFields').returns($cmdResponse)
-      $sandbox.stub(MicroservicePublicModeManager, 'findAll').returns($publicModeResponse)
       $sandbox.stub(CatalogItemImageManager, 'findAll').returns($imgResponse)
       $sandbox.stub(MicroserviceStatusManager, 'findAllExcludeFields').returns($statusResponse)
       $sandbox.stub(ApplicationManager, 'findOne').returns(Promise.resolve(application))
@@ -198,7 +196,6 @@ describe('Microservices Service', () => {
       $sandbox.stub(MicroserviceExtraHostManager, 'findAll').returns($findExtraHostsResponse)
       $sandbox.stub(MicroserviceEnvManager, 'findAllExcludeFields').returns($envResponse)
       $sandbox.stub(MicroserviceArgManager, 'findAllExcludeFields').returns($cmdResponse)
-      $sandbox.stub(MicroservicePublicModeManager, 'findAll').returns($publicModeResponse)
       $sandbox.stub(CatalogItemImageManager, 'findAll').returns($imgResponse)
       $sandbox.stub(MicroserviceStatusManager, 'findAllExcludeFields').returns($statusResponse)
       $sandbox.stub(ApplicationManager, 'findOne').returns(Promise.resolve(application))
