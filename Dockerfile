@@ -22,7 +22,7 @@ RUN npm version $PKG_VERSION --allow-same-version --no-git-tag-version
 
 RUN npm pack
 
-FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:1-63.1726695170
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.5-1730525319
 
 USER root
 # Install dependencies for logging and development
