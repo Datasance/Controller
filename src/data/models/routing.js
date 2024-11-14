@@ -12,11 +12,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
       field: 'name'
-    },
-    isNetworkConnection: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-      field: 'is_network_connection'
     }
   }, {
     tableName: 'Routings',
@@ -40,42 +35,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       as: 'destMicroservice',
       onDelete: 'cascade'
-    })
-
-    Routing.belongsTo(models.Microservice, {
-      foreignKey: {
-        name: 'sourceNetworkMicroserviceUuid',
-        field: 'source_network_microservice_uuid'
-      },
-      as: 'sourceNetworkMicroservice',
-      onDelete: 'set null'
-    })
-
-    Routing.belongsTo(models.Microservice, {
-      foreignKey: {
-        name: 'destNetworkMicroserviceUuid',
-        field: 'dest_network_microservice_uuid'
-      },
-      as: 'destNetworkMicroservice',
-      onDelete: 'set null'
-    })
-
-    Routing.belongsTo(models.Fog, {
-      foreignKey: {
-        name: 'sourceIofogUuid',
-        field: 'source_iofog_uuid'
-      },
-      as: 'sourceIofog',
-      onDelete: 'set null'
-    })
-
-    Routing.belongsTo(models.Fog, {
-      foreignKey: {
-        name: 'destIofogUuid',
-        field: 'dest_iofog_uuid'
-      },
-      as: 'destIofog',
-      onDelete: 'set null'
     })
 
     Routing.belongsTo(models.Application, {

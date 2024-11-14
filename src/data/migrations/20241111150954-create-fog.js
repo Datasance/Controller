@@ -90,18 +90,6 @@ module.exports = {
         type: Sequelize.TEXT,
         field: 'cpu_violation'
       },
-      cpuViolation: {
-        type: Sequelize.TEXT,
-        field: 'cpu_violation'
-      },
-      cpuViolation: {
-        type: Sequelize.TEXT,
-        field: 'cpu_violation'
-      },
-      cpuViolation: {
-        type: Sequelize.TEXT,
-        field: 'cpu_violation'
-      },
       catalogItemStatus: {
         type: Sequelize.TEXT,
         field: 'catalog_item_status'

@@ -966,7 +966,7 @@ async function getReceiverMicroservices (microservice, transaction) {
 async function isMicroserviceConsumer (microservice, transaction) {
   const routes = await RoutingManager.findAll({ destMicroserviceUuid: microservice.uuid }, transaction)
 
-  return !!(routes && routes.length > 0)
+  return Boolean(routes.length)
 }
 
 async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData, isCLI, transaction) {
