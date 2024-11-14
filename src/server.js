@@ -28,7 +28,27 @@ const { renderFile } = require('ejs')
 const xss = require('xss-clean')
 const { substitutionMiddleware } = require('./helpers/template-helper')
 const swaggerUi = require('swagger-ui-express')
-const swaggerFile = require('../docs/swagger.json')
+const yaml = require('yamljs')
+const swaggerDocument = yaml.load('/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/docs/swagger.yaml')
+
+if (!swaggerDocument.components) {
+  swaggerDocument.components = {}
+}
+
+swaggerDocument.components.securitySchemes = {
+  userToken: {
+    type: 'http',
+    scheme: 'bearer',
+    bearerFormat: 'JWT'
+  }
+}
+
+swaggerDocument.security = [
+  {
+    userToken: []
+  }
+]
+
 const multer = require('multer')
 const multerMemStorage = multer.memoryStorage()
 const uploadFile = (fileName) => multer({
@@ -235,4 +255,27 @@ initState()
       startHttpServer({ api: app, viewer: viewerApp }, { api: apiPort, viewer: viewerPort }, jobs)
     }
   })
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerFile))
+app.use('/docs', swaggerUi.serve)
+
+app.use('/docs', (req, res, next) => {
+  const userToken = req.query && req.query.userToken ? req.query.userToken : ''
+
+  const options = {
+    swaggerOptions: {
+      authAction: {
+        userToken: {
+          name: 'userToken',
+          schema: {
+            type: 'http',
+            in: 'header',
+            name: 'Authorization',
+            description: 'Bearer Token (User Token)'
+          },
+          value: `${userToken}`
+        }
+      }
+    }
+  }
+
+  swaggerUi.setup(swaggerDocument, options)(req, res, next)
+})
