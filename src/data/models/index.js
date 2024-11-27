@@ -47,6 +47,20 @@ db.initDB = async (isStart) => {
   await databaseProvider.initDB(isStart)
 
   if (isStart) {
+    if (databaseProvider instanceof require('../providers/sqlite')) {
+      const sqliteDbPath = databaseProvider.sequelize.options.storage
+
+      // Check if the database file exists
+      if (fs.existsSync(sqliteDbPath)) {
+        console.log('Database file exists. Running migrations only...')
+        await databaseProvider.runMigration(sqliteDbPath) // Ensure migration finishes before moving on
+      } else {
+        console.log('Database file does not exist. Running migrations and seeders...')
+        await databaseProvider.runMigration(sqliteDbPath) // Wait for migration to finish
+        await databaseProvider.runSeeder(sqliteDbPath) // Wait for seeding to finish
+      }
+    }
+
     // Configure system images
     const fogTypes = await db.FogType.findAll({})
     await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('SystemImages:Router', {}))
