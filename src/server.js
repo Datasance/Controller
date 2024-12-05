@@ -28,11 +28,15 @@ const { renderFile } = require('ejs')
 const xss = require('xss-clean')
 const { substitutionMiddleware } = require('./helpers/template-helper')
 const swaggerUi = require('swagger-ui-express')
-const yaml = require('yamljs')
-const swaggerDocument = yaml.load('/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/docs/swagger.yaml')
+const yaml = require('js-yaml')
+const swaggerDocument = yaml.load(fs.readFileSync('/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/docs/swagger.yaml'))
 
 if (!swaggerDocument.components) {
   swaggerDocument.components = {}
+}
+
+if (!swaggerDocument.components.securitySchemes) {
+  swaggerDocument.components.securitySchemes = {}
 }
 
 swaggerDocument.components.securitySchemes = {
@@ -255,13 +259,55 @@ initState()
       startHttpServer({ api: app, viewer: viewerApp }, { api: apiPort, viewer: viewerPort }, jobs)
     }
   })
+app.use('/datasance-logo-white.png', express.static(path.normalize('/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/src/public/datasance-logo-white.png')))
 app.use('/docs', swaggerUi.serve)
-
 app.use('/docs', (req, res, next) => {
   const userToken = req.query && req.query.userToken ? req.query.userToken : ''
+  const baseUrl = req.query && req.query.baseUrl ? req.query.baseUrl : 'http://localhost:51121/api/v3'
+
+  const customCss = `
+  .swagger-ui .topbar {
+    background-color: #10253dff;
+  }
+  .swagger-ui .topbar img {
+    content: none;
+  }
+  .swagger-ui .topbar a {
+    background-image: url('/datasance-logo-white.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 150px;
+    height: 50px;
+    display: block;
+    text-indent: -9999px;
+    overflow: hidden;
+  }
+`
+
+  const swaggerFilePath = path.normalize('/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/docs/swagger.yaml')
+  let swaggerDocumentCustom
+
+  try {
+    const fileContent = fs.readFileSync(swaggerFilePath, 'utf8')
+    swaggerDocumentCustom = yaml.load(fileContent)
+  } catch (error) {
+    console.error('Swagger YAML dosyası okunamadı:', error.message)
+    return res.status(500).send(`Swagger dosyası yüklenirken bir hata oluştu: ${error.message}`)
+  }
+
+  const swaggerDocumentWithBaseUrl = {
+    ...swaggerDocumentCustom,
+    servers: [
+      {
+        url: `${baseUrl}`
+      }
+    ]
+  }
 
   const options = {
+    customCss,
     swaggerOptions: {
+      persistAuthorization: true,
       authAction: {
         userToken: {
           name: 'userToken',
@@ -277,5 +323,5 @@ app.use('/docs', (req, res, next) => {
     }
   }
 
-  swaggerUi.setup(swaggerDocument, options)(req, res, next)
+  swaggerUi.setup(swaggerDocumentWithBaseUrl, options)(req, res, next)
 })
