@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.4.3",
+  "version": "3.4.4",
   "description": "ioFog Controller project for Eclipse IoFog @ iofog.org \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "0.3.8",
+    "@datasance/ecn-viewer": "0.3.9",
     "axios": "1.7.4",
     "body-parser": "^1.20.3",
     "child_process": "1.0.2",
@@ -96,6 +96,7 @@
     "sequelize": "6.37.3",
     "sqlite3": "^5.1.7",
     "string-format": "2.0.0",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "umzug": "^3.7.0",
     "underscore": "1.13.6",
@@ -107,7 +108,7 @@
     "chai": "5.1.1",
     "chai-as-promised": "7.1.2",
     "chai-http": "4.4.0",
-    "eslint": "9.2.0",
+    "eslint": "9.16.0",
     "eslint-config-google": "0.14.0",
     "mocha": "10.6.0",
     "mocha-junit-reporter": "2.2.1",

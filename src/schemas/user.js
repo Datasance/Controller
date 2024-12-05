@@ -27,7 +27,17 @@ const login = {
   additionalProperties: true
 }
 
+const refresh = {
+  id: '/refresh',
+  type: 'object',
+  properties: {
+    refreshToken: { type: 'string' }
+  },
+  required: ['refreshToken'],
+  additionalProperties: true
+}
+
 module.exports = {
-  mainSchemas: [login],
+  mainSchemas: [login, refresh],
   innerSchemas: []
 }

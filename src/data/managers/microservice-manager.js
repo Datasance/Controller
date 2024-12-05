@@ -35,7 +35,6 @@ const microserviceExcludedFields = [
   'created_at',
   'updated_at',
   'updatedBy',
-  'isNetwork',
   'rebuild',
   'deleteWithCleanUp',
   'imageSnapshot',
@@ -131,8 +130,7 @@ class MicroserviceManager extends BaseManager {
             attributes: ['uuid']
           }],
           attributes: { exclude: ['id', 'source_microservice_uuid',
-            'sourceMicroserviceUuid', 'destMicroserviceUuid', 'sourceNetworkMicroserviceUuid',
-            'destNetworkMicroserviceUuid', 'sourceIofogUuid', 'destIofogUuid'] }
+            'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
         }
       ],
       where: where,
@@ -317,9 +315,7 @@ class MicroserviceManager extends BaseManager {
             attributes: ['uuid']
           }],
           attributes: { exclude: ['id',
-            'sourceMicroserviceUuid', 'destMicroserviceUuid',
-            'sourceNetworkMicroserviceUuid', 'destNetworkMicroserviceUuid',
-            'sourceIofogUuid', 'destIofogUuid'] }
+            'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
         }
       ],
       where: where,

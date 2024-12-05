@@ -2,7 +2,7 @@
   "openapi" : "3.0.0",
   "info" : {
     "version" : "1.0.0",
-    "title" : "Datasance PoT-ioFog Controller"
+    "title" : "Datasance PoT Controller"
   },
   "tags" : [ {
     "name" : "Controller",
@@ -2653,6 +2653,30 @@
         "tags" : [ "User" ],
         "summary" : "Login",
         "operationId" : "login",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "headers" : {
+              "X-Timestamp" : {
+                "description" : "FogController server timestamp"
+              }
+            }
+          },
+          "400" : {
+            "description" : "bad request"
+          },
+          "401" : {
+            "description" : "incorrect credentials"
+          }
+        }
+      }
+    },
+    "/user/refresh" : {
+      "post" : {
+        "tags" : [ "Refresh" ],
+        "summary" : "Refresh accessToken with refreshToken",
+        "operationId" : "refresh",
         "parameters" : [ ],
         "responses" : {
           "200" : {

@@ -28,6 +28,18 @@ const userLoginEndPoint = async function (req) {
   return UserService.login(credentials, false)
 }
 
+const refreshTokenEndPoint = async function (req) {
+  const token = req.body
+
+  await Validator.validate(token, Validator.schemas.refresh)
+
+  const credentials = {
+    refreshToken: token.refreshToken
+
+  }
+  return UserService.refresh(credentials, false)
+}
+
 const getUserProfileEndPoint = async function (req) {
   return UserService.profile(req, false)
 }
@@ -38,6 +50,7 @@ const userLogoutEndPoint = async function (req) {
 
 module.exports = {
   userLoginEndPoint: userLoginEndPoint,
+  refreshTokenEndPoint: refreshTokenEndPoint,
   getUserProfileEndPoint: getUserProfileEndPoint,
   userLogoutEndPoint: userLogoutEndPoint
 }

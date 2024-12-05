@@ -47,6 +47,35 @@ module.exports = [
     }
   },
   {
+    method: 'post',
+    path: '/api/v3/user/refresh',
+    middleware: async (req, res) => {
+      logger.apiReq('POST /api/v3/user/refresh') // don't use req as arg, because password not encrypted
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.InvalidCredentialsError]
+        }
+      ]
+
+      const refreshTokenEndPoint = ResponseDecorator.handleErrors(UserController.refreshTokenEndPoint, successCode, errorCodes)
+      const responseObject = await refreshTokenEndPoint(req)
+
+      res
+        .status(responseObject.code)
+        .send(responseObject.body)
+
+      logger.apiRes('POST /api/v3/user/refresh', { args: { statusCode: responseObject.code } })
+      // don't use req and responseObject as args, because they have password and token
+    }
+  },
+  {
     method: 'get',
     path: '/api/v3/user/profile',
     middleware: async (req, res) => {

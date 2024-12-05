@@ -49,8 +49,51 @@ const login = async function (credentials, isCLI, transaction) {
 
     // Extract the access token from the response
     const accessToken = response.data.access_token
+    const refreshToken = response.data.refresh_token
     return {
-      accessToken
+      accessToken,
+      refreshToken
+    }
+  } catch (error) {
+    console.error('Error during login:', error)
+    throw new Errors.InvalidCredentialsError()
+  }
+}
+
+const refresh = async function (credentials, isCLI, transaction) {
+  try {
+    const data = qs.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: credentials.refreshToken,
+      client_id: process.env.KC_CLIENT,
+      client_secret: process.env.KC_CLIENT_SECRET
+    })
+
+    const agent = new https.Agent({
+      rejectUnauthorized: false // Ignore SSL certificate errors
+    })
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/token`,
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data,
+      httpsAgent: agent
+    }
+
+    // Make a POST request to Keycloak token endpoint
+    const response = await axios.request(config)
+
+    // Extract the access token from the response
+    const accessToken = response.data.access_token
+    const refreshToken = response.data.refresh_token
+    return {
+      accessToken,
+      refreshToken
     }
   } catch (error) {
     console.error('Error during login:', error)
@@ -120,6 +163,7 @@ const logout = async function (req, isCLI, transaction) {
 
 module.exports = {
   login: TransactionDecorator.generateTransaction(login),
+  refresh: TransactionDecorator.generateTransaction(refresh),
   profile: TransactionDecorator.generateTransaction(profile),
   logout: TransactionDecorator.generateTransaction(logout)
 }

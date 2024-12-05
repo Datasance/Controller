@@ -196,7 +196,7 @@ async function movePublicPortsToNewFog (updatedMicroservice, transaction) {
     const destAgent = await FogManager.findOne({ uuid: updatedMicroservice.iofogUuid }, transaction)
     const destAgentsRouter = destAgent.routerId ? await RouterManager.findOne({ id: destAgent.routerId }, transaction) : await RouterManager.findOne({ iofogUuid: destAgent.uuid }, transaction)
     const networkRouter = {
-      host: destAgentsRouter.host,
+      host: 'localhost',
       port: destAgentsRouter.messagingPort
     }
     const newProxy = await _createOrUpdateProxyMicroservice(localMapping, networkRouter, updatedMicroservice.iofogUuid, localProxy.catalogItemId, transaction)

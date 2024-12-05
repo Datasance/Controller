@@ -1,7 +1,7 @@
 openapi : "3.0.0"
 info:
   version: 1.0.0
-  title: Datasance PoT-ioFog Controller
+  title: Datasance PoT Controller
 paths:
   /status:
     get:
@@ -2524,6 +2524,34 @@ paths:
           description: bad request
         "401":
           description: incorrect credentials
+  /user/refresh:
+    post:
+      tags:
+        - Refresh
+      summary: Refresh accessToken with refreshToken
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+        required: true
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshSuccessResponse"
+        "400":
+          description: bad request
+        "401":
+          description: incorrect credentials
   /user/logout:
     post:
       tags:
@@ -3036,7 +3064,6 @@ tags:
     description: Manage your users
 servers:
   - url: http://localhost:51121/api/v3
-  - url: https://localhost:51121/api/v3
 components:
   securitySchemes:
     userToken:
@@ -4531,6 +4558,10 @@ components:
         - email
         - password
         - totp
+    RefreshRequest:
+      type: string
+      required:
+        - refreshToken
       properties:
         email:
           type: string
@@ -4542,8 +4573,21 @@ components:
       type: object
       required:
         - accessToken
+        - refreshToken
       properties:
         accessToken:
+          type: string
+        refreshToken:
+          type: string
+    RefreshSuccessResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
           type: string
     UserProfileDetailsResponse:
       type: object

@@ -63,7 +63,7 @@ module.exports = [
       const getApplicationsBySystemEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsBySystemEndPoint, successCode, errorCodes)
 
       // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await keycloak.protect(['SRE'])(req, res, async () => {
         const responseObject = await getApplicationsBySystemEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
