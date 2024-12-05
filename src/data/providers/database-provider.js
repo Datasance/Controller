@@ -36,7 +36,6 @@ class DatabaseProvider {
       for (let query of dataArr) {
         if (query.trim()) {
           query = query.trim() + ';' // Ensure semicolon is added back
-          console.log(`Running migration query: ${query}`)
 
           // Run each query sequentially
           await new Promise((resolve, reject) => {
@@ -105,7 +104,6 @@ class DatabaseProvider {
       for (let query of dataArr) {
         if (query.trim()) {
           query = query.trim() + ';' // Ensure semicolon is added back
-          console.log(`Running seeder query: ${query}`)
 
           // Run each query sequentially
           await new Promise((resolve, reject) => {
