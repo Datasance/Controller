@@ -2527,7 +2527,7 @@ paths:
   /user/refresh:
     post:
       tags:
-        - Refresh
+        - User
       summary: Refresh accessToken with refreshToken
       operationId: refresh
       requestBody:

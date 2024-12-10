@@ -2674,7 +2674,7 @@
     },
     "/user/refresh" : {
       "post" : {
-        "tags" : [ "Refresh" ],
+        "tags" : [ "User" ],
         "summary" : "Refresh accessToken with refreshToken",
         "operationId" : "refresh",
         "parameters" : [ ],
