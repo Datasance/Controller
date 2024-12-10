@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "0.3.9",
+    "@datasance/ecn-viewer": "0.3.11",
     "axios": "1.7.4",
     "body-parser": "^1.20.3",
     "child_process": "1.0.2",
@@ -66,7 +66,7 @@
     "cors": "2.8.5",
     "daemonize2": "0.4.2",
     "ejs": "3.1.10",
-    "express": "4.21.1",
+    "express": "4.21.2",
     "express-session": "1.18.1",
     "formidable": "3.5.1",
     "ftp": "0.3.10",
