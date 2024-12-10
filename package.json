@@ -96,8 +96,6 @@
     "sequelize": "6.37.3",
     "sqlite3": "^5.1.7",
     "string-format": "2.0.0",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0",
     "umzug": "^3.7.0",
     "underscore": "1.13.6",
     "xss-clean": "0.1.1"
