@@ -18,8 +18,8 @@ module.exports = {
   'Server:Port': 51121,
   'Server:DevMode': false,
 
-  'Service:LogsDirectory': process.env.PID_BASE ? `${process.env.PID_BASE}/iofog-controller` : '/var/log/iofog-controller',
-  'Service:LogsFileSize': 10485760,
+  'Service:LogsDirectory': '/var/log/iofog-controller',
+  'Service:LogsFileSize': 104857600,
   'Service:LogsFileCount': 10,
 
   'Settings:DefaultJobIntervalSeconds': 120,

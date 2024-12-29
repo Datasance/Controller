@@ -81,7 +81,7 @@ try {
   fileLogger = pino(
     {
       ...defaultFormat,
-      level: 'warn'
+      level: 'apiRes'
     },
     logDestination)
   process.on('SIGHUP', () => logDestination.reopen())

@@ -29,7 +29,7 @@ USER root
 # Install dependencies for logging and development
 RUN microdnf install -y logrotate g++ make && microdnf clean all
 
-COPY logrotate.conf /etc/logrotate.conf
+COPY logrotate.conf /etc/logrotate.d/iofog-controller
 
 # Install Python and pip
 RUN microdnf install -y python3 && \
@@ -39,6 +39,9 @@ RUN microdnf install -y python3 && \
     microdnf install shadow-utils && \
     microdnf clean all
 RUN useradd --uid 10000 --create-home runner
+RUN mkdir -p /var/log/iofog-controller && \
+    chown runner:runner /var/log/iofog-controller && \
+    chmod 755 /var/log/iofog-controller
 USER 10000
 WORKDIR /home/runner
 
@@ -53,6 +56,8 @@ ENV PID_BASE=/home/runner
 RUN npm i -g /home/runner/iofog-controller.tgz && \
   rm -rf /home/runner/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
+
+RUN rm -rf /home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/src/data/sqlite_files/*
 
 COPY LICENSE /licenses/LICENSE
 LABEL org.opencontainers.image.description=controller

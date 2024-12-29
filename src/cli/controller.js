@@ -46,13 +46,13 @@ class Controller extends BaseCLIHandler {
 
       switch (command) {
         case constants.CMD_STATUS:
-          await _executeCase(controllerCommand, constants.CMD_STATUS, _getStatus, false)
+          await _executeCase(controllerCommand, constants.CMD_STATUS, _getStatus)
           break
         case constants.CMD_FOG_TYPES:
-          await _executeCase(controllerCommand, constants.CMD_FOG_TYPES, _getFogTypes, false)
+          await _executeCase(controllerCommand, constants.CMD_FOG_TYPES, _getFogTypes)
           break
         case constants.CMD_VERSION:
-          await _executeCase(controllerCommand, constants.CMD_VERSION, _getVersion, false)
+          await _executeCase(controllerCommand, constants.CMD_VERSION, _getVersion)
           break
         case constants.CMD_HELP:
         default:
@@ -64,7 +64,7 @@ class Controller extends BaseCLIHandler {
   }
 }
 
-const _executeCase = async function (userCommand, commandName, f, isUserRequired) {
+const _executeCase = async function (userCommand, commandName, f) {
   try {
     const item = userCommand[commandName]
     await f(item)

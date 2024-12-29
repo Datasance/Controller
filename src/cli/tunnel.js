@@ -98,10 +98,10 @@ class Tunnel extends BaseCLIHandler {
 
       switch (command) {
         case constants.CMD_UPDATE:
-          await _executeCase(tunnelCommand, constants.CMD_UPDATE, _updateTunnel, false)
+          await _executeCase(tunnelCommand, constants.CMD_UPDATE, _updateTunnel)
           break
         case constants.CMD_LIST:
-          await _executeCase(tunnelCommand, constants.CMD_LIST, _tunnelList, false)
+          await _executeCase(tunnelCommand, constants.CMD_LIST, _tunnelList)
           break
         default:
           return this.help([])
@@ -112,7 +112,7 @@ class Tunnel extends BaseCLIHandler {
   }
 }
 
-async function _updateTunnel (obj, user) {
+async function _updateTunnel (obj) {
   const action = obj.action
   const tunnel = _createTunnelObject(obj)
 
@@ -126,10 +126,10 @@ async function _updateTunnel (obj, user) {
 
   switch (action) {
     case 'open':
-      await TunnelService.openTunnel(tunnel, user, true)
+      await TunnelService.openTunnel(tunnel, true)
       break
     case 'close':
-      await TunnelService.closeTunnel({ iofogUuid: tunnel.iofogUuid }, user)
+      await TunnelService.closeTunnel({ iofogUuid: tunnel.iofogUuid })
       break
     default:
       throw new Errors.ValidationError(ErrorMessages.INVALID_ACTION_PROPERTY)
@@ -143,7 +143,7 @@ async function _tunnelList () {
   logger.cliRes(JSON.stringify(tunnels, null, 2))
 }
 
-async function _executeCase (commands, commandName, f, isUserRequired) {
+async function _executeCase (commands, commandName, f) {
   try {
     const obj = commands[commandName]
     await f(obj)

@@ -90,19 +90,19 @@ class Application extends BaseCLIHandler {
 
       switch (command) {
         case constants.CMD_ADD:
-          await _executeCase(applicationCommand, constants.CMD_ADD, _createApplication, true)
+          await _executeCase(applicationCommand, constants.CMD_ADD, _createApplication)
           break
         case constants.CMD_UPDATE:
-          await _executeCase(applicationCommand, constants.CMD_UPDATE, _updateApplication, true)
+          await _executeCase(applicationCommand, constants.CMD_UPDATE, _updateApplication)
           break
         case constants.CMD_REMOVE:
-          await _executeCase(applicationCommand, constants.CMD_REMOVE, _deleteApplication, true)
+          await _executeCase(applicationCommand, constants.CMD_REMOVE, _deleteApplication)
           break
         case constants.CMD_LIST:
-          await _executeCase(applicationCommand, constants.CMD_LIST, _getAllApplications, false)
+          await _executeCase(applicationCommand, constants.CMD_LIST, _getAllApplications)
           break
         case constants.CMD_INFO:
-          await _executeCase(applicationCommand, constants.CMD_INFO, _getApplication, false)
+          await _executeCase(applicationCommand, constants.CMD_INFO, _getApplication)
           break
         case constants.CMD_HELP:
         default:
@@ -126,7 +126,7 @@ class Application extends BaseCLIHandler {
   }
 }
 
-const _executeCase = async function (applicationCommand, commandName, f, isUserRequired) {
+const _executeCase = async function (applicationCommand, commandName, f) {
   try {
     const item = applicationCommand[commandName]
     await f(item)
@@ -135,33 +135,33 @@ const _executeCase = async function (applicationCommand, commandName, f, isUserR
   }
 }
 
-const _createApplication = async function (applicationData, user) {
+const _createApplication = async function (applicationData) {
   const application = applicationData.file
     ? JSON.parse(fs.readFileSync(applicationData.file, 'utf8'))
     : _createApplicationObject(applicationData)
   logger.cliReq('application add', { args: application })
-  const createdApplication = await ApplicationService.createApplicationEndPoint(application, user, true)
+  const createdApplication = await ApplicationService.createApplicationEndPoint(application, true)
   logger.cliRes(JSON.stringify({
     id: createdApplication.id,
     name: createdApplication.name
   }, null, 2))
 }
 
-const _updateApplication = async function (applicationData, user) {
+const _updateApplication = async function (applicationData) {
   const application = applicationData.file
     ? JSON.parse(fs.readFileSync(applicationData.file, 'utf8'))
     : _createApplicationObject(applicationData)
 
   const name = applicationData.name
   logger.cliReq('application update', { args: application })
-  await ApplicationService.patchApplicationEndPoint(application, { name }, user, true)
+  await ApplicationService.patchApplicationEndPoint(application, { name }, true)
   logger.cliRes('Application updated successfully.')
 }
 
-const _deleteApplication = async function (applicationData, user) {
+const _deleteApplication = async function (applicationData) {
   const name = applicationData.name
   logger.cliReq('application remove', { args: { name } })
-  await ApplicationService.deleteApplicationEndPoint({ name }, user, true)
+  await ApplicationService.deleteApplicationEndPoint({ name }, true)
   logger.cliRes('Application removed successfully.')
 }
 

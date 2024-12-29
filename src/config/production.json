@@ -10,8 +10,8 @@
     "DevMode": true
   },
   "Service": {
-    "LogsDirectory": "${PID_BASE}/iofog-controller",
-    "LogsFileSize": 10485760,
+    "LogsDirectory": "/var/log/iofog-controller",
+    "LogsFileSize": 104857600,
     "LogsFileCount": 10
   },
   "Settings": {

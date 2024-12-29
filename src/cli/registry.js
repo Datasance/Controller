@@ -111,16 +111,16 @@ class Registry extends BaseCLIHandler {
 
       switch (command) {
         case constants.CMD_ADD:
-          await _executeCase(registryCommand, constants.CMD_ADD, _createRegistry, true)
+          await _executeCase(registryCommand, constants.CMD_ADD, _createRegistry)
           break
         case constants.CMD_REMOVE:
-          await _executeCase(registryCommand, constants.CMD_REMOVE, _deleteRegistry, false)
+          await _executeCase(registryCommand, constants.CMD_REMOVE, _deleteRegistry)
           break
         case constants.CMD_UPDATE:
-          await _executeCase(registryCommand, constants.CMD_UPDATE, _updateRegistry, false)
+          await _executeCase(registryCommand, constants.CMD_UPDATE, _updateRegistry)
           break
         case constants.CMD_LIST:
-          await _executeCase(registryCommand, constants.CMD_LIST, _getRegistries, false)
+          await _executeCase(registryCommand, constants.CMD_LIST, _getRegistries)
           break
         case constants.CMD_HELP:
         default:
@@ -132,28 +132,28 @@ class Registry extends BaseCLIHandler {
   }
 }
 
-async function _createRegistry (obj, user) {
+async function _createRegistry (obj) {
   const registry = _createRegistryObject(obj)
 
   const logRegistry = Object.assign({}, registry)
   delete logRegistry.password
   logger.cliReq('registry add', { args: logRegistry })
 
-  const response = await RegistryService.createRegistry(registry, user)
+  const response = await RegistryService.createRegistry(registry)
   logger.cliRes(JSON.stringify({
     id: response.id
   }, null, 2))
 }
 
-async function _getRegistries (obj, user) {
+async function _getRegistries (obj) {
   logger.cliReq('registry list')
-  const result = await RegistryService.findRegistries(user, true)
+  const result = await RegistryService.findRegistries(true)
   logger.cliRes(JSON.stringify(result, null, 2))
 }
 
-async function _deleteRegistry (obj, user) {
+async function _deleteRegistry (obj) {
   logger.cliReq('registry remove', { args: { id: obj.itemId } })
-  await RegistryService.deleteRegistry({ id: obj.itemId }, user, true)
+  await RegistryService.deleteRegistry({ id: obj.itemId }, true)
   logger.cliRes('Registry has been removed successfully.')
 }
 
@@ -168,7 +168,7 @@ async function _updateRegistry (obj) {
   logger.cliRes('Registry has been updated successfully.')
 }
 
-async function _executeCase (commands, commandName, f, isUserRequired) {
+async function _executeCase (commands, commandName, f) {
   try {
     const obj = commands[commandName]
     await f(obj)

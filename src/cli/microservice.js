@@ -66,15 +66,9 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
     cdiDevices: [
       'string'
     ],
-    runAsUser: [
-      'string'
-    ],
-    platform: [
-      'string'
-    ],
-    runtime: [
-      'string'
-    ]
+    runAsUser: 'string',
+    platform: 'string',
+    runtime: 'string'
   }
 )
 
@@ -114,15 +108,9 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
     cdiDevices: [
       'string'
     ],
-    runAsUser: [
-      'string'
-    ],
-    platform: [
-      'string'
-    ],
-    runtime: [
-      'string'
-    ]
+    runAsUser: 'string',
+    platform: 'string',
+    runtime: 'string'
   }
 )
 
@@ -314,7 +302,7 @@ class Microservice extends BaseCLIHandler {
       },
       {
         name: 'cdiDevices',
-        alias: 'd',
+        alias: 'D',
         type: String,
         description: 'Map CDI devices to microservice container',
         multiple: true,
@@ -322,7 +310,7 @@ class Microservice extends BaseCLIHandler {
       },
       {
         name: 'user',
-        alias: 'u',
+        alias: 'U',
         type: String,
         description: 'Run Microservice as a user)',
         multiple: true,
@@ -330,7 +318,7 @@ class Microservice extends BaseCLIHandler {
       },
       {
         name: 'platform',
-        alias: 'o',
+        alias: 'L',
         type: String,
         description: 'Microservice image platform to be used',
         multiple: true,
@@ -372,43 +360,43 @@ class Microservice extends BaseCLIHandler {
 
       switch (command) {
         case constants.CMD_ADD:
-          await _executeCase(microserviceCommand, constants.CMD_ADD, _createMicroservice, true)
+          await _executeCase(microserviceCommand, constants.CMD_ADD, _createMicroservice)
           break
         case constants.CMD_UPDATE:
-          await _executeCase(microserviceCommand, constants.CMD_UPDATE, _updateMicroservice, false)
+          await _executeCase(microserviceCommand, constants.CMD_UPDATE, _updateMicroservice)
           break
         case constants.CMD_REMOVE:
-          await _executeCase(microserviceCommand, constants.CMD_REMOVE, _removeMicroservice, false)
+          await _executeCase(microserviceCommand, constants.CMD_REMOVE, _removeMicroservice)
           break
         case constants.CMD_LIST:
-          await _executeCase(microserviceCommand, constants.CMD_LIST, _listMicroservices, false)
+          await _executeCase(microserviceCommand, constants.CMD_LIST, _listMicroservices)
           break
         case constants.CMD_INFO:
-          await _executeCase(microserviceCommand, constants.CMD_INFO, _getMicroservice, false)
+          await _executeCase(microserviceCommand, constants.CMD_INFO, _getMicroservice)
           break
         case constants.CMD_ROUTE_CREATE:
-          await _executeCase(microserviceCommand, constants.CMD_ROUTE_CREATE, _createRoute, false)
+          await _executeCase(microserviceCommand, constants.CMD_ROUTE_CREATE, _createRoute)
           break
         case constants.CMD_ROUTE_REMOVE:
-          await _executeCase(microserviceCommand, constants.CMD_ROUTE_REMOVE, _removeRoute, false)
+          await _executeCase(microserviceCommand, constants.CMD_ROUTE_REMOVE, _removeRoute)
           break
         case constants.CMD_PORT_MAPPING_CREATE:
-          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_CREATE, _createPortMapping, false)
+          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_CREATE, _createPortMapping)
           break
         case constants.CMD_PORT_MAPPING_REMOVE:
-          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_REMOVE, _removePortMapping, false)
+          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_REMOVE, _removePortMapping)
           break
         case constants.CMD_PORT_MAPPING_LIST:
-          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_LIST, _listPortMappings, false)
+          await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_LIST, _listPortMappings)
           break
         case constants.CMD_VOLUME_MAPPING_CREATE:
-          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_CREATE, _createVolumeMapping, false)
+          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_CREATE, _createVolumeMapping)
           break
         case constants.CMD_VOLUME_MAPPING_REMOVE:
-          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_REMOVE, _removeVolumeMapping, false)
+          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_REMOVE, _removeVolumeMapping)
           break
         case constants.CMD_VOLUME_MAPPING_LIST:
-          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_LIST, _listVolumeMappings, false)
+          await _executeCase(microserviceCommand, constants.CMD_VOLUME_MAPPING_LIST, _listVolumeMappings)
           break
         case constants.CMD_HELP:
         default:
@@ -485,7 +473,7 @@ class Microservice extends BaseCLIHandler {
   }
 }
 
-async function _executeCase (commands, commandName, f, isUserRequired) {
+async function _executeCase (commands, commandName, f) {
   try {
     const obj = commands[commandName]
     await f(obj)
@@ -494,13 +482,13 @@ async function _executeCase (commands, commandName, f, isUserRequired) {
   }
 }
 
-const _createRoute = async function (obj, user) {
+const _createRoute = async function (obj) {
   try {
     const arr = obj.route.split(':')
     const sourceMicroserviceUuid = arr[0]
     const destMicroserviceUuid = arr[1]
     logger.cliReq('microservice route-create', { args: { source: sourceMicroserviceUuid, dest: destMicroserviceUuid } })
-    await MicroserviceService.createRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, user, true)
+    await MicroserviceService.createRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, true)
     logger.cliRes(`Microservice route with source microservice ${sourceMicroserviceUuid} and dest microservice 
                 ${destMicroserviceUuid} has been created successfully.`)
   } catch (e) {
@@ -508,13 +496,13 @@ const _createRoute = async function (obj, user) {
   }
 }
 
-const _removeRoute = async function (obj, user) {
+const _removeRoute = async function (obj) {
   try {
     const arr = obj.route.split(':')
     const sourceMicroserviceUuid = arr[0]
     const destMicroserviceUuid = arr[1]
     logger.cliReq('microservice route-remove', { args: { source: sourceMicroserviceUuid, dest: destMicroserviceUuid } })
-    await MicroserviceService.deleteRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, user, true)
+    await MicroserviceService.deleteRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, true)
     logger.cliRes('Microservice route with source microservice ' + sourceMicroserviceUuid +
       ' and dest microservice ' + destMicroserviceUuid + 'has been removed successfully.')
   } catch (e) {
@@ -522,83 +510,83 @@ const _removeRoute = async function (obj, user) {
   }
 }
 
-const _createPortMapping = async function (obj, user) {
+const _createPortMapping = async function (obj) {
   const mapping = parsePortMappingObject(obj.mapping, ErrorMessages.CLI.INVALID_PORT_MAPPING)
   logger.cliReq('microservice port-mapping-create', { args: mapping })
-  await MicroserviceService.createPortMappingEndPoint(obj.microserviceUuid, mapping, user, true)
+  await MicroserviceService.createPortMappingEndPoint(obj.microserviceUuid, mapping, true)
   logger.cliRes('Port mapping has been created successfully.')
 }
 
-const _createVolumeMapping = async function (obj, user) {
+const _createVolumeMapping = async function (obj) {
   const mapping = parseVolumeMappingObject(obj.mapping, ErrorMessages.CLI.INVALID_VOLUME_MAPPING)
   logger.cliReq('microservice volume-mapping-create', { args: mapping })
-  const result = await MicroserviceService.createVolumeMappingEndPoint(obj.microserviceUuid, mapping, user, true)
+  const result = await MicroserviceService.createVolumeMappingEndPoint(obj.microserviceUuid, mapping, true)
   logger.cliRes(JSON.stringify({
     id: result.id
   }, null, 2))
 }
 
-const _removePortMapping = async function (obj, user) {
+const _removePortMapping = async function (obj) {
   try {
     logger.cliReq('microservice port-mapping-remove', { args: obj })
-    await MicroserviceService.deletePortMappingEndPoint(obj.microserviceUuid, obj.internalPort, user, true)
+    await MicroserviceService.deletePortMappingEndPoint(obj.microserviceUuid, obj.internalPort, true)
     logger.cliRes('Port mapping has been removed successfully.')
   } catch (e) {
     logger.error(e.message)
   }
 }
 
-const _removeVolumeMapping = async function (obj, user) {
+const _removeVolumeMapping = async function (obj) {
   try {
     logger.cliReq('microservice volume-mapping-remove', { args: obj })
-    await MicroserviceService.deleteVolumeMappingEndPoint(obj.microserviceUuid, obj.mappingId, user, true)
+    await MicroserviceService.deleteVolumeMappingEndPoint(obj.microserviceUuid, obj.mappingId, true)
     logger.cliRes('Volume mapping has been deleted successfully.')
   } catch (e) {
     logger.error(e.message)
   }
 }
 
-const _listPortMappings = async function (obj, user) {
+const _listPortMappings = async function (obj) {
   logger.cliReq('microservice port-mapping-list', { args: { microserviceUuid: obj.microserviceUuid } })
-  const result = await MicroserviceService.listMicroservicePortMappingsEndPoint(obj.microserviceUuid, user, true)
+  const result = await MicroserviceService.listMicroservicePortMappingsEndPoint(obj.microserviceUuid, true)
   logger.cliRes(JSON.stringify(result, null, 2))
 }
 
-const _listVolumeMappings = async function (obj, user) {
+const _listVolumeMappings = async function (obj) {
   logger.cliReq('microservice volume-mapping-list', { args: { microserviceUuid: obj.microserviceUuid } })
-  const result = await MicroserviceService.listVolumeMappingsEndPoint(obj.microserviceUuid, user, true)
+  const result = await MicroserviceService.listVolumeMappingsEndPoint(obj.microserviceUuid, true)
   logger.cliRes(JSON.stringify(result, null, 2))
 }
 
-const _removeMicroservice = async function (obj, user) {
+const _removeMicroservice = async function (obj) {
   const microserviceData = {
     withCleanup: obj.cleanup
   }
 
   logger.cliReq('microservice remove', { args: { microserviceUuid: obj.microserviceUuid, withCleanup: obj.cleanup } })
-  await MicroserviceService.deleteMicroserviceEndPoint(obj.microserviceUuid, microserviceData, user, true)
+  await MicroserviceService.deleteMicroserviceEndPoint(obj.microserviceUuid, microserviceData, true)
   logger.cliRes('Microservice has been removed successfully.')
 }
 
 const _listMicroservices = async function () {
   logger.cliReq('microservice list')
-  const result = await MicroserviceService.listMicroservicesEndPoint('', {}, true)
+  const result = await MicroserviceService.listMicroservicesEndPoint('', true)
   logger.cliRes(JSON.stringify(result, null, 2))
 }
 
-const _getMicroservice = async function (obj, user) {
+const _getMicroservice = async function (obj) {
   logger.cliReq('microservice info', { args: { microserviceUuid: obj.microserviceUuid } })
-  const result = await MicroserviceService.getMicroserviceEndPoint(obj.microserviceUuid, user, true)
+  const result = await MicroserviceService.getMicroserviceEndPoint(obj.microserviceUuid, true)
   logger.cliRes(JSON.stringify(result, null, 2))
 }
 
-const _createMicroservice = async function (obj, user) {
+const _createMicroservice = async function (obj) {
   const microservice = obj.file
     ? JSON.parse(fs.readFileSync(obj.file, 'utf8'))
     : _createMicroserviceObject(obj)
 
   logger.cliReq('microservice add', { args: microservice })
-  const result = await MicroserviceService.createMicroserviceEndPoint(microservice, user, true)
+  const result = await MicroserviceService.createMicroserviceEndPoint(microservice, true)
   const output = {
     uuid: result.uuid
   }
@@ -609,13 +597,13 @@ const _createMicroservice = async function (obj, user) {
   logger.cliRes(JSON.stringify(output, null, 2))
 }
 
-const _updateMicroservice = async function (obj, user) {
+const _updateMicroservice = async function (obj) {
   const microservice = obj.file
     ? JSON.parse(fs.readFileSync(obj.file, 'utf8'))
     : _updateMicroserviceObject(obj)
 
   logger.cliReq('microservice update', { args: microservice })
-  await MicroserviceService.updateMicroserviceEndPoint(obj.microserviceUuid, microservice, user, true)
+  await MicroserviceService.updateMicroserviceEndPoint(obj.microserviceUuid, microservice, true)
   logger.cliRes('Microservice has been updated successfully.')
 }
 

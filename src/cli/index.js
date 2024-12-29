@@ -37,7 +37,6 @@ class Cli extends BaseCLIHandler {
       // [constants.CMD_INIT_DB]: 'Init sqlite db for iofog-controller.',
       [constants.CMD_CONTROLLER]: 'Display iofog-controller service information.',
       [constants.CMD_HELP]: 'Display usage information.',
-      [constants.CMD_USER]: 'User operations.',
       [constants.CMD_CONFIG]: 'Set/Display iofog-controller service config.',
       [constants.CMD_TUNNEL]: 'Tunnel operations.',
       [constants.CMD_IOFOG]: 'ioFog nodes operations.',
