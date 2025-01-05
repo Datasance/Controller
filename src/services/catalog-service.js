@@ -136,9 +136,9 @@ const deleteCatalogItemEndPoint = async function (id, isCLI, transaction) {
 
 async function getNetworkCatalogItem (transaction) {
   return CatalogItemManager.findOne({
-    name: 'Networking Tool',
-    category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
+    name: 'NATs',
+    category: 'UTILITIES',
+    publisher: 'Datasance',
     registry_id: 1
   }, transaction)
 }
@@ -147,7 +147,7 @@ async function getRouterCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
+    publisher: 'Datasance',
     registry_id: 1
   }, transaction)
 }
@@ -156,7 +156,7 @@ async function getProxyCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.PROXY_CATALOG_NAME,
     category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
+    publisher: 'Datasance',
     registry_id: 1
   }, transaction)
 }
@@ -165,7 +165,7 @@ async function getBluetoothCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'RESTBlue',
     category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
+    publisher: 'Datasance',
     registry_id: 1
   }, transaction)
 }
@@ -174,7 +174,7 @@ async function getHalCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'HAL',
     category: 'SYSTEM',
-    publisher: 'Eclipse ioFog',
+    publisher: 'Dataance',
     registry_id: 1
   }, transaction)
 }

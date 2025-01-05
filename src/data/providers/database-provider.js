@@ -78,7 +78,7 @@ class DatabaseProvider {
 
   // Async function for the seeding process
   async runSeeder (dbName) {
-    const seederSqlPath = path.resolve(__dirname, '../seeders/db_seeder_v1.0.1.sql')
+    const seederSqlPath = path.resolve(__dirname, '../seeders/db_seeder_v1.0.2.sql')
 
     if (!fs.existsSync(seederSqlPath)) {
       console.error(`Seeder file not found: ${seederSqlPath}`)
