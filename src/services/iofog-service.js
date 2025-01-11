@@ -30,6 +30,7 @@ const MicroserviceService = require('./microservices-service')
 const EdgeResourceService = require('./edge-resource-service')
 const RouterManager = require('../data/managers/router-manager')
 const MicroserviceExtraHostManager = require('../data/managers/microservice-extra-host-manager')
+const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
 const RouterService = require('./router-service')
 const Constants = require('../helpers/constants')
@@ -607,7 +608,7 @@ async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
 
   const halMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
-    name: `Hal for Fog ${fogData.uuid}`,
+    name: `hal-${fogData.uuid.toLowerCase()}`,
     config: '{}',
     catalogItemId: halItem.id,
     iofogUuid: fogData.uuid,
@@ -616,7 +617,10 @@ async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
     configLastUpdated: Date.now()
   }
 
+  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  halMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(halMicroserviceData, transaction)
+  await MicroserviceStatusManager.create({ microserviceUuid: halMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteHalMicroserviceByFog (fogData, transaction) {
@@ -626,6 +630,8 @@ async function _deleteHalMicroserviceByFog (fogData, transaction) {
     catalogItemId: halItem.id
   }
 
+  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  deleteHalMicroserviceData.applicationId = application.id
   await MicroserviceManager.delete(deleteHalMicroserviceData, transaction)
 }
 
@@ -634,7 +640,7 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction)
 
   const bluetoothMicroserviceData = {
     uuid: AppHelper.generateRandomString(32),
-    name: `Bluetooth for Fog ${fogData.uuid}`,
+    name: `ble-${fogData.uuid.toLowerCase()}`,
     config: '{}',
     catalogItemId: bluetoothItem.id,
     iofogUuid: fogData.uuid,
@@ -643,7 +649,10 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction)
     configLastUpdated: Date.now()
   }
 
+  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  bluetoothMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(bluetoothMicroserviceData, transaction)
+  await MicroserviceStatusManager.create({ microserviceUuid: bluetoothMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
@@ -652,6 +661,8 @@ async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
     iofogUuid: fogData.uuid,
     catalogItemId: bluetoothItem.id
   }
+  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  deleteBluetoothMicroserviceData.applicationId = application.id
 
   await MicroserviceManager.delete(deleteBluetoothMicroserviceData, transaction)
 }

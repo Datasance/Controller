@@ -174,7 +174,7 @@ async function getHalCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'HAL',
     category: 'SYSTEM',
-    publisher: 'Dataance',
+    publisher: 'Datasance',
     registry_id: 1
   }, transaction)
 }
