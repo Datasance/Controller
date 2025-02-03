@@ -37,6 +37,35 @@ const MicroserviceExtraHostManager = require('../data/managers/microservice-extr
 const { VOLUME_MAPPING_DEFAULT } = require('../helpers/constants')
 const constants = require('../helpers/constants')
 const isEqual = require('lodash/isEqual')
+const TagsManager = require('../data/managers/tags-manager')
+
+async function _setPubTags (microserviceModel, tagsArray, transaction) {
+  if (tagsArray) {
+    let tags = []
+    for (const tag of tagsArray) {
+      let tagModel = await TagsManager.findOne({ value: tag }, transaction)
+      if (!tagModel) {
+        tagModel = await TagsManager.create({ value: tag }, transaction)
+      }
+      tags.push(tagModel)
+    }
+    await microserviceModel.setPubTags(tags)
+  }
+}
+
+async function _setSubTags (microserviceModel, tagsArray, transaction) {
+  if (tagsArray) {
+    let tags = []
+    for (const tag of tagsArray) {
+      let tagModel = await TagsManager.findOne({ value: tag }, transaction)
+      if (!tagModel) {
+        tagModel = await TagsManager.create({ value: tag }, transaction)
+      }
+      tags.push(tagModel)
+    }
+    await microserviceModel.setSubTags(tags)
+  }
+}
 
 async function listMicroservicesEndPoint (opt, isCLI, transaction) {
   // API retro compatibility
@@ -294,6 +323,37 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
   }
   if (microserviceData.volumeMappings) {
     await _createVolumeMappings(microservice, microserviceData.volumeMappings, transaction)
+  }
+
+  if (microserviceData.pubTags) {
+    await _setPubTags(microservice, microserviceData.pubTags, transaction)
+  }
+
+  if (microserviceData.subTags) {
+    await _setSubTags(microservice, microserviceData.subTags, transaction)
+    const fogsNeedUpdate = new Set()
+    for (const tag of microserviceData.subTags) {
+      try {
+        const where = {
+          delete: false,
+          '$pubTags.value$': tag
+        }
+        // Get fog nodes with microservices for the given pubTag
+        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['iofogUuid'] })
+        if (response.length > 0) {
+          response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
+        }
+      } catch (error) {
+        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+      }
+    }
+    for (const fog of fogsNeedUpdate) {
+      try {
+        await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
+      } catch (error) {
+        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+      }
+    }
   }
 
   if (microserviceData.iofogUuid) {
@@ -739,6 +799,38 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     await MicroservicePortService.movePublicPortsToNewFog(updatedMicroservice, transaction)
   }
 
+  // Update tags
+  if (microserviceData.pubTags) {
+    await _setPubTags(microservice, microserviceData.pubTags, transaction)
+  }
+
+  if (microserviceData.subTags) {
+    await _setSubTags(microservice, microserviceData.subTags, transaction)
+    const fogsNeedUpdate = new Set()
+    for (const tag of microserviceData.subTags) {
+      try {
+        const where = {
+          delete: false,
+          '$pubTags.value$': tag
+        }
+        // Get fog nodes with microservices for the given pubTag
+        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['iofogUuid'] })
+        if (response.length > 0) {
+          response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
+        }
+      } catch (error) {
+        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+      }
+    }
+    for (const fog of fogsNeedUpdate) {
+      try {
+        await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
+      } catch (error) {
+        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+      }
+    }
+  }
+
   if (needStatusReset) {
     const microserviceStatus = {
       status: MicroserviceStates.QUEUED,
@@ -958,15 +1050,66 @@ async function listPortMappingsEndPoint (microserviceUuid, isCLI, transaction) {
 }
 
 async function getReceiverMicroservices (microservice, transaction) {
+  // 1. Get existing routes (app-level routing)
   const routes = await RoutingManager.findAll({ sourceMicroserviceUuid: microservice.uuid }, transaction)
 
-  return routes.map(route => route.destMicroserviceUuid)
+  let receiverMicroservices = routes.map(route => route.destMicroserviceUuid)
+
+  // 2. Check if the microservice has pubTags and fetch microservices associated with those tags
+  if (microservice.pubTags) {
+    for (const tag of microservice.pubTags) {
+      try {
+        const where = {
+          delete: false,
+          '$subTags.value$': tag.value
+        }
+        // Get microservices for the given pubTag
+        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['uuid'] })
+        if (response.length > 0) {
+          const tagMicroservices = response.map(ms => ms.uuid)
+          // Add the microservices' UUIDs to the receiver list (filtering duplicates and removing the current microservice's UUID)
+          receiverMicroservices = [
+            ...new Set([
+              ...receiverMicroservices,
+              ...tagMicroservices.filter(uuid => uuid !== microservice.uuid) // Remove the current microservice's UUID
+            ])
+          ]
+        }
+      } catch (error) {
+        console.error(`[ERROR] Checking microservices for pubTag "${tag.value}":`, error.message)
+      }
+    }
+  }
+  return receiverMicroservices
 }
 
 async function isMicroserviceConsumer (microservice, transaction) {
+  // Step 1: App-level routing check
   const routes = await RoutingManager.findAll({ destMicroserviceUuid: microservice.uuid }, transaction)
 
-  return Boolean(routes.length)
+  if (routes.length > 0) {
+    return true
+  }
+
+  // Step 2: Subtag-based routing check
+  if (microservice.subTags) {
+    for (const tag of microservice.subTags) {
+      try {
+        const where = {
+          delete: false,
+          '$pubTags.value$': tag.value
+        }
+        const result = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['uuid'] })
+
+        if (result.length > 0) {
+          return true
+        }
+      } catch (error) {
+        console.error(`[ERROR] Checking microservices for subTag "${tag.value}":`, error.message)
+      }
+    }
+  }
+  return false
 }
 
 async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData, isCLI, transaction) {
@@ -1391,14 +1534,15 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const extraHosts = await MicroserviceExtraHostManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
   const images = await CatalogItemImageManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
   const volumeMappings = await VolumeMappingManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
-  const routes = await RoutingManager.findAll({ sourceMicroserviceUuid: microserviceUuid }, transaction)
+  const routes = await getReceiverMicroservices(microservice, transaction)
   const env = await MicroserviceEnvManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const cmd = await MicroserviceArgManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const arg = cmd.map((it) => it.cmd)
   const cdiDevices = await MicroserviceCdiDevManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const cdiDevs = cdiDevices.map((it) => it.cdiDevices)
+  const pubTags = microservice.pubTags ? microservice.pubTags.map(t => t.value) : []
+  const subTags = microservice.subTags ? microservice.subTags.map(t => t.value) : []
   const status = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
-
   // build microservice response
   const res = Object.assign({}, microservice)
   res.ports = []
@@ -1408,7 +1552,7 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
     res.ports.push(mapping)
   }
   res.volumeMappings = volumeMappings.map((vm) => vm.dataValues)
-  res.routes = routes.map((r) => r.destMicroserviceUuid)
+  res.routes = routes
   res.env = env
   res.cmd = arg
   res.cdiDevices = cdiDevs
@@ -1417,6 +1561,8 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   if (status && status.length) {
     res.status = status[0]
   }
+  res.pubTags = pubTags
+  res.subTags = subTags
 
   res.logSize *= 1
 
@@ -1430,6 +1576,40 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
 
 function listAllPublicPortsEndPoint (transaction) {
   return MicroservicePortService.listAllPublicPorts(transaction)
+}
+
+async function listMicroserviceByPubTagEndPoint (pubTag, transaction) {
+  const where = {
+    delete: false,
+    '$pubTags.value$': pubTag
+  }
+
+  const microservices = await MicroserviceManager.findAllExcludeFields(where, transaction)
+
+  const res = await Promise.all(microservices.map(async (microservice) => {
+    return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
+  }))
+
+  return {
+    microservices: res
+  }
+}
+
+async function listMicroserviceBySubTagEndPoint (subTag, transaction) {
+  const where = {
+    delete: false,
+    '$subTags.value$': subTag
+  }
+
+  const microservices = await MicroserviceManager.findAllExcludeFields(where, transaction)
+
+  const res = await Promise.all(microservices.map(async (microservice) => {
+    return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
+  }))
+
+  return {
+    microservices: res
+  }
 }
 
 module.exports = {
@@ -1457,5 +1637,7 @@ module.exports = {
   updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint),
   buildGetMicroserviceResponse: _buildGetMicroserviceResponse,
-  updateChangeTracking: _updateChangeTracking
+  updateChangeTracking: _updateChangeTracking,
+  listMicroserviceByPubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceByPubTagEndPoint),
+  listMicroserviceBySubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceBySubTagEndPoint)
 }

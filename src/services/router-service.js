@@ -65,16 +65,23 @@ async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) 
     edgeRouterPort: !isEdge ? fogData.edgeRouterPort : null,
     interRouterPort: !isEdge ? fogData.interRouterPort : null,
     isDefault: isDefault,
+    requireSsl: fogData.requireSsl,
+    sslProfile: fogData.sslProfile,
+    saslMechanisms: fogData.saslMechanisms,
+    authenticatePeer: fogData.authenticatePeer,
+    caCert: fogData.caCert,
+    tlsCert: fogData.tlsCert,
+    tlsKey: fogData.tlsKey,
     iofogUuid: uuid
   }
 
   const router = await RouterManager.create(routerData, transaction)
 
-  const microserviceConfig = _getRouterMicroserviceConfig(isEdge, uuid, messagingPort, router.interRouterPort, router.edgeRouterPort)
+  const microserviceConfig = _getRouterMicroserviceConfig(isEdge, uuid, messagingPort, router.interRouterPort, router.edgeRouterPort, router.saslMechanisms, router.authenticatePeer, router.sslProfile, router.requireSsl, router.caCert, router.tlsCert, router.tlsKey)
 
   for (const upstreamRouter of upstreamRouters) {
     await RouterConnectionManager.create({ sourceRouter: router.id, destRouter: upstreamRouter.id }, transaction)
-    microserviceConfig.connectors = (microserviceConfig.connectors || []).concat(_getRouterConnectorConfig(isEdge, upstreamRouter))
+    microserviceConfig.connectors = (microserviceConfig.connectors || []).concat(_getRouterConnectorConfig(isEdge, upstreamRouter, router.sslProfile, router.saslMechanisms))
   }
 
   const routerMicroservice = await _createRouterMicroservice(isEdge, uuid, microserviceConfig, transaction)
@@ -160,12 +167,12 @@ async function updateConfig (routerID, transaction) {
   if (!router) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, routerID))
   }
-  const microserviceConfig = _getRouterMicroserviceConfig(router.isEdge, router.iofogUuid, router.messagingPort, router.interRouterPort, router.edgeRouterPort)
+  const microserviceConfig = _getRouterMicroserviceConfig(router.isEdge, router.iofogUuid, router.messagingPort, router.interRouterPort, router.edgeRouterPort, router.saslMechanisms, router.authenticatePeer, router.sslProfile, router.requireSsl, router.caCert, router.tlsCert, router.tlsKey)
 
   const upstreamRoutersConnections = await RouterConnectionManager.findAllWithRouters({ sourceRouter: router.id }, transaction)
 
   for (const upstreamRouterConnection of upstreamRoutersConnections) {
-    microserviceConfig.connectors = (microserviceConfig.connectors || []).concat(_getRouterConnectorConfig(router.isEdge, upstreamRouterConnection.dest))
+    microserviceConfig.connectors = (microserviceConfig.connectors || []).concat(_getRouterConnectorConfig(router.isEdge, upstreamRouterConnection.dest, router.sslProfile, router.saslMechanisms))
   }
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   const routerMicroservice = await MicroserviceManager.findOne({
@@ -245,16 +252,26 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
   return routerMicroservice
 }
 
-function _getRouterConnectorConfig (isEdge, dest) {
-  return {
+function _getRouterConnectorConfig (isEdge, dest, sslProfile, saslMechanisms) {
+  const config = {
     name: dest.iofogUuid || Constants.DEFAULT_ROUTER_NAME,
-    role: (isEdge ? 'edge' : 'inter-router'),
+    role: isEdge ? 'edge' : 'inter-router',
     host: dest.host,
-    port: (isEdge ? dest.edgeRouterPort : dest.interRouterPort)
+    port: isEdge ? dest.edgeRouterPort : dest.interRouterPort
   }
+
+  if (sslProfile) {
+    config.sslProfile = sslProfile
+  }
+
+  if (saslMechanisms) {
+    config.saslMechanisms = saslMechanisms
+  }
+
+  return config
 }
 
-function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterPort, edgeRouterPort) {
+function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterPort, edgeRouterPort, saslMechanisms, authenticatePeer, sslProfile, requireSsl, caCert, tlsCert, tlsKey) {
   const microserviceConfig = {
     mode: isEdge ? 'edge' : 'interior',
     id: uuid,
@@ -267,17 +284,37 @@ function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterP
     ]
   }
 
+  // Conditionally add sslProfiles
+  if (sslProfile && tlsCert && tlsKey) {
+    microserviceConfig.sslProfiles = [
+      {
+        name: sslProfile,
+        tlsCert: tlsCert,
+        tlsKey: tlsKey,
+        ...(caCert && { caCert }) // Add caCert if provided
+      }
+    ]
+  }
+
   if (!isEdge) {
     microserviceConfig.listeners.push(
       {
         role: 'inter-router',
         host: '0.0.0.0',
-        port: interRouterPort
+        port: interRouterPort,
+        ...(saslMechanisms && { saslMechanisms }), // Add saslMechanisms if provided
+        ...(authenticatePeer && { authenticatePeer }), // Add authenticatePeer if provided
+        ...(sslProfile && { sslProfile }), // Add sslProfile if provided
+        ...(requireSsl && { requireSsl }) // Add requireSsl if provided
       },
       {
         role: 'edge',
         host: '0.0.0.0',
-        port: edgeRouterPort
+        port: edgeRouterPort,
+        ...(saslMechanisms && { saslMechanisms }), // Add saslMechanisms if provided
+        ...(authenticatePeer && { authenticatePeer }), // Add authenticatePeer if provided
+        ...(sslProfile && { sslProfile }), // Add sslProfile if provided
+        ...(requireSsl && { requireSsl }) // Add requireSsl if provided
       }
     )
   }

@@ -185,7 +185,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     networkInterface: {
       type: DataTypes.TEXT,
-      defaultValue: 'eth0',
+      defaultValue: 'dynamic',
       field: 'network_interface'
     },
     dockerUrl: {

@@ -48,6 +48,7 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     longitude: fogData.longitude,
     gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
+    networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
     diskLimit: fogData.diskLimit,
     diskDirectory: fogData.diskDirectory,
@@ -159,6 +160,7 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     longitude: fogData.longitude,
     gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
+    networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
     diskLimit: fogData.diskLimit,
     diskDirectory: fogData.diskDirectory,
@@ -211,6 +213,13 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
   const messagingPort = fogData.messagingPort || (router ? router.messagingPort : null)
   const interRouterPort = fogData.interRouterPort || (router ? router.interRouterPort : null)
   const edgeRouterPort = fogData.edgeRouterPort || (router ? router.edgeRouterPort : null)
+  const requireSsl = fogData.requireSsl || (router ? router.requireSsl : null)
+  const sslProfile = fogData.sslProfile || (router ? router.sslProfile : null)
+  const saslMechanisms = fogData.saslMechanisms || (router ? router.saslMechanisms : null)
+  const authenticatePeer = fogData.authenticatePeer || (router ? router.authenticatePeer : null)
+  const caCert = fogData.caCert || (router ? router.caCert : null)
+  const tlsCert = fogData.tlsCert || (router ? router.tlsCert : null)
+  const tlsKey = fogData.tlsKey || (router ? router.tlsKey : null)
   let networkRouter
 
   // const isSystem = updateFogData.isSystem === undefined ? oldFog.isSystem : updateFogData.isSystem
@@ -237,7 +246,7 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     } else {
       // Update existing router
       networkRouter = await RouterService.updateRouter(router, {
-        messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host
+        messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host, requireSsl, sslProfile, saslMechanisms, authenticatePeer, caCert, tlsCert, tlsKey
       }, upstreamRouters)
       await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
     }

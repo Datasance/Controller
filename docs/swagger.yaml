@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 1.0.0
+  version: 3.4.9
   title: Datasance PoT Controller
 paths:
   /status:
@@ -1683,6 +1683,68 @@ paths:
             type: string
       security:
         - userToken: []
+  /microservices/pub/{tag}:
+    get:
+      tags:
+        - Microservices
+      summary: Get list of microservices with filtered pub tag
+      operationId: listMicroserviceInfoByPubTag
+      parameters:
+        - in: path
+          name: tag
+          description: Microservice Pub Tags
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMicroservicesResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+  /microservices/sub/{tag}:
+    get:
+      tags:
+        - Microservices
+      summary: Get list of microservices with filtered sub tag
+      operationId: listMicroserviceInfoBySubTag
+      parameters:
+        - in: path
+          name: tag
+          description: Microservice Pub Tags
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetMicroservicesResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
   /microservices/system/{uuid}:
     patch:
       tags:
@@ -3294,6 +3356,14 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/PortMappingsRequest"
+              pubTags:
+                type: array
+                items:
+                  type: string
+              subTags:
+                type: array
+                items:
+                  type: string
         routes:
           type: array
           items:
@@ -3427,6 +3497,14 @@ components:
                     type: array
                     items:
                       $ref: "#/components/schemas/PortMappingsRequest"
+                  pubTags:
+                    type: array
+                    items:
+                      type: string
+                  subTags:
+                    type: array
+                    items:
+                      type: string
             routes:
               type: array
               items:
@@ -3741,6 +3819,20 @@ components:
           type: number
         edgeRouterPort:
           type: number
+        requireSsl:
+          type: string
+        sslProfile:
+          type: string
+        saslMechanisms:
+          type: string
+        authenticatePeer:
+          type: string
+        caCert:
+          type: string
+        tlsCert:
+          type: string
+        tlsKey:
+          type: string
         host:
           type: string
         tags:
@@ -4140,14 +4232,37 @@ components:
         protocol:
           type: string
           enum:
-          - tcp
-          - udp
-        proxy:
-          type: boolean
+            - tcp
+            - udp
+        public:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            schemes:
+              type: array
+              items:
+                type: string
+            protocol:
+              type: string
+              enum:
+                - tcp
+                - http
+            router:
+              type: object
+              properties:
+                host:
+                  type: string
+                port:
+                  type: number
+              required: []
+          required:
+            - schemes
+            - protocol
       required:
-      - internal
-      - external
-      - protocol
+        - internal
+        - external
+        - protocol
     PortMappingsRequest:
       type: object
       properties:
@@ -4158,20 +4273,77 @@ components:
         protocol:
           type: string
           enum:
-          - tcp
-          - udp
-        proxy:
-          type: boolean
+            - tcp
+            - udp
+        public:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            schemes:
+              type: array
+              items:
+                type: string
+            protocol:
+              type: string
+              enum:
+                - tcp
+                - http
+            router:
+              type: object
+              properties:
+                host:
+                  type: string
+                port:
+                  type: number
+              required: []
+          required:
+            - schemes
+            - protocol
       required:
-      - internal
-      - external
+        - internal
+        - external
     PortMappingsPublicResponse:
       type: object
       properties:
-        publicIp:
-          type: string
-        publicPort:
+        internal:
           type: number
+        external:
+          type: number
+        protocol:
+          type: string
+          enum:
+            - tcp
+            - udp
+        public:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            schemes:
+              type: array
+              items:
+                type: string
+            protocol:
+              type: string
+              enum:
+                - tcp
+                - http
+            router:
+              type: object
+              properties:
+                host:
+                  type: string
+                port:
+                  type: number
+              required: []
+          required:
+            - schemes
+            - protocol
+      required:
+        - internal
+        - external
+        - protocol
     PortMappingsListResponse:
       type: object
       properties:
@@ -4186,12 +4358,40 @@ components:
           type: number
         external:
           type: number
-        publicMode:
-          type: boolean
-        publicIp:
+        protocol:
           type: string
-        publicPort:
-          type: number
+          enum:
+            - tcp
+            - udp
+        public:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            schemes:
+              type: array
+              items:
+                type: string
+            protocol:
+              type: string
+              enum:
+                - tcp
+                - http
+            router:
+              type: object
+              properties:
+                host:
+                  type: string
+                port:
+                  type: number
+              required: []
+          required:
+            - schemes
+            - protocol
+      required:
+        - internal
+        - external
+        - protocol
     PortMappingAgentRequest:
       type: object
       properties:
@@ -4494,6 +4694,14 @@ components:
           type: array
           items:
             type: string
+        pubTags:
+          type: array
+          items:
+            type: string
+        subTags:
+          type: array
+          items:
+            type: string
     UpdateMicroserviceRequest:
       type: object
       required:
@@ -4536,6 +4744,14 @@ components:
           items:
             type: string
         cmd:
+          type: array
+          items:
+            type: string
+        pubTags:
+          type: array
+          items:
+            type: string
+        subTags:
           type: array
           items:
             type: string

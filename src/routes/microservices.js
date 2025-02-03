@@ -172,6 +172,68 @@ module.exports = [
     }
   },
   {
+    method: 'get',
+    path: '/api/v3/microservices/pub/:tag',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listMicroserviceByPubTagEndPoint = ResponseDecorator.handleErrors(MicroservicesController.listMicroserviceByPubTagEndPoint,
+          successCode, errorCodes)
+        const responseObject = await listMicroserviceByPubTagEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'get',
+    path: '/api/v3/microservices/sub/:tag',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listMicroserviceBySubTagEndPoint = ResponseDecorator.handleErrors(MicroservicesController.listMicroserviceBySubTagEndPoint,
+          successCode, errorCodes)
+        const responseObject = await listMicroserviceBySubTagEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
     method: 'patch',
     path: '/api/v3/microservices/:uuid',
     supportSubstitution: true,

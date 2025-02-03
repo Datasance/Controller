@@ -38,6 +38,8 @@ RUN microdnf install -y python3 && \
     pip3 install --no-cache --upgrade pip setuptools && \
     microdnf install shadow-utils && \
     microdnf clean all
+RUN microdnf reinstall -y tzdata &&  microdnf clean all
+RUN microdnf -y remove microdnf
 RUN useradd --uid 10000 --create-home runner
 RUN mkdir -p /var/log/iofog-controller && \
     chown runner:runner /var/log/iofog-controller && \

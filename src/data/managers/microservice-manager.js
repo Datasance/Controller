@@ -24,6 +24,7 @@ const StraceDiagnostics = models.StraceDiagnostics
 const CatalogItem = models.CatalogItem
 const CatalogItemImage = models.CatalogItemImage
 const Fog = models.Fog
+const Tags = models.Tags
 const Application = models.Application
 const Routing = models.Routing
 const Registry = models.Registry
@@ -213,6 +214,18 @@ class MicroserviceManager extends BaseManager {
           as: 'application',
           required: false,
           attributes: ['isActivated']
+        },
+        {
+          model: Tags,
+          as: 'pubTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        },
+        {
+          model: Tags,
+          as: 'subTags',
+          attributes: ['value'],
+          through: { attributes: [] }
         }
       ],
       where: {
@@ -374,12 +387,25 @@ class MicroserviceManager extends BaseManager {
 
   async findOneExcludeFields (where, transaction) {
     return Microservice.findOne({
+      include: [
+        {
+          model: Tags,
+          as: 'pubTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        },
+        {
+          model: Tags,
+          as: 'subTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        }
+      ],
       where: where,
       attributes: {
         exclude: microserviceExcludedFields
-      } }, {
-      transaction: transaction
-    })
+      }
+    }, { transaction: transaction })
   }
 
   async findAllExcludeFields (where, transaction) {
@@ -389,18 +415,27 @@ class MicroserviceManager extends BaseManager {
           model: Application,
           as: 'application',
           required: true,
-          where: {
-            isSystem: false
-          }
+          where: { isSystem: false }
+        },
+        {
+          model: Tags,
+          as: 'pubTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        },
+        {
+          model: Tags,
+          as: 'subTags',
+          attributes: ['value'],
+          through: { attributes: [] }
         }
       ],
       where: where,
-      order: [ [ 'name', 'ASC' ] ],
+      order: [['name', 'ASC']],
       attributes: {
         exclude: microserviceExcludedFields
-      } }, {
-      transaction: transaction
-    })
+      }
+    }, { transaction: transaction })
   }
 
   findOneWithCategory (where, transaction) {

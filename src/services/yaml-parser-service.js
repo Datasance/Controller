@@ -93,6 +93,9 @@ const parseMicroserviceYAML = async (microservice) => {
     env: (lget(microservice, 'container.env', [])).map(e => ({ key: e.key.toString(), value: e.value.toString() })),
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
+    ...microservice.msRoutes,
+    pubTags: lget(microservice, 'msRoutes.pubTags', []),
+    subTags: lget(microservice, 'msRoutes.subTags', []),
     application: microservice.application
   }
   _deleteUndefinedFields(microserviceData)
