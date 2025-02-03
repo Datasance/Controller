@@ -32,6 +32,16 @@ const getMicroserviceEndPoint = async function (req) {
   return MicroservicesService.getMicroserviceEndPoint(microserviceUuid, false)
 }
 
+const listMicroserviceByPubTagEndPoint = async function (req) {
+  const pubTag = req.params.tag
+  return MicroservicesService.listMicroserviceByPubTagEndPoint(pubTag)
+}
+
+const listMicroserviceBySubTagEndPoint = async function (req) {
+  const subTag = req.params.tag
+  return MicroservicesService.listMicroserviceBySubTagEndPoint(subTag)
+}
+
 const updateMicroserviceEndPoint = async function (req) {
   const microservice = req.body
   const microserviceUuid = req.params.uuid
@@ -155,6 +165,8 @@ const listAllPublicPortsEndPoint = async function (req) {
 module.exports = {
   createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
   getMicroserviceEndPoint: (getMicroserviceEndPoint),
+  listMicroserviceByPubTagEndPoint: (listMicroserviceByPubTagEndPoint),
+  listMicroserviceBySubTagEndPoint: (listMicroserviceBySubTagEndPoint),
   updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: (updateSystemMicroserviceEndPoint),
   deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),

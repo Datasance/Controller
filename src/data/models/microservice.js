@@ -164,6 +164,9 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'microservice_uuid',
       as: 'extraHosts'
     })
+
+    Microservice.belongsToMany(models.Tags, { as: 'pubTags', through: 'MicroservicePubTags' })
+    Microservice.belongsToMany(models.Tags, { as: 'subTags', through: 'MicroserviceSubTags' })
   }
 
   return Microservice

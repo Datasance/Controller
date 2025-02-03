@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS Fogs (
     catalog_item_message_counts TEXT,
     message_speed FLOAT DEFAULT 0.000,
     last_command_time BIGINT,
-    network_interface VARCHAR(32) DEFAULT 'eth0',
+    network_interface VARCHAR(32) DEFAULT 'dynamic',
     docker_url VARCHAR(255) DEFAULT 'unix:///var/run/docker.sock',
     disk_limit FLOAT DEFAULT 50,
     disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog/',
@@ -565,3 +565,31 @@ CREATE TABLE IF NOT EXISTS MicroserviceCdiDevices (
 
 CREATE INDEX idx_microservice_cdiDevices_microserviceUuid ON MicroserviceCdiDevices (microservice_uuid);
 
+ALTER TABLE Routers ADD COLUMN require_ssl TEXT;
+ALTER TABLE Routers ADD COLUMN ssl_profile TEXT;
+ALTER TABLE Routers ADD COLUMN sasl_mechanisms TEXT;
+ALTER TABLE Routers ADD COLUMN authenticate_peer TEXT;
+ALTER TABLE Routers ADD COLUMN ca_cert TEXT;
+ALTER TABLE Routers ADD COLUMN tls_cert TEXT;
+ALTER TABLE Routers ADD COLUMN tls_key TEXT;
+
+CREATE TABLE IF NOT EXISTS MicroservicePubTags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    microservice_uuid VARCHAR(32),
+    tag_id INT,
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES Tags (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS MicroserviceSubTags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    microservice_uuid VARCHAR(32),
+    tag_id INT,
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES Tags (id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservicepubtags_microservice_uuid ON MicroservicePubTags (microservice_uuid);
+CREATE INDEX idx_microservicesubtags_microservice_uuid ON MicroservicesubTags (microservice_uuid);
+CREATE INDEX idx_microservicepubtags_tag_id ON MicroservicePubTags (tag_id);
+CREATE INDEX idx_microservicesubtags_tag_id ON MicroservicesubTags (tag_id);

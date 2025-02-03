@@ -35,6 +35,34 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       field: 'is_default',
       defaultValue: false
+    },
+    requireSsl: {
+      type: DataTypes.TEXT,
+      field: 'require_ssl'
+    },
+    sslProfile: {
+      type: DataTypes.TEXT,
+      field: 'ssl_profile'
+    },
+    saslMechanisms: {
+      type: DataTypes.TEXT,
+      field: 'sasl_mechanisms'
+    },
+    authenticatePeer: {
+      type: DataTypes.TEXT,
+      field: 'authenticate_peer'
+    },
+    caCert: {
+      type: DataTypes.TEXT,
+      field: 'ca_cert'
+    },
+    tlsCert: {
+      type: DataTypes.TEXT,
+      field: 'tls_cert'
+    },
+    tlsKey: {
+      type: DataTypes.TEXT,
+      field: 'tls_key'
     }
   }, {
     tableName: 'Routers',

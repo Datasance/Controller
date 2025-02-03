@@ -55,7 +55,15 @@ const microserviceCreate = {
       'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
-    'runtime': { 'type': 'string' }
+    'runtime': { 'type': 'string' },
+    'pubTags': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    },
+    'subTags': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    }
   },
   'required': ['name'],
   'additionalProperties': true
@@ -102,7 +110,15 @@ const microserviceUpdate = {
       'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
-    'runtime': { 'type': 'string' }
+    'runtime': { 'type': 'string' },
+    'pubTags': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    },
+    'subTags': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    }
   },
   'additionalProperties': true
 }
@@ -146,9 +162,8 @@ const ports = {
   'properties': {
     'internal': { 'type': 'integer' },
     'external': { 'type': 'integer' },
-    'public': { '$ref': '/publicPort' },
-    'proxy': { type: 'boolean' },
-    'protocol': { 'enum': ['tcp', 'udp'] }
+    'protocol': { 'enum': ['tcp', 'udp'] },
+    'public': { '$ref': '/publicPort' }
   },
   'required': ['internal', 'external'],
   'additionalProperties': true

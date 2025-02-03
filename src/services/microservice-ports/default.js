@@ -84,7 +84,7 @@ async function validatePortMapping (agent, mapping, availablePublicPortsByHost, 
     }
     let host
     if (mapping.public.router && mapping.public.router.host && mapping.public.router.host !== DEFAULT_ROUTER_NAME) {
-      host = await FogManager.findOne({ uuid: mapping.public.host }, transaction)
+      host = await FogManager.findOne({ uuid: mapping.public.router.host }, transaction)
       if (!host) {
         throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_HOST, mapping.public.host))
       }
@@ -168,12 +168,23 @@ async function validatePublicPortAppHostTemplate (extraHost, templateArgs, msvc,
   }
 
   const ports = await MicroservicePortManager.findAllPublicPorts({ microserviceUuid: msvc.uuid }, transaction)
+
   for (const port of ports) {
     if (port.publicPort.publicPort === +(templateArgs[4])) {
-      const fog = await FogManager.findOne({ uuid: port.publicPort.hostId }, transaction)
-      extraHost.publicPort = port.publicPort.publicPort
-      extraHost.targetFogUuid = fog.uuid
-      extraHost.value = fog.host || fog.ipAddress
+      if (port.publicPort.hostId) {
+        const fog = await FogManager.findOne({ uuid: port.publicPort.hostId }, transaction)
+        extraHost.publicPort = port.publicPort.publicPort
+        extraHost.targetFogUuid = fog.uuid
+        extraHost.value = fog.host || fog.ipAddress
+      } else {
+        extraHost.publicPort = port.publicPort.publicPort
+        extraHost.targetFogUuid = null
+        extraHost.value = lget(
+          await ConfigManager.findOne({ key: DEFAULT_PROXY_HOST }, transaction),
+          'value',
+          'undefined-proxy-host'
+        )
+      }
       return extraHost
     }
   }

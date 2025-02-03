@@ -110,5 +110,9 @@ module.exports = {
   INVALID_APPLICATION_TEMPLATE_NAME: 'Could not find Application Template {}',
   APPLICATION_TEMPLATE_INVALID: 'Application Tempalte {} is invalid',
   WRONG_PUBLIC_LINK_PROTOCOL: 'Public port {} has a scheme of {} and cannot use protocol {}',
-  NO_AVAILABLE_PUBLIC_PORT: 'No public port available in range for {}'
+  NO_AVAILABLE_PUBLIC_PORT: 'No public port available in range for {}',
+  INVALID_MICROSERVICE_PUB_TAG: 'Invalid microservice Pub Tag \'{}\'',
+  INVALID_MICROSERVICE_SUB_TAG: 'Invalid microservice Sub Tag \'{}\'',
+  NOTFOUND_MICROSERVICE_PUB_TAG: 'No microservice found for Pub Tag \'{}\'',
+  NOTFOUND_MICROSERVICE_SUB_TAG: 'No microservice found for Sub Tag \'{}\''
 }
