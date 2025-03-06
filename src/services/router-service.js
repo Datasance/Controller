@@ -196,6 +196,7 @@ async function updateConfig (routerID, transaction) {
       await MicroserviceManager.update({ uuid: routerMicroservice.uuid }, { rebuild: true }, transaction)
       await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
     } else {
+      await MicroserviceManager.update({ uuid: routerMicroservice.uuid }, { rebuild: true }, transaction)
       await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
     }
   }
