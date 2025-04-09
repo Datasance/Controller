@@ -593,3 +593,23 @@ CREATE INDEX idx_microservicepubtags_microservice_uuid ON MicroservicePubTags (m
 CREATE INDEX idx_microservicesubtags_microservice_uuid ON MicroservicesubTags (microservice_uuid);
 CREATE INDEX idx_microservicepubtags_tag_id ON MicroservicePubTags (tag_id);
 CREATE INDEX idx_microservicesubtags_tag_id ON MicroservicesubTags (tag_id);
+
+CREATE TABLE IF NOT EXISTS MicroserviceCapAdd (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    cap_add TEXT,
+    microservice_uuid VARCHAR(32),
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservice_capAdd_microserviceUuid ON MicroserviceCapAdd (microservice_uuid);
+
+CREATE TABLE IF NOT EXISTS MicroserviceCapDrop (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    cap_drop TEXT,
+    microservice_uuid VARCHAR(32),
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservice_capDrop_microserviceUuid ON MicroserviceCapDrop (microservice_uuid);
+
+ALTER TABLE Microservices ADD COLUMN annotations TEXT;

@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.4.10
+  version: 3.4.11
   title: Datasance PoT Controller
 paths:
   /status:
@@ -2185,6 +2185,64 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/microservices/system/{uuid}/rebuild":
+    patch:
+      tags:
+        - Microservices
+      summary: Rebuilds a system microservice
+      operationId: rebuildSystemMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  "/microservices/{uuid}/rebuild":
+    patch:
+      tags:
+        - Microservices
+      summary: Rebuilds a microservice
+      operationId: rebuildMicroservice
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice Uuid
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/image-snapshot":
     post:
       tags:
@@ -3305,6 +3363,8 @@ components:
                 type: string
               config:
                 type: string
+              annotations:
+                type: string
               catalogItemId:
                 type: integer
               registryId:
@@ -3345,6 +3405,14 @@ components:
               runtime:
                 type: string           
               cdiDevices:
+                type: array
+                items:
+                  type: string
+              capAdd:
+                type: array
+                items:
+                  type: string
+              capDrop:
                 type: array
                 items:
                   type: string
@@ -3444,6 +3512,8 @@ components:
                     type: string
                   config:
                     type: string
+                  annotations:
+                    type: string
                   catalogItemId:
                     type: integer
                   registryId:
@@ -3486,6 +3556,14 @@ components:
                   runtime:
                     type: string           
                   cdiDevices:
+                    type: array
+                    items:
+                      type: string
+                  capAdd:
+                    type: array
+                    items:
+                      type: string
+                  capDrop:
                     type: array
                     items:
                       type: string
@@ -4133,6 +4211,8 @@ components:
           type: string
         config:
           type: string
+        annotations:
+          type: string
         rebuild:
           type: boolean
         rootHostAccess:
@@ -4166,6 +4246,14 @@ components:
         runtime:
           type: string           
         cdiDevices:
+          type: array
+          items:
+            type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
           type: array
           items:
             type: string
@@ -4585,6 +4673,8 @@ components:
           type: string
         config:
           type: string
+        annotations:
+          type: string
         rootHostAccess:
           type: boolean
         logLimit:
@@ -4615,6 +4705,14 @@ components:
         runtime:
           type: string           
         cdiDevices:
+          type: array
+          items:
+            type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
           type: array
           items:
             type: string
@@ -4651,6 +4749,8 @@ components:
         name:
           type: string
         config:
+          type: string
+        annotations:
           type: string
         catalogItemId:
           type: integer
@@ -4690,6 +4790,14 @@ components:
           type: array
           items:
             type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
+          type: array
+          items:
+            type: string
         cmd:
           type: array
           items:
@@ -4710,6 +4818,8 @@ components:
         name:
           type: string
         config:
+          type: string
+        annotations:
           type: string
         rebuild:
           type: boolean
@@ -4740,6 +4850,14 @@ components:
         runtime:
           type: string           
         cdiDevices:
+          type: array
+          items:
+            type: string
+        capAdd:
+          type: array
+          items:
+            type: string
+        capDrop:
           type: array
           items:
             type: string

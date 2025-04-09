@@ -9,6 +9,7 @@ const microserviceCreate = {
       'pattern': nameRegex
     },
     'config': { 'type': 'string' },
+    'annotations': { 'type': 'string' },
     'catalogItemId': {
       'type': 'integer',
       'minimum': 4
@@ -53,6 +54,12 @@ const microserviceCreate = {
     'cdiDevices': {
       'type': 'array',
       'items': { 'type': 'string' } },
+    'capAdd': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'capDrop': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
     'runtime': { 'type': 'string' },
@@ -78,6 +85,7 @@ const microserviceUpdate = {
       'pattern': nameRegex
     },
     'config': { 'type': 'string' },
+    'annotations': { 'type': 'string' },
     'rebuild': { 'type': 'boolean' },
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
@@ -106,6 +114,12 @@ const microserviceUpdate = {
       'type': 'array',
       'items': { 'type': 'string' } },
     'cdiDevices': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'capAdd': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'capDrop': {
       'type': 'array',
       'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },

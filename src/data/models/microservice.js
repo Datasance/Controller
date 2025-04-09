@@ -15,6 +15,11 @@ module.exports = (sequelize, DataTypes) => {
       field: 'config',
       defaultValue: '{}'
     },
+    annotations: {
+      type: DataTypes.TEXT,
+      field: 'annotations',
+      defaultValue: '{}'
+    },
     name: {
       type: DataTypes.TEXT,
       field: 'name',
@@ -39,15 +44,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     runAsUser: {
       type: DataTypes.TEXT,
-      field: 'run_as_user'
+      field: 'run_as_user',
+      defaultValue: ''
     },
     platform: {
       type: DataTypes.TEXT,
-      field: 'platform'
+      field: 'platform',
+      defaultValue: ''
     },
     runtime: {
       type: DataTypes.TEXT,
-      field: 'runtime'
+      field: 'runtime',
+      defaultValue: ''
     },
     logSize: {
       type: DataTypes.BIGINT,
@@ -158,6 +166,16 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasMany(models.MicroserviceCdiDev, {
       foreignKey: 'microservice_uuid',
       as: 'cdiDevices'
+    })
+
+    Microservice.hasMany(models.MicroserviceCapAdd, {
+      foreignKey: 'microservice_uuid',
+      as: 'capAdd'
+    })
+
+    Microservice.hasMany(models.MicroserviceCapDrop, {
+      foreignKey: 'microservice_uuid',
+      as: 'capDrop'
     })
 
     Microservice.hasMany(models.MicroserviceExtraHost, {

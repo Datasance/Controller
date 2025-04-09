@@ -54,6 +54,16 @@ const updateSystemMicroserviceEndPoint = async function (req) {
   return MicroservicesService.updateSystemMicroserviceEndPoint(microserviceUuid, microservice, false)
 }
 
+const rebuildMicroserviceEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.rebuildMicroserviceEndPoint(microserviceUuid, false)
+}
+
+const rebuildSystemMicroserviceEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.rebuildSystemMicroserviceEndPoint(microserviceUuid, false)
+}
+
 const updateMicroserviceYAMLEndPoint = async function (req) {
   const microserviceUuid = req.params.uuid
   const fileContent = req.file.buffer.toString()
@@ -169,6 +179,8 @@ module.exports = {
   listMicroserviceBySubTagEndPoint: (listMicroserviceBySubTagEndPoint),
   updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: (updateSystemMicroserviceEndPoint),
+  rebuildMicroserviceEndPoint: (rebuildMicroserviceEndPoint),
+  rebuildSystemMicroserviceEndPoint: (rebuildSystemMicroserviceEndPoint),
   deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),
   getMicroservicesByApplicationEndPoint: (getMicroservicesByApplicationEndPoint),
   createMicroserviceRouteEndPoint: (createMicroserviceRouteEndPoint),

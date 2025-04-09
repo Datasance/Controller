@@ -307,6 +307,76 @@ module.exports = [
   },
   {
     method: 'patch',
+    path: '/api/v3/microservices/:uuid/rebuild',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const rebuildMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.rebuildMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await rebuildMicroserviceEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'patch',
+    path: '/api/v3/microservices/system/:uuid/rebuild',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const rebuildSystemMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.rebuildSystemMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await rebuildSystemMicroserviceEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: responseObject })
+      })
+    }
+  },
+  {
+    method: 'patch',
     path: '/api/v3/microservices/yaml/:uuid',
     supportSubstitution: true,
     fileInput: 'microservice',

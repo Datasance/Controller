@@ -289,6 +289,8 @@ const getAgentMicroservices = async function (fog, transaction) {
     })
     const cmd = microservice.cmd && microservice.cmd.sort((a, b) => a.id - b.id).map((it) => it.cmd)
     const cdiDevices = microservice.cdiDevices && microservice.cdiDevices.sort((a, b) => a.id - b.id).map((it) => it.cdiDevices)
+    const capAdd = microservice.capAdd && microservice.capAdd.sort((a, b) => a.id - b.id).map((it) => it.capAdd)
+    const capDrop = microservice.capDrop && microservice.capDrop.sort((a, b) => a.id - b.id).map((it) => it.capDrop)
     const registryId = microservice.catalogItem && microservice.catalogItem.registry ? microservice.catalogItem.registry.id : microservice.registry.id
 
     const extraHosts = microservice.extraHosts ? microservice.extraHosts.map(_mapExtraHost) : []
@@ -297,6 +299,7 @@ const getAgentMicroservices = async function (fog, transaction) {
       uuid: microservice.uuid,
       imageId: imageId,
       config: microservice.config,
+      annotations: microservice.annotations,
       rebuild: microservice.rebuild,
       rootHostAccess: microservice.rootHostAccess,
       runAsUser: microservice.runAsUser,
@@ -313,6 +316,8 @@ const getAgentMicroservices = async function (fog, transaction) {
       extraHosts,
       cmd,
       cdiDevices,
+      capAdd,
+      capDrop,
       routes,
       isConsumer
     }
