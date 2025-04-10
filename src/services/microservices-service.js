@@ -913,6 +913,11 @@ async function rebuildMicroserviceEndPoint (microserviceUuid, isCLI, transaction
       uuid: microserviceUuid
     }
 
+  const check = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (check.catalogItem && check.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+
   const microservice = await MicroserviceManager.updateAndFind(query, { rebuild: true }, transaction)
 
   if (!microservice) {
