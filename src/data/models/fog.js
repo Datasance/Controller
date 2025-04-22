@@ -329,9 +329,19 @@ module.exports = (sequelize, DataTypes) => {
       as: 'accessToken'
     })
 
+    Fog.hasOne(models.FogPublicKey, {
+      foreignKey: 'iofog_uuid',
+      as: 'publicKey'
+    })
+
     Fog.hasMany(models.Microservice, {
       foreignKey: 'iofog_uuid',
       as: 'microservice'
+    })
+
+    Fog.hasMany(models.FogUsedToken, {
+      foreignKey: 'iofog_uuid',
+      as: 'jti'
     })
 
     Fog.hasOne(models.Router, {

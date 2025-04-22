@@ -21,7 +21,7 @@ const MicroserviceStates = require('../enums/microservice-state')
 const FogStates = require('../enums/fog-state')
 const Config = require('../config')
 
-const scheduleTime = Config.get('Settings:FogStatusUpdateIntervalSeconds') * 1000
+const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 
 async function run () {
   try {
@@ -41,7 +41,7 @@ async function updateFogsConnectionStatus (transaction) {
 }
 
 async function _updateFogStatus (transaction) {
-  const statusUpdateTolerance = Config.get('Settings:FogStatusUpdateTolerance')
+  const statusUpdateTolerance = Config.get('settings.fogStatusUpdateTolerance')
   const fogs = await FogManager.findAll({ daemonStatus: FogStates.RUNNING }, transaction)
   const unknownFogUuids = fogs
     .filter((fog) => {

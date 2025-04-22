@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.4.11",
+  "version": "3.5.0",
   "description": "ioFog Controller project for Eclipse IoFog @ iofog.org \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "0.4.4",
+    "@datasance/ecn-viewer": "0.5.3",
     "axios": "1.8.4",
     "body-parser": "^1.20.3",
     "child_process": "1.0.2",
@@ -65,6 +65,7 @@
     "cookie-parser": "1.4.7",
     "cors": "2.8.5",
     "daemonize2": "0.4.2",
+    "dotenv": "^16.5.0",
     "ejs": "3.1.10",
     "express": "4.21.2",
     "express-session": "1.18.1",
@@ -74,6 +75,7 @@
     "helmet": "7.1.0",
     "https": "1.0.0",
     "is-elevated": "3.0.0",
+    "jose": "^4.15.9",
     "js-yaml": "4.1.0",
     "jsonschema": "1.4.1",
     "keycloak-connect": "^26.1.1",
@@ -85,6 +87,7 @@
     "mysql2": "3.10.1",
     "nconf": "0.12.1",
     "node-fetch-npm": "^2.0.4",
+    "node-schedule": "^2.1.1",
     "os": "0.1.2",
     "path": "0.12.7",
     "pg": "8.12.0",
@@ -98,7 +101,13 @@
     "string-format": "2.0.0",
     "umzug": "^3.7.0",
     "underscore": "1.13.6",
-    "xss-clean": "0.1.1"
+    "xss-clean": "0.1.1",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/resources": "^1.8.0",
+    "@opentelemetry/sdk-node": "^0.200.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.200.0",
+    "@opentelemetry/instrumentation-http": "^0.200.0",
+    "@opentelemetry/instrumentation-express": "^0.48.1"
   },
   "devDependencies": {
     "acorn": "8.11.3",
@@ -127,5 +136,6 @@
     ".eslintrc.js",
     ".jshintrc",
     ".snyk"
-  ]
+  ],
+  "type": "commonjs"
 }

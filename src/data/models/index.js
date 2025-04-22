@@ -8,6 +8,7 @@ const constants = require('../constants')
 const basename = path.basename(__filename)
 const db = {}
 const config = require('../../config')
+const logger = require('../../logger')
 
 const databaseProvider = require('../providers/database-factory')
 const sequelize = databaseProvider.sequelize
@@ -52,10 +53,10 @@ db.initDB = async (isStart) => {
 
       // Check if the database file exists
       if (fs.existsSync(sqliteDbPath)) {
-        console.log('Database file exists. Running migrations only...')
+        logger.info('Database file exists. Running migrations only...')
         await databaseProvider.runMigration(sqliteDbPath) // Ensure migration finishes before moving on
       } else {
-        console.log('Database file does not exist. Running migrations and seeders...')
+        logger.info('Database file does not exist. Running migrations and seeders...')
         await databaseProvider.runMigration(sqliteDbPath) // Wait for migration to finish
         await databaseProvider.runSeeder(sqliteDbPath) // Wait for seeding to finish
       }
@@ -63,8 +64,8 @@ db.initDB = async (isStart) => {
 
     // Configure system images
     const fogTypes = await db.FogType.findAll({})
-    await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('SystemImages:Router', {}))
-    await configureImage(db, constants.PROXY_CATALOG_NAME, fogTypes, config.get('SystemImages:Proxy', {}))
+    await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('systemImages.router', {}))
+    await configureImage(db, constants.PROXY_CATALOG_NAME, fogTypes, config.get('systemImages.proxy', {}))
   }
 }
 

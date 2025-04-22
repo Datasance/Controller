@@ -16,38 +16,73 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const axios = require('axios')
 const qs = require('qs')
 const https = require('https')
+const config = require('../config')
+
+const kcClient = process.env.KC_CLIENT || config.get('auth.client.id')
+const kcClientSecret = process.env.KC_CLIENT_SECRET || config.get('auth.client.secret')
+const kcUrl = process.env.KC_URL || config.get('auth.url')
+const kcRealm = process.env.KC_REALM || config.get('auth.realm')
+const isDevMode = config.get('server.devMode', true)
+
+const mockUser = {
+  preferred_username: 'dev-user',
+  email: 'dev@example.com',
+  realm_access: {
+    roles: ['SRE', 'Developer', 'Viewer']
+  }
+}
+
+const mockToken = {
+  access_token: 'mock-access-token',
+  refresh_token: 'mock-refresh-token'
+}
+
+const isAuthConfigured = () => {
+  return kcUrl && kcRealm && kcClient && kcClientSecret
+}
 
 const login = async function (credentials, isCLI, transaction) {
-  try {
-    const data = qs.stringify({
-      grant_type: 'password',
-      username: credentials.email,
-      password: credentials.password,
-      totp: credentials.totp,
-      client_id: process.env.KC_CLIENT,
-      client_secret: process.env.KC_CLIENT_SECRET
-    })
-
-    const agent = new https.Agent({
-      rejectUnauthorized: false // Ignore SSL certificate errors
-    })
-
-    const config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/token`,
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      data,
-      httpsAgent: agent
+  // If in dev mode and auth is not configured, always return mock token
+  if (!isAuthConfigured() && isDevMode) {
+    return {
+      accessToken: mockToken.access_token,
+      refreshToken: mockToken.refresh_token
     }
+  }
 
-    // Make a POST request to Keycloak token endpoint
-    const response = await axios.request(config)
+  // If auth is not configured and not in dev mode, throw error
+  if (!isAuthConfigured() && !isDevMode) {
+    throw new Error(`Auth is not configured for this cluster. Please contact your administrator.`)
+  }
 
-    // Extract the access token from the response
+  // Only proceed with axios request if auth is configured
+  const data = qs.stringify({
+    grant_type: 'password',
+    username: credentials.email,
+    password: credentials.password,
+    totp: credentials.totp,
+    client_id: kcClient,
+    client_secret: kcClientSecret
+  })
+
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  })
+
+  const requestConfig = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: `${kcUrl}realms/${kcRealm}/protocol/openid-connect/token`,
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data,
+    httpsAgent: agent
+  }
+
+  try {
+    const response = await axios.request(requestConfig)
     const accessToken = response.data.access_token
     const refreshToken = response.data.refresh_token
     return {
@@ -55,40 +90,53 @@ const login = async function (credentials, isCLI, transaction) {
       refreshToken
     }
   } catch (error) {
-    console.error('Error during login:', error)
-    throw new Errors.InvalidCredentialsError()
+    if (error.response && error.response.data) {
+      throw new Errors.InvalidCredentialsError(error.response.data.error_description || 'Invalid credentials')
+    }
+    throw new Errors.InvalidCredentialsError(error.message || 'Invalid credentials')
   }
 }
 
 const refresh = async function (credentials, isCLI, transaction) {
-  try {
-    const data = qs.stringify({
-      grant_type: 'refresh_token',
-      refresh_token: credentials.refreshToken,
-      client_id: process.env.KC_CLIENT,
-      client_secret: process.env.KC_CLIENT_SECRET
-    })
-
-    const agent = new https.Agent({
-      rejectUnauthorized: false // Ignore SSL certificate errors
-    })
-
-    const config = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/token`,
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      data,
-      httpsAgent: agent
+  // If in dev mode and auth is not configured, always return mock token
+  if (!isAuthConfigured() && isDevMode) {
+    return {
+      accessToken: mockToken.access_token,
+      refreshToken: mockToken.refresh_token
     }
+  }
 
-    // Make a POST request to Keycloak token endpoint
-    const response = await axios.request(config)
+  // If auth is not configured and not in dev mode, throw error
+  if (!isAuthConfigured() && !isDevMode) {
+    throw new Error(`Auth is not configured for this cluster. Please contact your administrator.`)
+  }
 
-    // Extract the access token from the response
+  // Only proceed with axios request if auth is configured
+  const data = qs.stringify({
+    grant_type: 'refresh_token',
+    refresh_token: credentials.refreshToken,
+    client_id: kcClient,
+    client_secret: kcClientSecret
+  })
+
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  })
+
+  const requestConfig = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: `${kcUrl}realms/${kcRealm}/protocol/openid-connect/token`,
+    headers: {
+      'Cache-Control': 'no-cache',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    data,
+    httpsAgent: agent
+  }
+
+  try {
+    const response = await axios.request(requestConfig)
     const accessToken = response.data.access_token
     const refreshToken = response.data.refresh_token
     return {
@@ -96,68 +144,88 @@ const refresh = async function (credentials, isCLI, transaction) {
       refreshToken
     }
   } catch (error) {
-    console.error('Error during login:', error)
-    throw new Errors.InvalidCredentialsError()
+    if (error.response && error.response.data) {
+      throw new Errors.InvalidCredentialsError(error.response.data.error_description || 'Invalid credentials')
+    }
+    throw new Errors.InvalidCredentialsError(error.message || 'Invalid credentials')
   }
 }
 
 const profile = async function (req, isCLI, transaction) {
+  // If in dev mode and auth is not configured, always return mock user
+  if (!isAuthConfigured() && isDevMode) {
+    return mockUser
+  }
+
+  // If auth is not configured and not in dev mode, throw error
+  if (!isAuthConfigured() && !isDevMode) {
+    throw new Error(`Auth is not configured for this cluster. Please contact your administrator.`)
+  }
+
+  // Only proceed with axios request if auth is configured
+  const accessToken = req.headers.authorization.replace('Bearer ', '')
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  })
+
+  const requestConfig = {
+    method: 'get',
+    maxBodyLength: Infinity,
+    url: `${kcUrl}realms/${kcRealm}/protocol/openid-connect/userinfo`,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${accessToken}`
+    },
+    httpsAgent: agent
+  }
+
   try {
-    const accessToken = req.headers.authorization.replace('Bearer ', '')
-    const agent = new https.Agent({
-      // Ignore SSL certificate errors
-      rejectUnauthorized: false
-    })
-
-    const profileconfig = {
-      method: 'get',
-      maxBodyLength: Infinity,
-      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/userinfo`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Bearer ${accessToken}`
-      },
-      httpsAgent: agent
-    }
-
-    // Make the request using async/await
-    const response = await axios.request(profileconfig)
-
-    // Return the userinfo data
+    const response = await axios.request(requestConfig)
     return response.data
   } catch (error) {
-    console.error('Error during profile retrieval:', error)
-    throw new Errors.InvalidCredentialsError()
+    if (error.response && error.response.data) {
+      throw new Errors.InvalidCredentialsError(error.response.data.error_description || 'Invalid credentials')
+    }
+    throw new Errors.InvalidCredentialsError(error.message || 'Invalid credentials')
   }
 }
 
 const logout = async function (req, isCLI, transaction) {
+  // If in dev mode and auth is not configured, always return success
+  if (!isAuthConfigured() && isDevMode) {
+    return { status: 'success' }
+  }
+
+  // If auth is not configured and not in dev mode, throw error
+  if (!isAuthConfigured() && !isDevMode) {
+    throw new Error(`Auth is not configured for this cluster. Please contact your administrator.`)
+  }
+
+  // Only proceed with axios request if auth is configured
+  const accessToken = req.headers.authorization.replace('Bearer ', '')
+  const agent = new https.Agent({
+    rejectUnauthorized: false
+  })
+
+  const requestConfig = {
+    method: 'post',
+    maxBodyLength: Infinity,
+    url: `${kcUrl}realms/${kcRealm}/protocol/openid-connect/logout`,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Bearer ${accessToken}`
+    },
+    httpsAgent: agent
+  }
+
   try {
-    const accessToken = req.headers.authorization.replace('Bearer ', '')
-    const agent = new https.Agent({
-      // Ignore SSL certificate errors
-      rejectUnauthorized: false
-    })
-
-    const logoutconfig = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${process.env.KC_URL}realms/${process.env.KC_REALM}/protocol/openid-connect/logout`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Bearer ${accessToken}`
-      },
-      httpsAgent: agent
-    }
-
-    // Make the request using async/await
-    const response = await axios.request(logoutconfig)
-
-    // Return the userinfo data
+    const response = await axios.request(requestConfig)
     return response.data
   } catch (error) {
-    console.error('Error during logout:', error)
-    throw new Errors.InvalidCredentialsError()
+    if (error.response && error.response.data) {
+      throw new Errors.InvalidCredentialsError(error.response.data.error_description || 'Invalid credentials')
+    }
+    throw new Errors.InvalidCredentialsError(error.message || 'Invalid credentials')
   }
 }
 

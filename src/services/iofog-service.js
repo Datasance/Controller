@@ -489,8 +489,8 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
 
   const newProvision = {
     iofogUuid: fogData.uuid,
-    provisionKey: AppHelper.generateRandomString(8),
-    expirationTime: new Date().getTime() + (20 * 60 * 1000)
+    provisionKey: AppHelper.generateRandomString(16),
+    expirationTime: new Date().getTime() + (10 * 60 * 1000)
   }
 
   const fog = await FogManager.findOne(queryFogData, transaction)

@@ -16,3 +16,5 @@ node_modules
 .DS_Store
 iofogcontroller-*.tgz
 iofog-iofogcontroller-*.tgz
+.env
+src/iofog-controller.pid

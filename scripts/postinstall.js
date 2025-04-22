@@ -168,7 +168,7 @@ function updateEncryptionMethod () {
 
 function updateLogName () {
   console.log('    updating log name in ')
-  const dirname = config.get('Service:LogsDirectory')
+  const dirname = config.get('log.directory')
 
   if (fs.existsSync(dirname)) {
     fs.readdirSync(dirname).forEach((file) => {

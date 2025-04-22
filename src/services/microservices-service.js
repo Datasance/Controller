@@ -40,6 +40,7 @@ const { VOLUME_MAPPING_DEFAULT } = require('../helpers/constants')
 const constants = require('../helpers/constants')
 const isEqual = require('lodash/isEqual')
 const TagsManager = require('../data/managers/tags-manager')
+const logger = require('../logger')
 
 async function _setPubTags (microserviceModel, tagsArray, transaction) {
   if (tagsArray) {
@@ -356,14 +357,14 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
           response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
         }
       } catch (error) {
-        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
       }
     }
     for (const fog of fogsNeedUpdate) {
       try {
         await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
       } catch (error) {
-        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
       }
     }
   }
@@ -863,14 +864,14 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
           response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
         }
       } catch (error) {
-        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
       }
     }
     for (const fog of fogsNeedUpdate) {
       try {
         await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
       } catch (error) {
-        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
       }
     }
   }
@@ -1197,7 +1198,7 @@ async function getReceiverMicroservices (microservice, transaction) {
           ]
         }
       } catch (error) {
-        console.error(`[ERROR] Checking microservices for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking microservices for pubTag "${tag.value}":`, error.message)
       }
     }
   }
@@ -1226,7 +1227,7 @@ async function isMicroserviceConsumer (microservice, transaction) {
           return true
         }
       } catch (error) {
-        console.error(`[ERROR] Checking microservices for subTag "${tag.value}":`, error.message)
+        logger.error(`Checking microservices for subTag "${tag.value}":`, error.message)
       }
     }
   }

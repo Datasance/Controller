@@ -1,0 +1,111 @@
+# Application Configuration
+app:
+  name: pot-controller  # Application name
+  controlPlane: Remote        # Control plane type: Remote or Kubernetes or Local
+
+# Server Configuration
+server:
+  port: 51121             # Server port number
+  devMode: true          # Development mode flag
+  # ssl:
+  #   path:
+  #     key: ""              # SSL key file path
+  #     cert: ""             # SSL certificate file path
+  #     intermediateCert: "" # Intermediate certificate file path
+  #   # base64:
+  #   #   key:  # SSL key in base64 format
+  #   #   cert:  # SSL certificate in base64 format
+  #   #   intermediateCert: # Intermediate certificate in base64 format
+
+# Viewer Configuration
+viewer:
+  port: 8008             # Viewer port number
+  url: ""                # Viewer URL
+
+# Logging Configuration
+log:
+  level: info
+  directory: /var/log/iofog-controller  # Log directory
+  fileSize: 1073741824                   # Maximum log file size in bytes (1GB)
+  fileCount: 10                          # Maximum number of log files
+
+# Settings Configuration
+settings:
+  # defaultJobInterval: 120                 # Default job interval in seconds
+  fogStatusUpdateInterval: 30             # Fog status update interval in seconds
+  fogStatusUpdateTolerance: 3             # Fog status update tolerance
+
+# Database Configuration
+database:
+  provider: sqlite     # Database provider (sqlite/mysql/postgres)
+  # mysql:
+  #   host: ""    # MySQL host
+  #   port: 3306          # MySQL port
+  #   username: ""        # MySQL username
+  #   password: ""        # MySQL password
+  #   database: ""   # MySQL database name
+  # postgres:
+  #   host: ""   # PostgreSQL host
+  #   port: 5432         # PostgreSQL port
+  #   username: ""       # PostgreSQL username
+  #   password: ""       # PostgreSQL password
+  #   database: ""  # PostgreSQL database name
+  sqlite:
+    databaseName: dev_database.sqlite  # SQLite database file name
+    logging: false     # Enable SQLite query logging
+    transactionType: IMMEDIATE      # SQLite transaction type
+    pool:
+      maxActive: 1     # Maximum active connections
+      max: 1          # Maximum total connections
+      min: 0          # Minimum connections
+      idle: 20000     # Idle timeout in milliseconds
+
+# Auth Configuration
+# auth:
+#   realm:           # Keycloak realm
+#   realmKey:        # Realm public key
+#   url:       # Keycloak authentication server URL
+#   sslRequired:   # SSL requirement level
+#   client:
+#     id:           # ControllerClient ID
+#     secret:        # ControllerClient Client secret
+#   viewerClient:   # Viewer client ID
+
+# Public Ports Configuration
+publicPorts:
+  range: "6001-7999"  # Public ports range
+
+# System Images Configuration
+systemImages:
+  router:
+    "1": "ghcr.io/datasance/router:latest"
+    "2": "ghcr.io/datasance/router:latest"
+  proxy:
+    "1": "ghcr.io/datasance/proxy:latest"
+    "2": "ghcr.io/datasance/proxy:latest"
+
+# Diagnostics Configuration
+diagnostics:
+  directory: "diagnostic"  # Diagnostics directory
+
+
+# OpenTelemetry Configuration
+# otel:
+#   enabled: false         # true/disable OpenTelemetry
+#   serviceName: "pot-controller"  # Service name for traces
+#   endpoint: "http://localhost:4318/v1/traces"  # OTel endpoint
+#   protocol: http/protobuf       # Exporter OTLP Protocol (grpc or http/protobuf)
+#   headers: ""  # A list of headers to apply to all outgoing data (traces, metrics, and logs).
+#   resourceAttributes: "service.version=3.5.0,deployment.environment=production,team=devops"  # Resource attributes
+#   metrics:
+#     exporter: otlp      # Otel metrics exporter
+#     interval: 1000      # Metrics collection interval in ms
+#   logs:
+#     level: info       # Log level
+#   propagators: "tracecontext,baggage"  # Context propagation
+#   traces:
+#     sampler: "parentbased_traceidratio"       # Sampler to be used for traces
+#     samplerArg: 0.1
+#   batch: # Batch size and timeout for telemetry data
+#     size: 512      # Maximum batch size
+#     delay: 1000    # Delay interval (in milliseconds) between two consecutive exports

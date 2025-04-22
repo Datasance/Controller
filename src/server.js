@@ -11,225 +11,270 @@
  *
  */
 
-const config = require('./config')
-const logger = require('./logger')
-const db = require('./data/models')
+// Initialize everything in the correct order
+const { initialize } = require('./init')
+initialize().then(() => {
+  const config = require('./config')
+  const logger = require('./logger')
+  const db = require('./data/models')
+  const CleanupService = require('./services/cleanup-service')
 
-const bodyParser = require('body-parser')
-const cookieParser = require('cookie-parser')
-const express = require('express')
-const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@datasance/ecn-viewer')
-const fs = require('fs')
-const helmet = require('helmet')
-const cors = require('cors')
-const https = require('https')
-const path = require('path')
-const { renderFile } = require('ejs')
-const xss = require('xss-clean')
-const { substitutionMiddleware } = require('./helpers/template-helper')
-const multer = require('multer')
-const multerMemStorage = multer.memoryStorage()
-const uploadFile = (fileName) => multer({
-  storage: multerMemStorage
-}).single(fileName)
-const keycloak = require('./config/keycloak.js').initKeycloak()
-const session = require('express-session')
-const memoryStore = require('./config/keycloak.js').getMemoryStore()
+  const bodyParser = require('body-parser')
+  const cookieParser = require('cookie-parser')
+  const express = require('express')
+  const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@datasance/ecn-viewer')
+  const fs = require('fs')
+  const helmet = require('helmet')
+  const cors = require('cors')
+  const https = require('https')
+  const path = require('path')
+  const { renderFile } = require('ejs')
+  const xss = require('xss-clean')
+  const { substitutionMiddleware } = require('./helpers/template-helper')
+  const multer = require('multer')
+  const multerMemStorage = multer.memoryStorage()
+  const uploadFile = (fileName) => multer({
+    storage: multerMemStorage
+  }).single(fileName)
 
-const viewerApp = express()
+  // Initialize session and Keycloak after config is loaded
+  const session = require('express-session')
+  const { initKeycloak, getMemoryStore } = require('./config/keycloak.js')
+  const memoryStore = getMemoryStore()
+  const keycloak = initKeycloak()
 
-const app = express()
+  const viewerApp = express()
+  const app = express()
 
-app.use(cors())
+  app.use(cors())
 
-app.use(helmet())
-app.use(xss())
+  app.use(helmet())
+  app.use(xss())
 
-// express logs
-// app.use(morgan('combined'));
-app.use(session({
-  secret: 'pot-controller',
-  resave: false,
-  saveUninitialized: true,
-  store: memoryStore
-}))
-app.use(keycloak.middleware())
-app.use(bodyParser.urlencoded({
-  extended: true
-}))
-app.use(bodyParser.json())
+  // express logs
+  // app.use(morgan('combined'));
+  app.use(session({
+    secret: 'pot-controller',
+    resave: false,
+    saveUninitialized: true,
+    store: memoryStore
+  }))
+  app.use(keycloak.middleware())
+  app.use(bodyParser.urlencoded({
+    extended: true
+  }))
+  app.use(bodyParser.json())
 
-app.engine('ejs', renderFile)
-app.set('view engine', 'ejs')
-app.use(cookieParser())
+  app.engine('ejs', renderFile)
+  app.set('view engine', 'ejs')
+  app.use(cookieParser())
 
-app.set('views', path.join(__dirname, 'views'))
+  app.set('views', path.join(__dirname, 'views'))
 
-app.on('uncaughtException', (req, res, route, err) => {
-  // TODO
-})
-
-app.use((req, res, next) => {
-  if (req.headers && req.headers['request-id']) {
-    req.id = req.headers['request-id']
-    delete req.headers['request-id']
-  }
-
-  res.append('X-Timestamp', Date.now())
-  next()
-})
-
-global.appRoot = path.resolve(__dirname)
-
-const registerRoute = (route) => {
-  const middlewares = [route.middleware]
-  if (route.supportSubstitution) {
-    middlewares.unshift(substitutionMiddleware)
-  }
-  if (route.fileInput) {
-    middlewares.unshift(uploadFile(route.fileInput))
-  }
-  app[route.method.toLowerCase()](route.path, ...middlewares)
-}
-
-const setupMiddleware = function (routeName) {
-  const routes = [].concat(require(path.join(__dirname, 'routes', routeName)) || [])
-  routes.forEach(registerRoute)
-}
-
-fs.readdirSync(path.join(__dirname, 'routes'))
-  .forEach(setupMiddleware)
-
-const jobs = []
-
-const setupJobs = function (file) {
-  jobs.push((require(path.join(__dirname, 'jobs', file)) || []))
-}
-
-fs.readdirSync(path.join(__dirname, 'jobs'))
-  .filter((file) => {
-    return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js')
+  app.on('uncaughtException', (req, res, route, err) => {
+    // TODO
   })
-  .forEach(setupJobs)
 
-function registerServers (api, viewer) {
-  process.once('SIGTERM', async function (code) {
-    console.log('SIGTERM received. Shutting down.')
-    await new Promise((resolve) => { api.close(resolve) })
-    console.log('API Server closed.')
-    await new Promise((resolve) => { viewer.close(resolve) })
-    console.log('Viewer Server closed.')
-    process.exit(0)
-  })
-}
-
-function startHttpServer (apps, ports, jobs) {
-  logger.info('SSL not configured, starting HTTP server.')
-
-  const viewerServer = apps.viewer.listen(ports.viewer, function onStart (err) {
-    if (err) {
-      logger.error(err)
-    }
-    logger.info(`==> 🌎 Viewer listening on port ${ports.viewer}. Open up http://localhost:${ports.viewer}/ in your browser.`)
-  })
-  const apiServer = apps.api.listen(ports.api, function onStart (err) {
-    if (err) {
-      logger.error(err)
-    }
-    logger.info(`==> 🌎 API Listening on port ${ports.api}. Open up http://localhost:${ports.api}/ in your browser.`)
-    jobs.forEach((job) => job.run())
-  })
-  registerServers(apiServer, viewerServer)
-}
-
-function startHttpsServer (apps, ports, sslKey, sslCert, intermedKey, jobs) {
-  try {
-    const sslOptions = {
-      key: fs.readFileSync(sslKey),
-      cert: fs.readFileSync(sslCert),
-      ca: fs.readFileSync(intermedKey),
-      requestCert: true,
-      rejectUnauthorized: false // currently for some reason iofog agent doesn't work without this option
+  app.use((req, res, next) => {
+    if (req.headers && req.headers['request-id']) {
+      req.id = req.headers['request-id']
+      delete req.headers['request-id']
     }
 
-    const viewerServer = https.createServer(sslOptions, apps.viewer).listen(ports.viewer, function onStart (err) {
-      if (err) {
-        logger.error(err)
-      }
-      logger.info(`==> 🌎 HTTPS Viewer server listening on port ${ports.viewer}. Open up https://localhost:${ports.viewer}/ in your browser.`)
-      jobs.forEach((job) => job.run())
+    res.append('X-Timestamp', Date.now())
+    next()
+  })
+
+  global.appRoot = path.resolve(__dirname)
+
+  const registerRoute = (route) => {
+    const middlewares = [route.middleware]
+    if (route.supportSubstitution) {
+      middlewares.unshift(substitutionMiddleware)
+    }
+    if (route.fileInput) {
+      middlewares.unshift(uploadFile(route.fileInput))
+    }
+    app[route.method.toLowerCase()](route.path, ...middlewares)
+  }
+
+  const setupMiddleware = function (routeName) {
+    const routes = [].concat(require(path.join(__dirname, 'routes', routeName)) || [])
+    routes.forEach(registerRoute)
+  }
+
+  fs.readdirSync(path.join(__dirname, 'routes'))
+    .forEach(setupMiddleware)
+
+  const jobs = []
+
+  const setupJobs = function (file) {
+    jobs.push((require(path.join(__dirname, 'jobs', file)) || []))
+  }
+
+  fs.readdirSync(path.join(__dirname, 'jobs'))
+    .filter((file) => {
+      return (file.indexOf('.') !== 0) && (file.slice(-3) === '.js')
     })
+    .forEach(setupJobs)
 
-    const apiServer = https.createServer(sslOptions, apps.api).listen(ports.api, function onStart (err) {
+  function registerServers (api, viewer) {
+    process.once('SIGTERM', async function (code) {
+      console.log('SIGTERM received. Shutting down.')
+      await new Promise((resolve) => { api.close(resolve) })
+      console.log('API Server closed.')
+      await new Promise((resolve) => { viewer.close(resolve) })
+      console.log('Viewer Server closed.')
+      process.exit(0)
+    })
+  }
+
+  function startHttpServer (apps, ports, jobs) {
+    logger.info('SSL not configured, starting HTTP server.')
+
+    const viewerServer = apps.viewer.listen(ports.viewer, function onStart (err) {
       if (err) {
         logger.error(err)
       }
-      logger.info(`==> 🌎 HTTPS API server listening on port ${ports.api}. Open up https://localhost:${ports.api}/ in your browser.`)
+      logger.info(`==> 🌎 Viewer listening on port ${ports.viewer}. Open up http://localhost:${ports.viewer}/ in your browser.`)
+    })
+    const apiServer = apps.api.listen(ports.api, function onStart (err) {
+      if (err) {
+        logger.error(err)
+      }
+      logger.info(`==> 🌎 API Listening on port ${ports.api}. Open up http://localhost:${ports.api}/ in your browser.`)
       jobs.forEach((job) => job.run())
     })
     registerServers(apiServer, viewerServer)
-  } catch (e) {
-    logger.error('ssl_key or ssl_cert or intermediate_cert is either missing or invalid. Provide valid SSL configurations.')
   }
-}
 
-const devMode = config.get('Server:DevMode')
-const apiPort = +(config.get('Server:Port'))
-const viewerPort = +(process.env.VIEWER_PORT || config.get('Viewer:Port'))
-const viewerURL = process.env.VIEWER_URL || config.get('Viewer:Url')
-const sslKey = config.get('Server:SslKey')
-const sslCert = config.get('Server:SslCert')
-const intermedKey = config.get('Server:IntermediateCert')
-const kcRealm = process.env.KC_REALM
-const kcURL = `${process.env.KC_URL}`
-const kcClient = process.env.KC_VIEWER_CLIENT
+  const { createSSLOptions } = require('./utils/ssl-utils')
 
-viewerApp.use('/', ecnViewer.middleware(express))
-
-const isDaemon = process.argv[process.argv.length - 1] === 'daemonize2'
-
-const initState = async () => {
-  if (!isDaemon) {
-    // InitDB
+  function startHttpsServer (apps, ports, sslKey, sslCert, intermedKey, jobs, isBase64 = false) {
     try {
-      await db.initDB(true)
-    } catch (err) {
-      logger.error('Unable to initialize the database. Error: ' + err)
-      process.exit(1)
-    }
+      const sslOptions = createSSLOptions({
+        key: sslKey,
+        cert: sslCert,
+        intermedKey: intermedKey,
+        isBase64: isBase64
+      })
 
-    // Store PID to let deamon know we are running.
-    jobs.push({
-      run: () => {
-        const pidFile = path.join((process.env.PID_BASE || __dirname), 'iofog-controller.pid')
-        logger.info(`==> PID file: ${pidFile}`)
-        fs.writeFileSync(pidFile, process.pid.toString())
+      const viewerServer = https.createServer(sslOptions, apps.viewer).listen(ports.viewer, function onStart (err) {
+        if (err) {
+          logger.error(err)
+        }
+        logger.info(`==> 🌎 HTTPS Viewer server listening on port ${ports.viewer}. Open up https://localhost:${ports.viewer}/ in your browser.`)
+        jobs.forEach((job) => job.run())
+      })
+
+      const apiServer = https.createServer(sslOptions, apps.api).listen(ports.api, function onStart (err) {
+        if (err) {
+          logger.error(err)
+        }
+        logger.info(`==> 🌎 HTTPS API server listening on port ${ports.api}. Open up https://localhost:${ports.api}/ in your browser.`)
+        jobs.forEach((job) => job.run())
+      })
+      registerServers(apiServer, viewerServer)
+    } catch (e) {
+      logger.error('Error loading SSL certificates. Please check your configuration.')
+    }
+  }
+
+  const devMode = process.env.DEV_MODE || config.get('server.devMode')
+  const apiPort = process.env.API_PORT || config.get('server.port')
+  const viewerPort = process.env.VIEWER_PORT || config.get('viewer.port')
+  const viewerURL = process.env.VIEWER_URL || config.get('viewer.url')
+
+  // File-based SSL configuration
+  const sslKey = process.env.SSL_KEY || config.get('server.ssl.path.key')
+  const sslCert = process.env.SSL_CERT || config.get('server.ssl.path.cert')
+  const intermedKey = process.env.INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
+
+  // Base64 SSL configuration
+  const sslKeyBase64 = config.get('server.ssl.base64.key')
+  const sslCertBase64 = config.get('server.ssl.base64.cert')
+  const intermedKeyBase64 = config.get('server.ssl.base64.intermediateCert')
+
+  const hasFileBasedSSL = !devMode && sslKey && sslCert
+  const hasBase64SSL = !devMode && sslKeyBase64 && sslCertBase64
+
+  const kcRealm = process.env.KC_REALM || config.get('auth.realm')
+  const kcURL = process.env.KC_URL || config.get('auth.url')
+  const kcClient = process.env.KC_VIEWER_CLIENT || config.get('auth.viewerClient')
+
+  viewerApp.use('/', ecnViewer.middleware(express))
+
+  const isDaemon = process.argv[process.argv.length - 1] === 'daemonize2'
+
+  const initState = async () => {
+    if (!isDaemon) {
+      // InitDB
+      try {
+        await db.initDB(true)
+      } catch (err) {
+        logger.error('Unable to initialize the database. Error: ' + err)
+        process.exit(1)
+      }
+
+      // Store PID to let deamon know we are running.
+      jobs.push({
+        run: () => {
+          const pidFile = path.join((process.env.PID_BASE || __dirname), 'iofog-controller.pid')
+          logger.info(`==> PID file: ${pidFile}`)
+          fs.writeFileSync(pidFile, process.pid.toString())
+        }
+      })
+    }
+    // Set up controller-config.js for ECN Viewer
+    const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@datasance', 'ecn-viewer', 'build', 'controller-config.js')
+    const ecnViewerControllerConfig = {
+      port: apiPort,
+      user: {},
+      controllerDevMode: devMode,
+      keycloakURL: kcURL,
+      keycloakRealm: kcRealm,
+      keycloakClientid: kcClient
+    }
+    if (viewerURL) {
+      ecnViewerControllerConfig.url = viewerURL
+    }
+    const ecnViewerConfigScript = `
+      window.controllerConfig = ${JSON.stringify(ecnViewerControllerConfig)}
+    `
+    fs.writeFileSync(ecnViewerControllerConfigFilePath, ecnViewerConfigScript)
+  }
+
+  // Initialize cleanup service
+  CleanupService.start()
+
+  initState()
+    .then(() => {
+      if (hasFileBasedSSL) {
+        startHttpsServer(
+          { api: app, viewer: viewerApp },
+          { api: apiPort, viewer: viewerPort },
+          sslKey,
+          sslCert,
+          intermedKey,
+          jobs,
+          false
+        )
+      } else if (hasBase64SSL) {
+        startHttpsServer(
+          { api: app, viewer: viewerApp },
+          { api: apiPort, viewer: viewerPort },
+          sslKeyBase64,
+          sslCertBase64,
+          intermedKeyBase64,
+          jobs,
+          true
+        )
+      } else {
+        startHttpServer(
+          { api: app, viewer: viewerApp },
+          { api: apiPort, viewer: viewerPort },
+          jobs
+        )
       }
     })
-  }
-  // Set up controller-config.js for ECN Viewer
-  const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@datasance', 'ecn-viewer', 'build', 'controller-config.js')
-  const ecnViewerControllerConfig = {
-    port: apiPort,
-    user: {},
-    keycloakURL: kcURL,
-    keycloakRealm: kcRealm,
-    keycloakClientid: kcClient
-  }
-  if (viewerURL) {
-    ecnViewerControllerConfig.url = viewerURL
-  }
-  const ecnViewerConfigScript = `
-    window.controllerConfig = ${JSON.stringify(ecnViewerControllerConfig)}
-  `
-  fs.writeFileSync(ecnViewerControllerConfigFilePath, ecnViewerConfigScript)
-}
-
-initState()
-  .then(() => {
-    if (!devMode && sslKey && sslCert && intermedKey) {
-      startHttpsServer({ api: app, viewer: viewerApp }, { api: apiPort, viewer: viewerPort }, sslKey, sslCert, intermedKey, jobs)
-    } else {
-      startHttpServer({ api: app, viewer: viewerApp }, { api: apiPort, viewer: viewerPort }, jobs)
-    }
-  })
+})

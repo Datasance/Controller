@@ -7,7 +7,7 @@ class PostgresDatabaseProvider extends DatabaseProvider {
   constructor () {
     super()
 
-    const postgresConfig = config.get('Database:Config:postgre', {})
+    const postgresConfig = config.get('database.postgres', {})
     postgresConfig.dialect = 'postgres'
     postgresConfig.host = process.env.DB_HOST || postgresConfig.host
     postgresConfig.port = process.env.DB_PORT || postgresConfig.port

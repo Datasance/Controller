@@ -70,7 +70,7 @@ async function checkPortAvailability (port) {
 }
 
 const findAvailablePort = async function (hostname) {
-  let portRange = Config.get('Tunnel:PortRange')
+  let portRange = Config.get('tunnel.portRange')
   if (!portRange) {
     logger.warn('Port range was\'n specified in config. Default range (2000-10000) will be used')
     portRange = '2000-10000'

@@ -21,7 +21,7 @@ const Op = Sequelize.Op
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogProvisionKeyManager = require('../data/managers/iofog-provision-key-manager')
 const FogManager = require('../data/managers/iofog-manager')
-const FogAccessTokenService = require('../services/iofog-access-token-service')
+const FogKeyService = require('../services/iofog-key-service')
 const ChangeTrackingService = require('./change-tracking-service')
 const FogVersionCommandManager = require('../data/managers/iofog-version-command-manager')
 const StraceManager = require('../data/managers/strace-manager')
@@ -54,6 +54,7 @@ const agentProvision = async function (provisionData, transaction) {
   const provision = await FogProvisionKeyManager.findOne({
     provisionKey: provisionData.key
   }, transaction)
+
   if (!provision) {
     throw new Errors.NotFoundError(ErrorMessages.INVALID_PROVISIONING_KEY)
   }
@@ -67,11 +68,17 @@ const agentProvision = async function (provisionData, transaction) {
     uuid: provision.iofogUuid
   }, transaction)
 
+  if (!fog) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_IOFOG_UUID)
+  }
+
   await _checkMicroservicesFogType(fog, provisionData.type, transaction)
 
-  const newAccessToken = await FogAccessTokenService.generateAccessToken(transaction)
+  // Generate Ed25519 key pair
+  const keyPair = await FogKeyService.generateKeyPair(transaction)
 
-  await FogAccessTokenService.updateAccessToken(fog.uuid, newAccessToken, transaction)
+  // Store the public key
+  await FogKeyService.storePublicKey(fog.uuid, keyPair.publicKey, transaction)
 
   await FogManager.update({
     uuid: fog.uuid
@@ -85,7 +92,7 @@ const agentProvision = async function (provisionData, transaction) {
 
   return {
     uuid: fog.uuid,
-    token: newAccessToken.token
+    privateKey: keyPair.privateKey
   }
 }
 

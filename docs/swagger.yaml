@@ -3191,9 +3191,9 @@ components:
       scheme: bearer
       bearerFormat: JWT
     agentToken:
-      type: apiKey
-      in: header
-      name: Authorization
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   requestBodies:
     UpdateIOFogNodeRequestBody:
       content:

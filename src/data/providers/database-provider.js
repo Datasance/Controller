@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 const sqlite3 = require('sqlite3').verbose()
+const logger = require('../../logger')
 
 class DatabaseProvider {
   constructor () {
@@ -12,7 +13,7 @@ class DatabaseProvider {
     const migrationSqlPath = path.resolve(__dirname, '../migrations/db_migration_v1.0.2.sql')
 
     if (!fs.existsSync(migrationSqlPath)) {
-      console.error(`Migration file not found: ${migrationSqlPath}`)
+      logger.error(`Migration file not found: ${migrationSqlPath}`)
       throw new Error('Migration file not found')
     }
 
@@ -21,10 +22,10 @@ class DatabaseProvider {
 
     let db = new sqlite3.Database(dbName, (err) => {
       if (err) {
-        console.error(err.message)
+        logger.error(err.message)
         throw err
       }
-      console.log('Connected to the SQLite database for migration.')
+      logger.info('Connected to the SQLite database for migration.')
     })
 
     try {
@@ -45,7 +46,7 @@ class DatabaseProvider {
                   err.message.includes('already exists') ||
                   err.message.includes('duplicate')
                 ) {
-                  console.warn(`Ignored error: ${err.message}`)
+                  logger.warn(`Ignored error: ${err.message}`)
                   resolve() // Ignore specific errors
                 } else {
                   db.run('ROLLBACK;') // Rollback transaction on error
@@ -61,16 +62,16 @@ class DatabaseProvider {
 
       // Commit the transaction if all queries succeed
       db.run('COMMIT;')
-      console.log('Migration completed successfully.')
+      logger.info('Migration completed successfully.')
     } catch (err) {
-      console.error('Migration failed:', err)
+      logger.error('Migration failed:', err)
       throw err
     } finally {
       db.close((err) => {
         if (err) {
-          console.error('Error closing database connection:', err.message)
+          logger.error('Error closing database connection:', err.message)
         } else {
-          console.log('Database connection closed after migration.')
+          logger.info('Database connection closed after migration.')
         }
       })
     }
@@ -81,7 +82,7 @@ class DatabaseProvider {
     const seederSqlPath = path.resolve(__dirname, '../seeders/db_seeder_v1.0.2.sql')
 
     if (!fs.existsSync(seederSqlPath)) {
-      console.error(`Seeder file not found: ${seederSqlPath}`)
+      logger.error(`Seeder file not found: ${seederSqlPath}`)
       throw new Error('Seeder file not found')
     }
 
@@ -90,14 +91,15 @@ class DatabaseProvider {
 
     let db = new sqlite3.Database(dbName, (err) => {
       if (err) {
-        console.error(err.message)
+        logger.error(err.message)
         throw err
       }
-      console.log('Connected to the SQLite database for seeding.')
+      logger.info('Connected to the SQLite database for seeding.')
     })
 
     try {
       db.serialize(() => {
+        db.run('PRAGMA foreign_keys=OFF;') // Disable foreign key checks during seeding
         db.run('BEGIN TRANSACTION;') // Start transaction
       })
 
@@ -113,7 +115,7 @@ class DatabaseProvider {
                   err.message.includes('already exists') ||
                   err.message.includes('duplicate')
                 ) {
-                  console.warn(`Ignored error: ${err.message}`)
+                  logger.warn(`Ignored error: ${err.message}`)
                   resolve() // Ignore specific errors
                 } else {
                   db.run('ROLLBACK;') // Rollback transaction on error
@@ -129,16 +131,16 @@ class DatabaseProvider {
 
       // Commit the transaction if all queries succeed
       db.run('COMMIT;')
-      console.log('Seeding completed successfully.')
+      logger.info('Seeding completed successfully.')
     } catch (err) {
-      console.error('Seeding failed:', err)
+      logger.error('Seeding failed:', err)
       throw err
     } finally {
       db.close((err) => {
         if (err) {
-          console.error('Error closing database connection:', err.message)
+          logger.error('Error closing database connection:', err.message)
         } else {
-          console.log('Database connection closed after seeding.')
+          logger.info('Database connection closed after seeding.')
         }
       })
     }

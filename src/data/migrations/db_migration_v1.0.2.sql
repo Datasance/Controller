@@ -613,3 +613,28 @@ CREATE TABLE IF NOT EXISTS MicroserviceCapDrop (
 CREATE INDEX idx_microservice_capDrop_microserviceUuid ON MicroserviceCapDrop (microservice_uuid);
 
 ALTER TABLE Microservices ADD COLUMN annotations TEXT;
+
+CREATE TABLE IF NOT EXISTS FogPublicKeys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    public_key TEXT,
+    iofog_uuid VARCHAR(32),
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fog_public_keys_iofogUuid ON FogPublicKeys (iofog_uuid);
+
+CREATE TABLE IF NOT EXISTS FogUsedTokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    jti VARCHAR(255) NOT NULL,
+    iofog_uuid VARCHAR(32),
+    expiry_time DATETIME NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fog_used_tokens_iofogUuid ON FogUsedTokens (iofog_uuid);
+
+DROP TABLE IF EXISTS FogAccessTokens;

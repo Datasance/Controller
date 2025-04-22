@@ -52,7 +52,7 @@ async function _checkForDuplicatePorts (agent, localPort, transaction) {
 }
 
 function _createDefaultPublicPortRange () {
-  const defaultPortRangeStr = process.env.PUBLIC_PORTS_RANGE || controllerConfig.get('PublicPorts:Range')
+  const defaultPortRangeStr = process.env.PUBLIC_PORTS_RANGE || controllerConfig.get('publicPorts.range')
   const [startStr, endStr] = defaultPortRangeStr.split('-')
   let start = parseInt(startStr)
   let end = parseInt(endStr)

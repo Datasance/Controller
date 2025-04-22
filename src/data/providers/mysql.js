@@ -7,7 +7,7 @@ class MySqlDatabaseProvider extends DatabaseProvider {
   constructor () {
     super()
 
-    const mysqlConfig = config.get('Database:Config:mysql', {})
+    const mysqlConfig = config.get('database.mysql', {})
     mysqlConfig.dialect = 'mysql'
     mysqlConfig.host = process.env.DB_HOST || mysqlConfig.host
     mysqlConfig.port = process.env.DB_PORT || mysqlConfig.port

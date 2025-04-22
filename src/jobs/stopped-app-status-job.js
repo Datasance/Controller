@@ -19,7 +19,7 @@ const MicroserviceStates = require('../enums/microservice-state')
 const Config = require('../config')
 const ApplicationManager = require('../data/managers/application-manager')
 
-const scheduleTime = Config.get('Settings:FogStatusUpdateIntervalSeconds') * 1000
+const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 
 async function run () {
   try {
