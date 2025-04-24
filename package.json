@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "0.5.3",
+    "@datasance/ecn-viewer": "0.5.4",
     "axios": "1.8.4",
     "body-parser": "^1.20.3",
     "child_process": "1.0.2",
