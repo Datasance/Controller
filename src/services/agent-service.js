@@ -11,6 +11,7 @@
  *
  */
 
+const config = require('../config')
 const path = require('path')
 const fs = require('fs')
 const formidable = require('formidable')
@@ -41,6 +42,7 @@ const MicroserviceService = require('../services/microservices-service')
 const RouterManager = require('../data/managers/router-manager')
 const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
+const SecretManager = require('../data/managers/secret-manager')
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
 const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources']
@@ -121,6 +123,9 @@ const _invalidateFogNode = async function (fog, transaction) {
 
 const getAgentConfig = async function (fog, transaction) {
   const router = fog.routerId ? await RouterManager.findOne({ id: fog.routerId }, transaction) : await fog.getRouter()
+  // Get local agent certificate from secrets
+  const localAgentSecret = await SecretManager.getSecret(`${fog.uuid}-local-agent`, transaction)
+
   // fog is the result of FogManager.FindOne() in the checkFogToken middleware
   return {
     networkInterface: fog.networkInterface,
@@ -143,7 +148,10 @@ const getAgentConfig = async function (fog, transaction) {
     dockerPruningFrequency: fog.dockerPruningFrequency,
     routerHost: router.host === fog.host ? 'localhost' : router.host,
     routerPort: router.messagingPort,
-    timeZone: fog.timeZone
+    timeZone: fog.timeZone,
+    caCert: localAgentSecret ? localAgentSecret.data['ca.crt'] : null,
+    tlsCert: localAgentSecret ? localAgentSecret.data['tls.crt'] : null,
+    tlsKey: localAgentSecret ? localAgentSecret.data['tls.key'] : null
   }
 }
 
@@ -253,7 +261,8 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
       cpuUsage: status.cpuUsage,
       memoryUsage: status.memoryUsage,
       percentage: status.percentage,
-      errorMessage: status.errorMessage
+      errorMessage: status.errorMessage,
+      ipAddress: status.ipAddress
     }
     microserviceStatus = AppHelper.deleteUndefinedFields(microserviceStatus)
     const microservice = await MicroserviceManager.findOne({
@@ -581,6 +590,44 @@ async function _checkMicroservicesFogType (fog, fogTypeId, transaction) {
   }
 }
 
+const getControllerCA = async function (fog, transaction) {
+  const devMode = process.env.DEV_MODE || config.get('server.devMode')
+  const sslCert = process.env.SSL_CERT || config.get('server.ssl.path.cert')
+  const intermedKey = process.env.INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
+  const sslCertBase64 = config.get('server.ssl.base64.cert')
+  const intermedKeyBase64 = config.get('server.ssl.base64.intermediateCert')
+  const hasFileBasedSSL = !devMode && sslCert
+  const hasBase64SSL = !devMode && sslCertBase64
+
+  if (devMode) {
+    throw new Errors.ValidationError('Controller is in development mode')
+  }
+
+  if (hasFileBasedSSL) {
+    try {
+      if (intermedKey) {
+        const certData = fs.readFileSync(intermedKey)
+        return Buffer.from(certData).toString('base64')
+      } else {
+        const certData = fs.readFileSync(sslCert)
+        return Buffer.from(certData).toString('base64')
+      }
+    } catch (error) {
+      throw new Errors.ValidationError('Failed to read SSL certificate file')
+    }
+  }
+
+  if (hasBase64SSL) {
+    if (intermedKeyBase64) {
+      return intermedKeyBase64
+    } else if (sslCertBase64) {
+      return sslCertBase64
+    }
+  }
+
+  throw new Errors.ValidationError('No valid SSL certificate configuration found')
+}
+
 module.exports = {
   agentProvision: TransactionDecorator.generateTransaction(agentProvision),
   agentDeprovision: TransactionDecorator.generateTransaction(agentDeprovision),
@@ -601,5 +648,6 @@ module.exports = {
   deleteNode: TransactionDecorator.generateTransaction(deleteNode),
   getImageSnapshot: TransactionDecorator.generateTransaction(getImageSnapshot),
   putImageSnapshot: TransactionDecorator.generateTransaction(putImageSnapshot),
-  getAgentLinkedEdgeResources: TransactionDecorator.generateTransaction(getAgentLinkedEdgeResources)
+  getAgentLinkedEdgeResources: TransactionDecorator.generateTransaction(getAgentLinkedEdgeResources),
+  getControllerCA: TransactionDecorator.generateTransaction(getControllerCA)
 }

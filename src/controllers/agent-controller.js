@@ -110,6 +110,10 @@ const putImageSnapshotEndPoint = async function (req, fog) {
   return AgentService.putImageSnapshot(req, fog)
 }
 
+const getControllerCAEndPoint = async function (req, fog) {
+  return AgentService.getControllerCA(fog)
+}
+
 module.exports = {
   agentProvisionEndPoint: agentProvisionEndPoint,
   agentDeprovisionEndPoint: AuthDecorator.checkFogToken(agentDeprovisionEndPoint),
@@ -130,5 +134,6 @@ module.exports = {
   getImageSnapshotEndPoint: AuthDecorator.checkFogToken(getImageSnapshotEndPoint),
   putImageSnapshotEndPoint: AuthDecorator.checkFogToken(putImageSnapshotEndPoint),
   resetAgentConfigChangesEndPoint: AuthDecorator.checkFogToken(resetAgentConfigChangesEndPoint),
-  getAgentLinkedEdgeResourcesEndpoint: AuthDecorator.checkFogToken(getAgentLinkedEdgeResourcesEndpoint)
+  getAgentLinkedEdgeResourcesEndpoint: AuthDecorator.checkFogToken(getAgentLinkedEdgeResourcesEndpoint),
+  getControllerCAEndPoint: AuthDecorator.checkFogToken(getControllerCAEndPoint)
 }

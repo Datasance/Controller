@@ -44,6 +44,45 @@ async function parseAppTemplateFile (fileContent) {
   return appTemplate
 }
 
+async function parseSecretFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || !doc.kind) {
+      throw new Errors.ValidationError(`Invalid YAML format: missing kind field`)
+    }
+    if (doc.kind !== 'Secret') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
+    }
+
+    // If this is an update, validate that the name matches
+    if (options.isUpdate && options.secretName) {
+      if (doc.metadata.name !== options.secretName) {
+        throw new Errors.ValidationError(`Secret name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.secretName})`)
+      }
+
+      // For updates, we only need the data
+      return {
+        data: doc.spec.data
+      }
+    }
+
+    // For creates, return full object
+    return {
+      name: lget(doc, 'metadata.name', undefined),
+      type: doc.spec.type,
+      data: doc.spec.data
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing YAML: ${error.message}`)
+  }
+}
+
 const mapImages = (images) => {
   const imgs = []
   if (images.x86 != null) {
@@ -80,14 +119,15 @@ const parseMicroserviceImages = async (fileImages) => {
 
 const parseMicroserviceYAML = async (microservice) => {
   const { registryId, catalogItemId, images } = await parseMicroserviceImages(microservice.images)
+  const container = microservice.container || {}
   const microserviceData = {
     config: microservice.config != null ? JSON.stringify(microservice.config) : undefined,
     name: microservice.name,
     catalogItemId,
     agentName: lget(microservice, 'agent.name'),
     registryId,
-    ...microservice.container,
-    annotations: microservice.container.annotations != null ? JSON.stringify(microservice.container.annotations) : undefined,
+    ...container,
+    annotations: container.annotations != null ? JSON.stringify(container.annotations) : undefined,
     capAdd: lget(microservice, 'container.capAdd', []),
     capDrop: lget(microservice, 'container.capDrop', []),
     ports: (lget(microservice, 'container.ports', [])),
@@ -140,8 +180,41 @@ async function parseMicroserviceFile (fileContent) {
 
 const _deleteUndefinedFields = (obj) => Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key])
 
+async function parseCertificateFile (fileContent) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || !doc.kind) {
+      throw new Errors.ValidationError(`Invalid YAML format: missing kind field`)
+    }
+    if (doc.kind !== 'Certificate' && doc.kind !== 'CertificateAuthority') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
+    }
+
+    const result = {
+      name: lget(doc, 'metadata.name', undefined),
+      ...doc.spec
+    }
+
+    if (doc.kind === 'CertificateAuthority') {
+      result.isCA = true
+    }
+
+    return result
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing YAML: ${error.message}`)
+  }
+}
+
 module.exports = {
   parseAppTemplateFile: parseAppTemplateFile,
   parseAppFile: parseAppFile,
-  parseMicroserviceFile: parseMicroserviceFile
+  parseMicroserviceFile: parseMicroserviceFile,
+  parseSecretFile: parseSecretFile,
+  parseCertificateFile: parseCertificateFile
 }

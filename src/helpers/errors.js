@@ -102,6 +102,14 @@ class CLIArgsNotProvidedError extends Error {
   }
 }
 
+class ConflictError extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'ConflictError'
+    this.status = 409
+  }
+}
+
 module.exports = {
   AuthenticationError: AuthenticationError,
   TransactionError: TransactionError,
@@ -113,5 +121,6 @@ module.exports = {
   FtpError: FtpError,
   InvalidArgumentError: InvalidArgumentError,
   InvalidArgumentTypeError: InvalidArgumentTypeError,
-  CLIArgsNotProvidedError: CLIArgsNotProvidedError
+  CLIArgsNotProvidedError: CLIArgsNotProvidedError,
+  ConflictError: ConflictError
 }

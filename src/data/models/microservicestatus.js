@@ -60,6 +60,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       defaultValue: '',
       field: 'error_message'
+    },
+    ipAddress: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+      field: 'ip_address'
     }
   }, {
     tableName: 'MicroserviceStatuses',

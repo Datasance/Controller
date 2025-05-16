@@ -41,7 +41,7 @@ module.exports = [
           .status(responseObject.code)
           .send({ flows: responseObject.body.applications })
 
-        logger.apiRes({ req: req, user: user, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
   },
@@ -72,7 +72,7 @@ module.exports = [
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, user: user, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
   },
@@ -103,7 +103,7 @@ module.exports = [
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, user: user, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
   },
@@ -138,7 +138,7 @@ module.exports = [
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, user: user, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
   },
@@ -169,7 +169,7 @@ module.exports = [
           .status(responseObject.code)
           .send(responseObject.body)
 
-        logger.apiRes({ req: req, user: user, res: responseObject })
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
   }

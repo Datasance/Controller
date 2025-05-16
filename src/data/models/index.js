@@ -11,26 +11,28 @@ const config = require('../../config')
 const logger = require('../../logger')
 
 const databaseProvider = require('../providers/database-factory')
-const sequelize = databaseProvider.sequelize
 
-fs
-  .readdirSync(__dirname)
-  .filter((file) => {
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js')
+// Initialize models after database is ready
+const initializeModels = (sequelize) => {
+  fs
+    .readdirSync(__dirname)
+    .filter((file) => {
+      return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js')
+    })
+    .forEach((file) => {
+      const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes)
+      db[model.name] = model
+    })
+
+  Object.keys(db).forEach((modelName) => {
+    if (db[modelName].associate) {
+      db[modelName].associate(db)
+    }
   })
-  .forEach((file) => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes)
-    db[model.name] = model
-  })
 
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db)
-  }
-})
-
-db.sequelize = sequelize
-db.Sequelize = Sequelize
+  db.sequelize = sequelize
+  db.Sequelize = Sequelize
+}
 
 const configureImage = async (db, name, fogTypes, images) => {
   const catalogItem = await db.CatalogItem.findOne({ where: { name, isPublic: false } })
@@ -47,19 +49,23 @@ const configureImage = async (db, name, fogTypes, images) => {
 db.initDB = async (isStart) => {
   await databaseProvider.initDB(isStart)
 
+  // Initialize models after database is ready
+  initializeModels(databaseProvider.sequelize)
+
   if (isStart) {
     if (databaseProvider instanceof require('../providers/sqlite')) {
       const sqliteDbPath = databaseProvider.sequelize.options.storage
-
-      // Check if the database file exists
-      if (fs.existsSync(sqliteDbPath)) {
-        logger.info('Database file exists. Running migrations only...')
-        await databaseProvider.runMigration(sqliteDbPath) // Ensure migration finishes before moving on
-      } else {
-        logger.info('Database file does not exist. Running migrations and seeders...')
-        await databaseProvider.runMigration(sqliteDbPath) // Wait for migration to finish
-        await databaseProvider.runSeeder(sqliteDbPath) // Wait for seeding to finish
-      }
+      logger.info('Running SQLite database migrations and seeders...')
+      await databaseProvider.runMigrationSQLite(sqliteDbPath)
+      await databaseProvider.runSeederSQLite(sqliteDbPath)
+    } else if (databaseProvider instanceof require('../providers/mysql')) {
+      logger.info('Running MySQL database migrations and seeders...')
+      await databaseProvider.runMigrationMySQL(databaseProvider.sequelize)
+      await databaseProvider.runSeederMySQL(databaseProvider.sequelize)
+    } else if (databaseProvider instanceof require('../providers/postgres')) {
+      logger.info('Running PostgreSQL database migrations and seeders...')
+      await databaseProvider.runMigrationPostgres(databaseProvider.sequelize)
+      await databaseProvider.runSeederPostgres(databaseProvider.sequelize)
     }
 
     // Configure system images

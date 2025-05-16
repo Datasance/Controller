@@ -1,136 +1,36 @@
-/*
- *  *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
- *  *
- *  * This program and the accompanying materials are made available under the
- *  * terms of the Eclipse Public License v. 2.0 which is available at
- *  * http://www.eclipse.org/legal/epl-2.0
- *  *
- *  * SPDX-License-Identifier: EPL-2.0
- *  *******************************************************************************
- *
- */
 const constants = require('../helpers/constants')
-const ApplicationController = require('../controllers/application-controller')
+const CertificateController = require('../controllers/certificate-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
-const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const Errors = require('../helpers/errors')
 const keycloak = require('../config/keycloak.js').initKeycloak()
 
 module.exports = [
   {
-    method: 'get',
-    path: '/api/v3/application',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_SUCCESS
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        }
-      ]
-
-      const getApplicationsByUserEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsByUserEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
-        const responseObject = await getApplicationsByUserEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-      })
-    }
-  },
-  {
-    method: 'get',
-    path: '/api/v3/application/system',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_SUCCESS
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        }
-      ]
-
-      const getApplicationsBySystemEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsBySystemEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE'])(req, res, async () => {
-        const responseObject = await getApplicationsBySystemEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-      })
-    }
-  },
-  {
     method: 'post',
-    path: '/api/v3/application',
-    supportSubstitution: true,
+    path: '/api/v3/certificates/ca',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
       const successCode = constants.HTTP_CODE_CREATED
       const errorCodes = [
         {
-          code: constants.HTTP_CODE_BAD_REQUEST,
-          errors: [Errors.ValidationError]
-        },
-        {
           code: constants.HTTP_CODE_UNAUTHORIZED,
           errors: [Errors.AuthenticationError]
-        }
-      ]
-
-      const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await createApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-      })
-    }
-  },
-  {
-    method: 'post',
-    path: '/api/v3/application/yaml',
-    fileInput: 'application',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_CREATED
-      const errorCodes = [
+        },
         {
           code: constants.HTTP_CODE_BAD_REQUEST,
           errors: [Errors.ValidationError]
         },
         {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
+          code: constants.HTTP_CODE_CONFLICT,
+          errors: [Errors.ConflictError]
         }
       ]
 
-      const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationYAMLEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await createApplicationEndPoint(req)
+        const createCAEndpoint = ResponseDecorator.handleErrors(CertificateController.createCAEndpoint, successCode, errorCodes)
+        const responseObject = await createCAEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
@@ -142,7 +42,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/application/:name',
+    path: '/api/v3/certificates/ca/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -158,49 +58,9 @@ module.exports = [
         }
       ]
 
-      const getApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
-        const responseObject = await getApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-        return null
-      })
-    }
-  },
-  {
-    method: 'patch',
-    path: '/api/v3/application/:name',
-    supportSubstitution: true,
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_NO_CONTENT
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_BAD_REQUEST,
-          errors: [Errors.ValidationError]
-        },
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        },
-        {
-          code: constants.HTTP_CODE_NOT_FOUND,
-          errors: [Errors.NotFoundError]
-        }
-      ]
-
-      const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.patchApplicationEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await updateApplicationEndPoint(req)
+        const getCAEndpoint = ResponseDecorator.handleErrors(CertificateController.getCAEndpoint, successCode, errorCodes)
+        const responseObject = await getCAEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
@@ -211,70 +71,22 @@ module.exports = [
     }
   },
   {
-    method: 'put',
-    path: '/api/v3/application/yaml/:name',
-    fileInput: 'application',
+    method: 'get',
+    path: '/api/v3/certificates/ca',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
-      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const successCode = constants.HTTP_CODE_SUCCESS
       const errorCodes = [
-        {
-          code: constants.HTTP_CODE_BAD_REQUEST,
-          errors: [Errors.ValidationError]
-        },
         {
           code: constants.HTTP_CODE_UNAUTHORIZED,
           errors: [Errors.AuthenticationError]
-        },
-        {
-          code: constants.HTTP_CODE_NOT_FOUND,
-          errors: [Errors.NotFoundError]
         }
       ]
 
-      const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationYAMLEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await updateApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-      })
-    }
-  },
-  {
-    method: 'put',
-    path: '/api/v3/application/:name',
-    supportSubstitution: true,
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_NO_CONTENT
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_BAD_REQUEST,
-          errors: [Errors.ValidationError]
-        },
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        },
-        {
-          code: constants.HTTP_CODE_NOT_FOUND,
-          errors: [Errors.NotFoundError]
-        }
-      ]
-
-      const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await updateApplicationEndPoint(req)
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listCAEndpoint = ResponseDecorator.handleErrors(CertificateController.listCAEndpoint, successCode, errorCodes)
+        const responseObject = await listCAEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
@@ -286,11 +98,11 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/application/:name',
+    path: '/api/v3/certificates/ca/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
-      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const successCode = constants.HTTP_CODE_SUCCESS
       const errorCodes = [
         {
           code: constants.HTTP_CODE_UNAUTHORIZED,
@@ -302,11 +114,133 @@ module.exports = [
         }
       ]
 
-      const deleteApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteApplicationEndPoint, successCode, errorCodes)
-
-      // Add keycloak.protect() middleware to protect the route
       await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
-        const responseObject = await deleteApplicationEndPoint(req)
+        const deleteCAEndpoint = ResponseDecorator.handleErrors(CertificateController.deleteCAEndpoint, successCode, errorCodes)
+        const responseObject = await deleteCAEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/certificates',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_CONFLICT,
+          errors: [Errors.ConflictError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.createCertificateEndpoint, successCode, errorCodes)
+        const responseObject = await createCertificateEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'get',
+    path: '/api/v3/certificates/expiring',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listExpiringCertificatesEndpoint = ResponseDecorator.handleErrors(CertificateController.listExpiringCertificatesEndpoint, successCode, errorCodes)
+        const responseObject = await listExpiringCertificatesEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'get',
+    path: '/api/v3/certificates/:name',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const getCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.getCertificateEndpoint, successCode, errorCodes)
+        const responseObject = await getCertificateEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'get',
+    path: '/api/v3/certificates',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const listCertificatesEndpoint = ResponseDecorator.handleErrors(CertificateController.listCertificatesEndpoint, successCode, errorCodes)
+        const responseObject = await listCertificatesEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)
@@ -318,11 +252,11 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/application/system/:name',
+    path: '/api/v3/certificates/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
-      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const successCode = constants.HTTP_CODE_SUCCESS
       const errorCodes = [
         {
           code: constants.HTTP_CODE_UNAUTHORIZED,
@@ -334,11 +268,82 @@ module.exports = [
         }
       ]
 
-      const deleteSystemApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteSystemApplicationEndPoint, successCode, errorCodes)
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.deleteCertificateEndpoint, successCode, errorCodes)
+        const responseObject = await deleteCertificateEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE'])(req, res, async () => {
-        const responseObject = await deleteSystemApplicationEndPoint(req)
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/certificates/:name/renew',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        },
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const renewCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.renewCertificateEndpoint, successCode, errorCodes)
+        const responseObject = await renewCertificateEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/certificates/yaml',
+    fileInput: 'certificate',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_CONFLICT,
+          errors: [Errors.ConflictError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createCertificateFromYamlEndpoint = ResponseDecorator.handleErrors(CertificateController.createCertificateFromYamlEndpoint, successCode, errorCodes)
+        const responseObject = await createCertificateFromYamlEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res
           .status(responseObject.code)

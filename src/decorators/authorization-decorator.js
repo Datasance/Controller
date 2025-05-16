@@ -51,6 +51,7 @@ function checkFogToken (f) {
       const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
       const fogUuid = payload.sub
       logger.debug({ payload }, 'JWT payload')
+      logger.info({ iofogUUID: payload.sub })
 
       if (!fogUuid) {
         logger.error('JWT missing subject claim')

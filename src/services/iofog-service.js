@@ -11,6 +11,8 @@
  *
  */
 
+const config = require('../config')
+const fs = require('fs')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const AppHelper = require('../helpers/app-helper')
 const FogManager = require('../data/managers/iofog-manager')
@@ -36,6 +38,107 @@ const RouterService = require('./router-service')
 const Constants = require('../helpers/constants')
 const Op = require('sequelize').Op
 const lget = require('lodash/get')
+const CertificateService = require('./certificate-service')
+const logger = require('../logger')
+
+const SITE_CA_CERT = 'pot-site-ca'
+const DEFAULT_ROUTER_LOCAL_CA = 'default-router-local-ca'
+
+async function _handleRouterCertificates (fogData, transaction) {
+  // Helper to check CA existence
+  async function ensureCA (name, subject) {
+    try {
+      await CertificateService.getCAEndpoint(name, transaction)
+      // CA exists
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        await CertificateService.createCAEndpoint({
+          name,
+          subject: `${subject}`,
+          expiration: 60, // months
+          type: 'self-signed'
+        }, transaction)
+      } else if (err.name === 'ConflictError') {
+        // Already exists, ignore
+      } else {
+        throw err
+      }
+    }
+  }
+
+  // Helper to check cert existence
+  async function ensureCert (name, subject, hosts, ca) {
+    try {
+      await CertificateService.getCertificateEndpoint(name, transaction)
+      // Cert exists
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        await CertificateService.createCertificateEndpoint({
+          name,
+          subject: `${subject}`,
+          hosts,
+          ca
+        }, transaction)
+      } else if (err.name === 'ConflictError') {
+        // Already exists, ignore
+      } else {
+        throw err
+      }
+    }
+  }
+
+  // Build hosts string from available fields
+  const hosts = [
+    fogData.host,
+    fogData.ipAddress,
+    fogData.ipAddressExternal
+  ].filter(Boolean).join(',') || 'localhost'
+
+  try {
+    // Always ensure SITE_CA_CERT exists
+    await ensureCA(SITE_CA_CERT, SITE_CA_CERT)
+
+    // Always ensure site-server cert exists
+    await ensureCert(
+      `${fogData.uuid}-site-server`,
+      `${fogData.uuid}-site-server`,
+      hosts,
+      { type: 'direct', secretName: SITE_CA_CERT }
+    )
+
+    // Always ensure local-ca exists
+    await ensureCA(`${fogData.uuid}-local-ca`, `${fogData.uuid}-local-ca`)
+
+    // Always ensure local-server cert exists
+    await ensureCert(
+      `${fogData.uuid}-local-server`,
+      `${fogData.uuid}-local-server`,
+      hosts,
+      { type: 'direct', secretName: `${fogData.uuid}-local-ca` }
+    )
+
+    // Always ensure local-agent cert exists
+    await ensureCert(
+      `${fogData.uuid}-local-agent`,
+      `${fogData.uuid}-local-agent`,
+      hosts,
+      { type: 'direct', secretName: `${fogData.uuid}-local-ca` }
+    )
+
+    // If routerMode is 'none', also ensure DEFAULT_ROUTER_LOCAL_CA and local-agent signed by it
+    if (fogData.routerMode === 'none') {
+      await ensureCA(DEFAULT_ROUTER_LOCAL_CA, DEFAULT_ROUTER_LOCAL_CA)
+      await ensureCert(
+        `${fogData.uuid}-local-agent`,
+        `${fogData.uuid}-local-agent`,
+        hosts,
+        { type: 'direct', secretName: DEFAULT_ROUTER_LOCAL_CA }
+      )
+    }
+  } catch (error) {
+    logger.error('Certificate operation failed:', error)
+  }
+}
 
 async function createFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogCreate)
@@ -72,6 +175,10 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     routerId: null,
     timeZone: fogData.timeZone
   }
+
+  // Add certificate handling
+  await _handleRouterCertificates(fogData, transaction)
+
   createFogData = AppHelper.deleteUndefinedFields(createFogData)
 
   // Default router is edge
@@ -190,6 +297,9 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
+  // Add certificate handling
+  await _handleRouterCertificates(fogData, transaction)
+
   // Update tags
   await _setTags(oldFog, fogData.tags, transaction)
 
@@ -213,13 +323,6 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
   const messagingPort = fogData.messagingPort || (router ? router.messagingPort : null)
   const interRouterPort = fogData.interRouterPort || (router ? router.interRouterPort : null)
   const edgeRouterPort = fogData.edgeRouterPort || (router ? router.edgeRouterPort : null)
-  const requireSsl = fogData.requireSsl || (router ? router.requireSsl : null)
-  const sslProfile = fogData.sslProfile || (router ? router.sslProfile : null)
-  const saslMechanisms = fogData.saslMechanisms || (router ? router.saslMechanisms : null)
-  const authenticatePeer = fogData.authenticatePeer || (router ? router.authenticatePeer : null)
-  const caCert = fogData.caCert || (router ? router.caCert : null)
-  const tlsCert = fogData.tlsCert || (router ? router.tlsCert : null)
-  const tlsKey = fogData.tlsKey || (router ? router.tlsKey : null)
   let networkRouter
 
   // const isSystem = updateFogData.isSystem === undefined ? oldFog.isSystem : updateFogData.isSystem
@@ -246,7 +349,7 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     } else {
       // Update existing router
       networkRouter = await RouterService.updateRouter(router, {
-        messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host, requireSsl, sslProfile, saslMechanisms, authenticatePeer, caCert, tlsCert, tlsKey
+        messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host
       }, upstreamRouters)
       await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
     }
@@ -500,9 +603,41 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
 
   const provisioningKeyData = await FogProvisionKeyManager.updateOrCreate({ iofogUuid: fogData.uuid }, newProvision, transaction)
 
+  const devMode = process.env.DEV_MODE || config.get('server.devMode')
+  const sslCert = process.env.SSL_CERT || config.get('server.ssl.path.cert')
+  const intermedKey = process.env.INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
+  const sslCertBase64 = config.get('server.ssl.base64.cert')
+  const intermedKeyBase64 = config.get('server.ssl.base64.intermediateCert')
+  const hasFileBasedSSL = !devMode && sslCert
+  const hasBase64SSL = !devMode && sslCertBase64
+  let caCert = ''
+
+  if (!devMode) {
+    if (hasFileBasedSSL) {
+      try {
+        if (intermedKey) {
+          const certData = fs.readFileSync(intermedKey)
+          caCert = Buffer.from(certData).toString('base64')
+        } else {
+          const certData = fs.readFileSync(sslCert)
+          caCert = Buffer.from(certData).toString('base64')
+        }
+      } catch (error) {
+        throw new Errors.ValidationError('Failed to read SSL certificate file')
+      }
+    }
+    if (hasBase64SSL) {
+      if (intermedKeyBase64) {
+        caCert = intermedKeyBase64
+      } else if (sslCertBase64) {
+        caCert = sslCertBase64
+      }
+    }
+  }
   return {
     key: provisioningKeyData.provisionKey,
-    expirationTime: provisioningKeyData.expirationTime
+    expirationTime: provisioningKeyData.expirationTime,
+    caCert: caCert
   }
 }
 

@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.4.11
+  version: 3.5.0
   title: Datasance PoT Controller
 paths:
   /status:
@@ -476,7 +476,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -619,7 +619,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -677,7 +677,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -813,7 +813,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -875,6 +875,34 @@ paths:
         - Agent
       summary: Deprovision agent
       operationId: agentDeprovision
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentDeprovisioningRequest"
+        required: true
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+  /agent/cert:
+    get:
+      tags:
+        - Agent
+      summary: Move Controller CA to Agent
+      operationId: agentControllerCert
+      security:
+        - agentToken: []
       requestBody:
         content:
           application/json:
@@ -1576,7 +1604,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -1778,7 +1806,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/yaml:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -3155,6 +3183,453 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /secrets:
+    post:
+      tags:
+        - Secrets
+      summary: Creates a new secret
+      operationId: createSecret
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Secret Already Exists
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Secrets
+      summary: Lists all secrets
+      operationId: listSecrets
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretListResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+  "/secrets/{name}":
+    get:
+      tags:
+        - Secrets
+      summary: Gets a secret by name
+      operationId: getSecret
+      parameters:
+        - in: path
+          name: name
+          description: Secret name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Secret Not Found
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Secrets
+      summary: Updates an existing secret
+      operationId: updateSecret
+      parameters:
+        - in: path
+          name: name
+          description: Secret name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretUpdate"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Secret Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Secrets
+      summary: Deletes a secret
+      operationId: deleteSecret
+      parameters:
+        - in: path
+          name: name
+          description: Secret name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+        "401":
+          description: Not Authorized
+        "404":
+          description: Secret Not Found
+        "500":
+          description: Internal Server Error
+  /secrets/yaml:
+    post:
+      tags:
+        - Secrets
+      summary: Create a secret from YAML file
+      operationId: createSecretFromYAML
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                secret:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+        '400':
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Secret Already Exists
+        "500":
+          description: Internal Server Error
+  "/secrets/yaml/{name}":
+    put:
+      tags:
+        - Secrets
+      summary: Updates an existing secret using YAML
+      operationId: updateSecretFromYAML
+      parameters:
+        - in: path
+          name: name
+          description: Secret name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                secret:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretResponse"
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Secret Not Found
+  /certificates/ca/{name}:
+    get:
+      tags:
+        - Certificates
+      summary: Get a Certificate Authority (CA) by name
+      operationId: getCA
+      parameters:
+        - in: path
+          name: name
+          description: CA name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CAResponse"
+        '401':
+          description: Unauthorized
+        '404':
+          description: CA not found
+        '500':
+          description: Internal Server Error
+    delete:
+      tags:
+        - Certificates
+      summary: Delete a Certificate Authority (CA) by name
+      operationId: deleteCA
+      parameters:
+        - in: path
+          name: name
+          description: CA name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+        '404':
+          description: CA not found
+        '500':
+          description: Internal Server Error
+          
+  /certificates:
+    post:
+      tags:
+        - Certificates
+      summary: Create a new certificate
+      operationId: createCertificate
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateCreateRequest"
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateResponse"
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not Found - Referenced CA not found
+        '409':
+          description: Conflict - Certificate already exists
+    get:
+      tags:
+        - Certificates
+      summary: List all certificates
+      operationId: listCertificates
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateListResponse"
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+          
+  /certificates/expiring:
+    get:
+      tags:
+        - Certificates
+      summary: List certificates that will expire soon
+      operationId: listExpiringCertificates
+      parameters:
+        - in: query
+          name: days
+          description: Number of days ahead to check for expiration (default 30)
+          required: false
+          schema:
+            type: integer
+            default: 30
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateListResponse"
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+          
+  /certificates/{name}:
+    get:
+      tags:
+        - Certificates
+      summary: Get a certificate by name
+      operationId: getCertificate
+      parameters:
+        - in: path
+          name: name
+          description: Certificate name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateResponse"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Certificate not found
+        '500':
+          description: Internal Server Error
+    delete:
+      tags:
+        - Certificates
+      summary: Delete a certificate by name
+      operationId: deleteCertificate
+      parameters:
+        - in: path
+          name: name
+          description: Certificate name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+        '404':
+          description: Certificate not found
+        '500':
+          description: Internal Server Error
+          
+  /certificates/{name}/renew:
+    post:
+      tags:
+        - Certificates
+      summary: Renew a certificate
+      operationId: renewCertificate
+      parameters:
+        - in: path
+          name: name
+          description: Certificate name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateRenewResponse"
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Certificate not found
+        '500':
+          description: Internal Server Error
+  /certificates/yaml:
+    post:
+      tags:
+        - Certificates
+      summary: Create a certificate or CA from YAML file
+      operationId: createCertificateFromYAML
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                certificate:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CAResponse"
+                  - $ref: "#/components/schemas/CertificateResponse"
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Not Found - Referenced CA not found
+        '409':
+          description: Conflict - Certificate or CA already exists
 tags:
   - name: Controller
     description: Manage your controller
@@ -3182,6 +3657,10 @@ tags:
     description: Used by your agents to communicate with your controller
   - name: User
     description: Manage your users
+  - name: Secrets
+    description: Manage your secrets
+  - name: Certificates
+    description: Manage your certificates
 servers:
   - url: http://localhost:51121/api/v3
 components:
@@ -3897,20 +4376,6 @@ components:
           type: number
         edgeRouterPort:
           type: number
-        requireSsl:
-          type: string
-        sslProfile:
-          type: string
-        saslMechanisms:
-          type: string
-        authenticatePeer:
-          type: string
-        caCert:
-          type: string
-        tlsCert:
-          type: string
-        tlsKey:
-          type: string
         host:
           type: string
         tags:
@@ -5041,3 +5506,318 @@ components:
           type: string
         destMicroserviceUuid:
           type: string
+    SecretCreate:
+      type: object
+      required:
+        - name
+        - type
+        - data
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        type:
+          type: string
+          enum: [opaque, tls]
+        data:
+          type: object
+    SecretUpdate:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+    SecretResponse:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - data
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [opaque, tls]
+        data:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    SecretListResponse:
+      type: object
+      required:
+        - secrets
+      properties:
+        secrets:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - type
+              - created_at
+              - updated_at
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              type:
+                type: string
+                enum: [opaque, tls]
+              created_at:
+                type: string
+                format: date-time
+              updated_at:
+                type: string
+                format: date-time
+    # Certificate schemas
+    CACreateRequest:
+      type: object
+      required:
+        - name
+        - subject
+        - type
+      properties:
+        name:
+          type: string
+          description: Name of the CA
+        subject:
+          type: string
+          description: Subject of the CA (CN)
+        expiration:
+          type: integer
+          description: Expiration time in milliseconds
+        type:
+          type: string
+          enum: [k8s-secret, direct, self-signed]
+          description: Type of CA
+        secretName:
+          type: string
+          description: Name of the secret (required for direct type)
+    
+    CAResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the CA
+        subject:
+          type: string
+          description: Subject of the CA
+        is_ca:
+          type: boolean
+          description: True if this is a CA
+        valid_from:
+          type: string
+          format: date-time
+          description: Validity start date
+        valid_to:
+          type: string
+          format: date-time
+          description: Validity end date
+        serial_number:
+          type: string
+          description: Certificate serial number
+        data:
+          type: object
+          properties:
+            certificate:
+              type: string
+              description: PEM encoded certificate
+            private_key:
+              type: string
+              description: PEM encoded private key
+    
+    CAListResponse:
+      type: object
+      properties:
+        cas:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the CA
+              subject:
+                type: string
+                description: Subject of the CA
+              valid_from:
+                type: string
+                format: date-time
+                description: Validity start date
+              valid_to:
+                type: string
+                format: date-time
+                description: Validity end date
+              days_remaining:
+                type: integer
+                description: Days until expiration
+              is_expired:
+                type: boolean
+                description: True if certificate is expired
+    
+    CertificateCreateRequest:
+      type: object
+      required:
+        - name
+        - subject
+        - hosts
+      properties:
+        name:
+          type: string
+          description: Name of the certificate
+        subject:
+          type: string
+          description: Subject of the certificate (CN)
+        hosts:
+          type: string
+          description: Comma-separated list of hosts
+        expiration:
+          type: integer
+          description: Expiration time in milliseconds
+        ca:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [k8s-secret, direct, self-signed]
+              description: Type of CA
+            secretName:
+              type: string
+              description: Name of the CA secret
+            cert:
+              type: string
+              description: PEM encoded certificate (for direct type)
+            key:
+              type: string
+              description: PEM encoded private key (for direct type)
+    
+    CertificateResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the certificate
+        subject:
+          type: string
+          description: Subject of the certificate
+        hosts:
+          type: string
+          description: Comma-separated list of hosts
+        is_ca:
+          type: boolean
+          description: True if this is a CA
+        valid_from:
+          type: string
+          format: date-time
+          description: Validity start date
+        valid_to:
+          type: string
+          format: date-time
+          description: Validity end date
+        serial_number:
+          type: string
+          description: Certificate serial number
+        ca_name:
+          type: string
+          description: Name of the signing CA
+        certificate_chain:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              subject:
+                type: string
+        days_remaining:
+          type: integer
+          description: Days until expiration
+        is_expired:
+          type: boolean
+          description: True if certificate is expired
+        data:
+          type: object
+          properties:
+            certificate:
+              type: string
+              description: PEM encoded certificate
+            private_key:
+              type: string
+              description: PEM encoded private key
+    
+    CertificateListResponse:
+      type: object
+      properties:
+        certificates:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the certificate
+              subject:
+                type: string
+                description: Subject of the certificate
+              hosts:
+                type: string
+                description: Comma-separated list of hosts
+              is_ca:
+                type: boolean
+                description: True if this is a CA
+              valid_from:
+                type: string
+                format: date-time
+                description: Validity start date
+              valid_to:
+                type: string
+                format: date-time
+                description: Validity end date
+              days_remaining:
+                type: integer
+                description: Days until expiration
+              is_expired:
+                type: boolean
+                description: True if certificate is expired
+              ca_name:
+                type: string
+                description: Name of the signing CA
+    
+    CertificateRenewResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the certificate
+        subject:
+          type: string
+          description: Subject of the certificate
+        hosts:
+          type: string
+          description: Comma-separated list of hosts
+        valid_from:
+          type: string
+          format: date-time
+          description: New validity start date
+        valid_to:
+          type: string
+          format: date-time
+          description: New validity end date
+        renewed:
+          type: boolean
+          description: True if certificate was successfully renewed

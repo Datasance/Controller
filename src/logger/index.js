@@ -89,6 +89,7 @@ const defaultFormat = {
       let result = {}
 
       if (log.req) {
+        // Create base request info
         result = Object.assign(
           result,
           serializer.req(log.req),
@@ -99,10 +100,46 @@ const defaultFormat = {
             username: log.req.kauth && log.req.kauth.grant && log.req.kauth.grant.access_token && log.req.kauth.grant.access_token.content && log.req.kauth.grant.access_token.content.preferred_username
           }
         )
+        // Filter request headers
+        if (result.headers) {
+          const allowedHeaders = ['content-type', 'content-length', 'user-agent']
+          const filteredHeaders = {}
+          for (const header of allowedHeaders) {
+            if (result.headers[header]) {
+              filteredHeaders[header] = result.headers[header]
+            }
+          }
+          result.headers = filteredHeaders
+        }
       }
 
       if (log.res) {
-        result = Object.assign(result, serializer.res(log.res))
+        // Get serialized response
+        const serializedRes = serializer.res(log.res)
+        // Find status code
+        let statusCode = null
+        if (log.statusCode !== undefined) {
+          statusCode = log.statusCode
+        } else if (log.res.statusCode !== undefined) {
+          statusCode = log.res.statusCode
+        } else if (serializedRes.statusCode !== undefined) {
+          statusCode = serializedRes.statusCode
+        }
+        // Filter response headers
+        if (serializedRes.headers) {
+          const allowedHeaders = ['content-type', 'content-length', 'x-timestamp', 'etag']
+          const filteredHeaders = {}
+          for (const header of allowedHeaders) {
+            if (serializedRes.headers[header]) {
+              filteredHeaders[header] = serializedRes.headers[header]
+            }
+          }
+          serializedRes.headers = filteredHeaders
+        }
+        // Add filtered response to result
+        result = Object.assign(result, serializedRes, { statusCode })
+        // Remove body for privacy
+        delete result.body
       }
 
       return result

@@ -114,5 +114,16 @@ module.exports = {
   INVALID_MICROSERVICE_PUB_TAG: 'Invalid microservice Pub Tag \'{}\'',
   INVALID_MICROSERVICE_SUB_TAG: 'Invalid microservice Sub Tag \'{}\'',
   NOTFOUND_MICROSERVICE_PUB_TAG: 'No microservice found for Pub Tag \'{}\'',
-  NOTFOUND_MICROSERVICE_SUB_TAG: 'No microservice found for Sub Tag \'{}\''
+  NOTFOUND_MICROSERVICE_SUB_TAG: 'No microservice found for Sub Tag \'{}\'',
+  SECRET_ALREADY_EXISTS: 'Secret with name "{0}" already exists',
+  SECRET_NOT_FOUND: 'Secret with name "{0}" not found',
+  // Certificate related error messages
+  CA_ALREADY_EXISTS: 'CA with name %s already exists',
+  CA_NOT_FOUND: 'CA with name %s not found',
+  CERTIFICATE_ALREADY_EXISTS: 'Certificate with name %s already exists',
+  CERTIFICATE_NOT_FOUND: 'Certificate with name %s not found',
+  INVALID_CERTIFICATE: 'Invalid certificate: %s',
+  INVALID_CA: 'Invalid CA: %s',
+  NOT_KUBERNETES_ENV: 'Controller is not running in Kubernetes environment',
+  K8S_SECRET_NOT_ALLOWED: 'Kubernetes secret type is not allowed in non-Kubernetes environment'
 }

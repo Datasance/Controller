@@ -65,9 +65,9 @@ async function seedTestData () {
     fogType: 1,
     isSystem: true,
     routerMode: 'interior',
-    messagingPort: 5672,
-    edgeRouterPort: 56722,
-    interRouterPort: 56721,
+    messagingPort: 5671,
+    edgeRouterPort: 45671,
+    interRouterPort: 55671,
     host: 'localhost'
   }, { }, false)
   const defaultRouter = await RouterService.findOne({ isDefault: true })
