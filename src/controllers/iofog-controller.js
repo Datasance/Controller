@@ -41,9 +41,10 @@ async function getFogEndPoint (req) {
 }
 
 async function getFogListEndPoint (req) {
-  const isSystem = req.query && req.query.system ? req.query.system === 'true' : false
+  // const isSystem = req.query && req.query.system ? req.query.system === 'true' : false
   const query = qs.parse(req.query)
-  return FogService.getFogListEndPoint(query.filters, false, isSystem)
+  // return FogService.getFogListEndPoint(query.filters, false, isSystem)
+  return FogService.getFogListEndPoint(query.filters, false)
 }
 
 async function generateProvisionKeyEndPoint (req) {

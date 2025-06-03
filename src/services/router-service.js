@@ -76,7 +76,7 @@ async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) 
 
   const router = await RouterManager.create(routerData, transaction)
 
-  const microserviceConfig = await _getRouterMicroserviceConfig(isEdge, uuid, messagingPort, router.interRouterPort, router.edgeRouterPort, transaction)
+  const microserviceConfig = await _getRouterMicroserviceConfig(isEdge, uuid, messagingPort, router.interRouterPort, router.edgeRouterPort, fogData.containerEngine, transaction)
 
   for (const upstreamRouter of upstreamRouters) {
     await RouterConnectionManager.create({ sourceRouter: router.id, destRouter: upstreamRouter.id }, transaction)
@@ -94,7 +94,7 @@ async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) 
   return router
 }
 
-async function updateRouter (oldRouter, newRouterData, upstreamRouters, transaction) {
+async function updateRouter (oldRouter, newRouterData, upstreamRouters, containerEngine, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   const routerMicroservice = await MicroserviceManager.findOne({
     catalogItemId: routerCatalog.id,
@@ -132,19 +132,19 @@ async function updateRouter (oldRouter, newRouterData, upstreamRouters, transact
   await RouterConnectionManager.bulkCreate(upstreamToCreate.map(router => ({ sourceRouter: oldRouter.id, destRouter: router.id })), transaction)
 
   // Update proxy microservice (If port or host changed)
-  const proxyCatalog = await CatalogService.getProxyCatalogItem(transaction)
-  const existingProxy = await MicroserviceManager.findOne({ iofogUuid: oldRouter.iofogUuid, catalogItemId: proxyCatalog.id }, transaction)
-  if (existingProxy) {
-    const config = JSON.parse(existingProxy.config || '{}')
-    config.networkRouter = {
-      host: newRouterData.host || oldRouter.host,
-      port: newRouterData.messagingPort
-    }
-    await MicroserviceManager.updateIfChanged({ uuid: existingProxy.uuid }, { config: JSON.stringify(config) }, transaction)
-  }
+  // const proxyCatalog = await CatalogService.getProxyCatalogItem(transaction)
+  // const existingProxy = await MicroserviceManager.findOne({ iofogUuid: oldRouter.iofogUuid, catalogItemId: proxyCatalog.id }, transaction)
+  // if (existingProxy) {
+  //   const config = JSON.parse(existingProxy.config || '{}')
+  //   config.networkRouter = {
+  //     host: newRouterData.host || oldRouter.host,
+  //     port: newRouterData.messagingPort
+  //   }
+  //   await MicroserviceManager.updateIfChanged({ uuid: existingProxy.uuid }, { config: JSON.stringify(config) }, transaction)
+  // }
 
   // Update config if needed
-  await updateConfig(oldRouter.id, transaction)
+  await updateConfig(oldRouter.id, containerEngine, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.routerChanged, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
   await ChangeTrackingService.update(oldRouter.iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
@@ -171,7 +171,7 @@ async function _updateRouterPorts (routerMicroserviceUuid, router, transaction) 
   }
 }
 
-async function updateConfig (routerID, transaction) {
+async function updateConfig (routerID, containerEngine, transaction) {
   const router = await RouterManager.findOne({ id: routerID }, transaction)
   if (!router) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, routerID))
@@ -197,6 +197,7 @@ async function updateConfig (routerID, transaction) {
     router.messagingPort,
     router.interRouterPort,
     router.edgeRouterPort,
+    containerEngine,
     transaction
   )
 
@@ -252,12 +253,22 @@ async function updateConfig (routerID, transaction) {
 }
 
 function _listenersChanged (currentListeners, newListeners) {
-  if (currentListeners.length !== newListeners.length) {
+  if (!currentListeners || !newListeners) {
     return true
   }
 
-  for (const listener of currentListeners) {
-    if (newListeners.findIndex(l => l.port === listener.port) === -1) {
+  // Convert to arrays if they're objects
+  const currentArray = Object.values(currentListeners)
+  const newArray = Object.values(newListeners)
+
+  if (currentArray.length !== newArray.length) {
+    return true
+  }
+
+  // Compare only port property
+  for (const currentListener of currentArray) {
+    const matchingListener = newArray.find(l => l.port === currentListener.port)
+    if (!matchingListener) {
       return true
     }
   }
@@ -272,7 +283,7 @@ function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
   }
 
   const mappingData = {
-    isPublic: false,
+    // isPublic: false,
     portInternal: port,
     portExternal: port,
     microserviceUuid: routerMicroserviceUuid
@@ -290,7 +301,7 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
     isSystem: true
   }
   const routerMicroserviceData = {
-    uuid: AppHelper.generateRandomString(32),
+    uuid: AppHelper.generateUUID(),
     name: `router-${uuid.toLowerCase()}`,
     config: JSON.stringify(microserviceConfig),
     catalogItemId: routerCatalog.id,
@@ -354,7 +365,16 @@ function _getRouterConnectorConfig (isEdge, dest, uuid) {
   return config
 }
 
-async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterPort, edgeRouterPort, transaction) {
+async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterPort, edgeRouterPort, containerEngine, transaction) {
+  let platform = 'docker'
+  if (containerEngine === 'podman') {
+    platform = 'podman'
+  }
+
+  let namespace = SITE_CONFIG_NAMESPACE
+  if (process.env.CONTROLLER_NAMESPACE) {
+    namespace = process.env.CONTROLLER_NAMESPACE
+  }
   const config = {
     addresses: {
       mc: {
@@ -381,8 +401,8 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     },
     siteConfig: {
       name: uuid,
-      namespace: SITE_CONFIG_NAMESPACE,
-      platform: 'docker',
+      namespace: namespace,
+      platform: platform,
       version: SITE_CONFIG_VERSION
     },
     sslProfiles: {}

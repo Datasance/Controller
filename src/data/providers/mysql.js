@@ -45,7 +45,10 @@ class MySqlDatabaseProvider extends DatabaseProvider {
       const connection = await mysql.createConnection(this.connectionOptions)
       await connection.end()
     } catch (err) {
-      if (err.code === 'ER_BAD_DB_ERROR') {
+      // Check both the error and its parent (for Sequelize errors)
+      const errorToCheck = err.parent || err
+
+      if (errorToCheck.code === 'ER_BAD_DB_ERROR') {
         // Database doesn't exist, try to create it
         logger.info('Database does not exist, attempting to create it...')
         const { database, ...connectionConfig } = this.connectionOptions
@@ -56,6 +59,15 @@ class MySqlDatabaseProvider extends DatabaseProvider {
         } finally {
           await tempConnection.end()
         }
+      } else if (errorToCheck.code === 'ER_DUP_KEYNAME' ||
+                errorToCheck.errno === 1061 ||
+                (errorToCheck.message && (
+                  errorToCheck.message.includes('Error 1050') || // Table already exists
+                  errorToCheck.message.includes('Error 1060') || // Duplicate column name
+                  errorToCheck.message.includes('Error 1054') || // Unknown column
+                  errorToCheck.message.includes('Error 1061') // Duplicate key name
+                ))) {
+        logger.info(`Ignoring known MySQL error: ${errorToCheck.message}`)
       } else {
         throw err
       }

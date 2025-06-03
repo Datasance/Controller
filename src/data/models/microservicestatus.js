@@ -65,6 +65,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       defaultValue: '',
       field: 'ip_address'
+    },
+    execSessionId: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+      field: 'exec_session_id'
     }
   }, {
     tableName: 'MicroserviceStatuses',

@@ -1,5 +1,6 @@
 const forge = require('node-forge')
 const k8sClient = require('./k8s-client')
+const BigNumber = require('bignumber.js')
 
 // Types for CA input
 const CA_TYPES = {
@@ -120,7 +121,7 @@ async function loadCA (name) {
 
     if (secret.type !== 'tls') {
       throw new Error(`Secret ${name} is not a TLS secret`)
-  }
+    }
 
     if (!secret.data || !secret.data['tls.crt'] || !secret.data['tls.key']) {
       throw new Error(`Invalid TLS secret data for ${name}`)
@@ -134,6 +135,18 @@ async function loadCA (name) {
   } catch (error) {
     throw new Error(`Failed to load CA: ${error.message}`)
   }
+}
+
+/**
+ * Generates a random serial number between 0 and 2^128-1
+ * @returns {string} - Serial number as a decimal string
+ */
+function generateSerialNumber () {
+  // Create a random 16-byte buffer
+  const randomBytes = forge.random.getBytesSync(16)
+  // Convert to BigNumber
+  const serialNumber = new BigNumber('0x' + forge.util.bytesToHex(randomBytes))
+  return serialNumber.toString()
 }
 
 /**
@@ -152,7 +165,7 @@ async function generateSelfSignedCA (subject, expiration = 5 * 365 * 24 * 60 * 6
 
     // Set certificate fields
     cert.publicKey = keys.publicKey
-    cert.serialNumber = forge.util.bytesToHex(forge.random.getBytesSync(16))
+    cert.serialNumber = generateSerialNumber()
 
     // Set validity period
     const now = new Date()
@@ -224,8 +237,8 @@ async function getCAFromK8sSecret (secretName) {
       return null
     }
     if (!secret.data['tls.crt'] || !secret.data['tls.key']) {
-    return null
-  }
+      return null
+    }
 
     const cert = Buffer.from(secret.data['tls.crt'], 'base64').toString()
     const key = Buffer.from(secret.data['tls.key'], 'base64').toString()
@@ -362,7 +375,8 @@ async function generateCertificate ({
       if (host.match(/^(\d{1,3}\.){3}\d{1,3}$/)) {
         // IP address
         altNames.push({ type: 7, ip: host })
-  } else {
+        altNames.push({ type: 2, value: host })
+      } else {
         // DNS name
         altNames.push({ type: 2, value: host })
       }
@@ -413,31 +427,31 @@ async function generateCertificate ({
       cert.setIssuer(subjectAttrs)
 
       // Add extensions for a self-signed server certificate
-  cert.setExtensions([
-    {
-      name: 'basicConstraints',
+      cert.setExtensions([
+        {
+          name: 'basicConstraints',
           cA: false,
           critical: true
-    },
-    {
-      name: 'keyUsage',
-      digitalSignature: true,
-      keyEncipherment: true,
+        },
+        {
+          name: 'keyUsage',
+          digitalSignature: true,
+          keyEncipherment: true,
           critical: true
-    },
-    {
-      name: 'extKeyUsage',
-      serverAuth: true,
-      clientAuth: true
-    },
-    {
-      name: 'subjectAltName',
+        },
+        {
+          name: 'extKeyUsage',
+          serverAuth: true,
+          clientAuth: true
+        },
+        {
+          name: 'subjectAltName',
           altNames: altNames
         },
         {
           name: 'subjectKeyIdentifier'
-    }
-  ])
+        }
+      ])
 
       // Self-sign the certificate
       cert.sign(keys.privateKey, forge.md.sha256.create())
@@ -454,7 +468,7 @@ async function generateCertificate ({
       'ca.crt': Buffer.from(caCert ? caCert.certPem || caCert.crtData : certPem).toString('base64')
     }
 
-  const secret = {
+    const secret = {
       name: name,
       type: 'tls',
       data: secretData

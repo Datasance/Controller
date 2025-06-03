@@ -352,10 +352,19 @@ class DatabaseProvider {
           try {
             await db.query(query)
           } catch (err) {
-            if (err.code === 'ER_TABLE_EXISTS_ERROR' ||
-                err.code === 'ER_DUP_FIELDNAME' ||
-                err.code === 'ER_DUP_KEYNAME') {
-              logger.warn(`Ignored MySQL error: ${err.message}`)
+            // Check both the error and its parent (for Sequelize errors)
+            const errorToCheck = err.parent || err
+            if (errorToCheck.code === 'ER_TABLE_EXISTS_ERROR' ||
+                errorToCheck.code === 'ER_DUP_FIELDNAME' ||
+                errorToCheck.code === 'ER_DUP_KEYNAME' ||
+                errorToCheck.code === 'ER_BLOB_KEY_WITHOUT_LENGTH' ||
+                errorToCheck.code === 'ER_CANT_DROP_FIELD_OR_KEY' ||
+                errorToCheck.code === 'duplicate_key' ||
+                errorToCheck.code === 'already_exists' ||
+                errorToCheck.errno === 1091 ||
+                errorToCheck.errno === 1061 ||
+                errorToCheck.errno === 1170) {
+              logger.warn(`Ignored MySQL error: ${errorToCheck.message}`)
             } else {
               await db.query('ROLLBACK')
               throw err
@@ -404,10 +413,33 @@ class DatabaseProvider {
           try {
             await db.query(query)
           } catch (err) {
-            if (err.code === '42P07' || // duplicate_table
-                err.code === '42701' || // duplicate_column
-                err.code === '42P06') { // duplicate_schema
-              logger.warn(`Ignored PostgreSQL error: ${err.message}`)
+            // Check both the error and its parent (for Sequelize errors)
+            const errorToCheck = err.parent || err
+
+            // If transaction is aborted, rollback and start new transaction
+            if (errorToCheck.code === '25P02') {
+              logger.warn('Transaction aborted, rolling back and starting new transaction...')
+              await db.query('ROLLBACK')
+              await db.query('BEGIN')
+              continue
+            }
+
+            if (errorToCheck.code === '42P07' || // duplicate_table
+                errorToCheck.code === '42701' || // duplicate_column
+                errorToCheck.code === '42P06' || // duplicate_schema
+                errorToCheck.code === '23505' || // unique_violation
+                errorToCheck.code === '23503' || // foreign_key_violation
+                errorToCheck.code === '42P01' || // undefined_table
+                errorToCheck.code === '42703' || // undefined_column
+                errorToCheck.code === '42P16' || // invalid_table_definition
+                errorToCheck.code === '42P17' || // invalid_table_definition
+                errorToCheck.code === '42P18' || // invalid_table_definition
+                (errorToCheck.message && (
+                  errorToCheck.message.includes('already exists') ||
+                  errorToCheck.message.includes('duplicate key') ||
+                  errorToCheck.message.includes('relation')
+                ))) {
+              logger.warn(`Ignored PostgreSQL error: ${errorToCheck.message}`)
             } else {
               await db.query('ROLLBACK')
               throw err

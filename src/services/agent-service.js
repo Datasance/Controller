@@ -43,9 +43,10 @@ const RouterManager = require('../data/managers/router-manager')
 const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
 const SecretManager = require('../data/managers/secret-manager')
+const ConfigMapManager = require('../data/managers/config-map-manager')
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
-const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources']
+const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions']
 for (const key of CHANGE_TRACKING_KEYS) {
   CHANGE_TRACKING_DEFAULT[key] = false
 }
@@ -112,10 +113,10 @@ const agentDeprovision = async function (deprovisionData, fog, transaction) {
 
 const _invalidateFogNode = async function (fog, transaction) {
   const where = { uuid: fog.uuid }
-  const data = { daemonStatus: FogStates.UNKNOWN, ipAddress: '0.0.0.0', ipAddressExternal: '0.0.0.0' }
+  const data = { daemonStatus: FogStates.DEPROVISIONED, ipAddress: '0.0.0.0', ipAddressExternal: '0.0.0.0' }
   await FogManager.update(where, data, transaction)
   const updatedFog = Object.assign({}, fog)
-  updatedFog.daemonStatus = FogStates.UNKNOWN
+  updatedFog.daemonStatus = FogStates.DEPROVISIONED
   updatedFog.ipAddress = '0.0.0.0'
   updatedFog.ipAddressExternal = '0.0.0.0'
   return updatedFog
@@ -137,6 +138,10 @@ const getAgentConfig = async function (fog, transaction) {
     logLimit: fog.logLimit,
     logDirectory: fog.logDirectory,
     logFileCount: fog.logFileCount,
+    gpsMode: fog.gpsMode,
+    gpsDevice: fog.gpsDevice,
+    gpsScanFrequency: fog.gpsScanFrequency,
+    edgeGuardFrequency: fog.edgeGuardFrequency,
     statusFrequency: fog.statusFrequency,
     changeFrequency: fog.changeFrequency,
     deviceScanFrequency: fog.deviceScanFrequency,
@@ -175,6 +180,9 @@ const updateAgentConfig = async function (updateData, fog, transaction) {
     latitude: updateData.latitude,
     longitude: updateData.longitude,
     gpsMode: updateData.gpsMode,
+    gpsDevice: updateData.gpsDevice,
+    gpsScanFrequency: updateData.gpsScanFrequency,
+    edgeGuardFrequency: updateData.edgeGuardFrequency,
     dockerPruningFrequency: updateData.dockerPruningFrequency,
     availableDiskThreshold: updateData.availableDiskThreshold,
     logLevel: updateData.logLevel,
@@ -198,7 +206,6 @@ const getAgentConfigChanges = async function (ioFog, transaction) {
     }
     res.lastUpdated = changeTracking.lastUpdated
   }
-
   return res
 }
 
@@ -238,10 +245,30 @@ const updateAgentStatus = async function (agentStatus, fog, transaction) {
     tunnelStatus: agentStatus.tunnelStatus,
     version: agentStatus.version,
     isReadyToUpgrade: agentStatus.isReadyToUpgrade,
-    isReadyToRollback: agentStatus.isReadyToRollback
+    isReadyToRollback: agentStatus.isReadyToRollback,
+    activeVolumeMounts: agentStatus.activeVolumeMounts,
+    volumeMountLastUpdate: agentStatus.volumeMountLastUpdate
   }
 
   fogStatus = AppHelper.deleteUndefinedFields(fogStatus)
+
+  const existingFog = await FogManager.findOne({
+    uuid: fog.uuid
+  }, transaction)
+
+  if (!existingFog.warningMessage.includes('Background orchestration')) {
+    fogStatus.daemonStatus = agentStatus.daemonStatus
+  } else {
+    fogStatus.daemonStatus = FogStates.WARNING
+  }
+
+  if (agentStatus.warningMessage.includes('HW signature changed') || agentStatus.warningMessage.includes('HW signature mismatch')) {
+    fogStatus.securityStatus = 'WARNING'
+    fogStatus.securityViolationInfo = 'HW signature mismatch'
+  } else {
+    fogStatus.securityStatus = 'OK'
+    fogStatus.securityViolationInfo = 'No violation'
+  }
 
   await FogManager.update({
     uuid: fog.uuid
@@ -262,7 +289,8 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
       memoryUsage: status.memoryUsage,
       percentage: status.percentage,
       errorMessage: status.errorMessage,
-      ipAddress: status.ipAddress
+      ipAddress: status.ipAddress,
+      execSessionId: status.execSessionId
     }
     microserviceStatus = AppHelper.deleteUndefinedFields(microserviceStatus)
     const microservice = await MicroserviceManager.findOne({
@@ -296,6 +324,7 @@ const getAgentMicroservices = async function (fog, transaction) {
 
     const routes = await MicroserviceService.getReceiverMicroservices(microservice, transaction)
     const isConsumer = await MicroserviceService.isMicroserviceConsumer(microservice, transaction)
+    const isRouter = await MicroserviceService.isMicroserviceRouter(microservice, transaction)
 
     const env = microservice.env && microservice.env.map((it) => {
       return {
@@ -318,6 +347,8 @@ const getAgentMicroservices = async function (fog, transaction) {
       annotations: microservice.annotations,
       rebuild: microservice.rebuild,
       rootHostAccess: microservice.rootHostAccess,
+      pidMode: microservice.pidMode,
+      ipcMode: microservice.ipcMode,
       runAsUser: microservice.runAsUser,
       platform: microservice.platform,
       runtime: microservice.runtime,
@@ -335,7 +366,9 @@ const getAgentMicroservices = async function (fog, transaction) {
       capAdd,
       capDrop,
       routes,
-      isConsumer
+      isConsumer,
+      isRouter,
+      execEnabled: microservice.execEnabled
     }
 
     response.push(responseMicroservice)
@@ -628,6 +661,59 @@ const getControllerCA = async function (fog, transaction) {
   throw new Errors.ValidationError('No valid SSL certificate configuration found')
 }
 
+const getAgentLinkedVolumeMounts = async function (fog, transaction) {
+  const volumeMounts = []
+  const resourceAttributes = [
+    'uuid',
+    'name',
+    'version',
+    'configMapName',
+    'secretName'
+  ]
+  const resources = await fog.getVolumeMounts({ attributes: resourceAttributes })
+  for (const resource of resources) {
+    const resourceObject = resource.toJSON()
+    let data = {}
+
+    if (resourceObject.configMapName) {
+      // Handle ConfigMap
+      const configMap = await ConfigMapManager.getConfigMap(resourceObject.configMapName, transaction)
+      if (configMap) {
+        // For configmaps, we need to base64 encode all values
+        data = Object.entries(configMap.data).reduce((acc, [key, value]) => {
+          acc[key] = Buffer.from(value).toString('base64')
+          return acc
+        }, {})
+      }
+    } else if (resourceObject.secretName) {
+      // Handle Secret
+      const secret = await SecretManager.getSecret(resourceObject.secretName, transaction)
+      if (secret) {
+        if (secret.type === 'tls') {
+          // For TLS secrets, values are already base64 encoded
+          data = secret.data
+        } else {
+          // For opaque secrets, we need to base64 encode all values
+          data = Object.entries(secret.data).reduce((acc, [key, value]) => {
+            acc[key] = Buffer.from(value).toString('base64')
+            return acc
+          }, {})
+        }
+      }
+    }
+
+    // Create final response object without configMapName and secretName
+    const responseObject = {
+      uuid: resourceObject.uuid,
+      name: resourceObject.name,
+      version: resourceObject.version,
+      data: data
+    }
+    volumeMounts.push(responseObject)
+  }
+  return volumeMounts
+}
+
 module.exports = {
   agentProvision: TransactionDecorator.generateTransaction(agentProvision),
   agentDeprovision: TransactionDecorator.generateTransaction(agentDeprovision),
@@ -649,5 +735,6 @@ module.exports = {
   getImageSnapshot: TransactionDecorator.generateTransaction(getImageSnapshot),
   putImageSnapshot: TransactionDecorator.generateTransaction(putImageSnapshot),
   getAgentLinkedEdgeResources: TransactionDecorator.generateTransaction(getAgentLinkedEdgeResources),
+  getAgentLinkedVolumeMounts: TransactionDecorator.generateTransaction(getAgentLinkedVolumeMounts),
   getControllerCA: TransactionDecorator.generateTransaction(getControllerCA)
 }

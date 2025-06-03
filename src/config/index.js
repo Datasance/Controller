@@ -41,10 +41,7 @@ class Config {
       // Clear any existing configuration
       nconf.reset()
 
-      // Set the entire config as defaults
-      nconf.defaults(this.config)
-
-      // Set environment variables
+      // First set environment variables
       nconf.env({
         separator: '_',
         parseValues: true,
@@ -75,7 +72,7 @@ class Config {
         }
       })
 
-      // Get all environment overrides
+      // Get environment overrides first
       const envOverrides = nconf.get()
 
       // Create a deep copy of the base config
@@ -95,13 +92,6 @@ class Config {
           current[keys[keys.length - 1]] = value
         } else if (!key.includes(':') && key !== 'type') {
           finalConfig[key] = value
-        }
-      })
-
-      // Remove any nconf internal keys and the type field
-      Object.keys(finalConfig).forEach(key => {
-        if (key.includes(':') || key === 'type') {
-          delete finalConfig[key]
         }
       })
 

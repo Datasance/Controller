@@ -247,6 +247,31 @@ module.exports = [
   },
   {
     method: 'get',
+    path: '/api/v3/agent/volumeMounts',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      const getAgentLinkedVolumeMountsEndpoint = ResponseDecorator.handleErrors(AgentController.getAgentLinkedVolumeMountsEndpoint,
+        successCode, errorCodes)
+      const responseObject = await getAgentLinkedVolumeMountsEndpoint(req)
+
+      res
+        .status(responseObject.code)
+        .send(responseObject.body)
+
+      logger.apiRes({ req: req, res: res, responseObject: responseObject })
+    }
+  },
+  {
+    method: 'get',
     path: '/api/v3/agent/microservices',
     middleware: async (req, res) => {
       logger.apiReq(req)

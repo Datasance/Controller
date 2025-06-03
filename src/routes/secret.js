@@ -89,7 +89,7 @@ module.exports = [
     }
   },
   {
-    method: 'put',
+    method: 'patch',
     path: '/api/v3/secrets/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -123,7 +123,7 @@ module.exports = [
     }
   },
   {
-    method: 'put',
+    method: 'patch',
     path: '/api/v3/secrets/yaml/:name',
     fileInput: 'secret',
     middleware: async (req, res) => {

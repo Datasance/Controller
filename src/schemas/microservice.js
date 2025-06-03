@@ -153,9 +153,22 @@ const env = {
   'type': 'object',
   'properties': {
     'key': { 'type': 'string' },
-    'value': { 'type': 'string' }
+    'value': { 'type': 'string' },
+    'valueFromSecret': { 'type': 'string' },
+    'valueFromConfigMap': { 'type': 'string' }
   },
-  'required': ['key', 'value'],
+  'required': ['key'],
+  'oneOf': [
+    {
+      'required': ['value']
+    },
+    {
+      'required': ['valueFromSecret']
+    },
+    {
+      'required': ['valueFromConfigMap']
+    }
+  ],
   'additionalProperties': true
 }
 
@@ -176,33 +189,10 @@ const ports = {
   'properties': {
     'internal': { 'type': 'integer' },
     'external': { 'type': 'integer' },
-    'protocol': { 'enum': ['tcp', 'udp'] },
-    'public': { '$ref': '/publicPort' }
+    'protocol': { 'enum': ['tcp', 'udp'] }
   },
   'required': ['internal', 'external'],
   'additionalProperties': true
-}
-
-const publicPort = {
-  'id': '/publicPort',
-  type: 'object',
-  properties: {
-    enabled: { type: 'boolean' },
-    schemes: { type: 'array', items: { type: 'string' } },
-    protocol: { 'enum': ['tcp', 'http'] },
-    router: { '$ref': '/publicPortRouter' }
-  },
-  required: ['schemes', 'protocol']
-}
-
-const publicPortRouter = {
-  'id': '/publicPortRouter',
-  type: 'object',
-  properties: {
-    host: { type: 'string' },
-    port: { type: 'number' }
-  },
-  required: []
 }
 
 const portsCreate = {
@@ -211,8 +201,7 @@ const portsCreate = {
   'properties': {
     'internal': { 'type': 'integer' },
     'external': { 'type': 'integer' },
-    'protocol': { 'enum': ['tcp', 'udp'] },
-    'public': { '$ref': '/publicPort' }
+    'protocol': { 'enum': ['tcp', 'udp'] }
   },
   'required': ['internal', 'external'],
   'additionalProperties': true
@@ -232,6 +221,6 @@ const volumeMappings = {
 }
 
 module.exports = {
-  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, publicPort, publicPortRouter, extraHosts, portsCreate, microserviceDelete, volumeMappings],
-  innerSchemas: [volumeMappings, ports, publicPort, publicPortRouter, env, extraHosts, microserviceCreate]
+  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, extraHosts, portsCreate, microserviceDelete, volumeMappings],
+  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate]
 }

@@ -11,7 +11,7 @@ const caCreate = {
     },
     secretName: { type: 'string' }
   },
-  required: ['type'],
+  required: ['type', 'name'],
   additionalProperties: false,
   allOf: [
     {
@@ -43,9 +43,9 @@ const certificateCreate = {
       type: 'object',
       properties: {
         type: { type: 'string', enum: ['k8s-secret', 'direct', 'self-signed'] },
-        secretName: { type: 'string' },
-        cert: { type: 'string' },
-        key: { type: 'string' }
+        secretName: { type: 'string' }
+        // cert: { type: 'string' },
+        // key: { type: 'string' }
       },
       required: ['type']
     }
@@ -141,4 +141,3 @@ module.exports = {
   ],
   innerSchemas: []
 }
- 

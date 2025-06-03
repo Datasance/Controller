@@ -42,7 +42,10 @@ async function updateFogsConnectionStatus (transaction) {
 
 async function _updateFogStatus (transaction) {
   const statusUpdateTolerance = Config.get('settings.fogStatusUpdateTolerance')
-  const fogs = await FogManager.findAll({ daemonStatus: FogStates.RUNNING }, transaction)
+  const fogs = [
+    ...await FogManager.findAll({ daemonStatus: FogStates.RUNNING }, transaction),
+    ...await FogManager.findAll({ daemonStatus: FogStates.WARNING }, transaction)
+  ]
   const unknownFogUuids = fogs
     .filter((fog) => {
       const statusUpdateToleranceMs = fog.statusFrequency * 1000 * statusUpdateTolerance

@@ -65,10 +65,25 @@ module.exports = (sequelize, DataTypes) => {
       field: 'log_size',
       defaultValue: 0
     },
+    pidMode: {
+      type: DataTypes.TEXT,
+      field: 'pid_mode',
+      defaultValue: ''
+    },
+    ipcMode: {
+      type: DataTypes.TEXT,
+      field: 'ipc_mode',
+      defaultValue: ''
+    },
     imageSnapshot: {
       type: DataTypes.TEXT,
       field: 'image_snapshot',
       defaultValue: ''
+    },
+    execEnabled: {
+      type: DataTypes.BOOLEAN,
+      field: 'exec_enabled',
+      defaultValue: false
     },
     delete: {
       type: DataTypes.BOOLEAN,
@@ -156,6 +171,11 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasMany(models.MicroserviceEnv, {
       foreignKey: 'microservice_uuid',
       as: 'env'
+    })
+
+    Microservice.hasMany(models.VolumeMount, {
+      foreignKey: 'microservice_uuid',
+      as: 'volumeMounts'
     })
 
     Microservice.hasMany(models.MicroserviceArg, {

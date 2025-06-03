@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     longitude DOUBLE PRECISION,
     description TEXT,
     last_active BIGINT,
-    daemon_status VARCHAR(32) DEFAULT 'UNKNOWN',
+    daemon_status VARCHAR(32) DEFAULT 'NOT_PROVISIONED',
     daemon_operating_duration BIGINT DEFAULT 0,
     daemon_last_start BIGINT,
     memory_usage DOUBLE PRECISION DEFAULT 0.000,
@@ -110,8 +110,8 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     change_frequency INT DEFAULT 20,
     device_scan_frequency INT DEFAULT 20,
     tunnel VARCHAR(255) DEFAULT '',
-    isolated_docker_container BOOLEAN DEFAULT TRUE,
-    docker_pruning_freq INT DEFAULT 1,
+    isolated_docker_container BOOLEAN DEFAULT FALSE,
+    docker_pruning_freq INT DEFAULT 0,
     available_disk_threshold DOUBLE PRECISION DEFAULT 20,
     log_level VARCHAR(10) DEFAULT 'INFO',
     is_system BOOLEAN DEFAULT FALSE,
@@ -566,14 +566,6 @@ ADD COLUMN run_as_user TEXT DEFAULT NULL,
 ADD COLUMN platform TEXT DEFAULT NULL,
 ADD COLUMN runtime TEXT DEFAULT NULL;
 
-ALTER TABLE "Routers"
-ADD COLUMN require_ssl TEXT,
-ADD COLUMN ssl_profile TEXT,
-ADD COLUMN sasl_mechanisms TEXT,
-ADD COLUMN authenticate_peer TEXT,
-ADD COLUMN ca_cert TEXT,
-ADD COLUMN tls_cert TEXT,
-ADD COLUMN tls_key TEXT;
 
 CREATE TABLE IF NOT EXISTS "MicroservicePubTags" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
@@ -686,7 +678,9 @@ CREATE TABLE IF NOT EXISTS "Services" (
     resource TEXT NOT NULL,
     target_port INTEGER NOT NULL,
     service_port INTEGER,
+    k8s_type TEXT,
     bridge_port INTEGER,
+    default_bridge TEXT,
     service_endpoint TEXT,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0)
@@ -708,10 +702,73 @@ CREATE TABLE IF NOT EXISTS "ServiceTags" (
 CREATE INDEX idx_service_tags_service_id ON "ServiceTags" (service_id);
 CREATE INDEX idx_service_tags_tag_id ON "ServiceTags" (tag_id);
 
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS require_ssl;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS ssl_profile;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS sasl_mechanisms;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS authenticate_peer;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS ca_cert;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS tls_cert;
-ALTER TABLE "Routers" DROP COLUMN IF EXISTS tls_key;
+
+ALTER TABLE "Fogs" ADD COLUMN container_engine VARCHAR(32);
+ALTER TABLE "Fogs" ADD COLUMN deployment_type VARCHAR(32);
+
+ALTER TABLE "MicroserviceExtraHost" DROP COLUMN IF EXISTS public_port;
+ALTER TABLE "MicroservicePorts" DROP COLUMN IF EXISTS is_public;
+ALTER TABLE "MicroservicePorts" DROP COLUMN IF EXISTS is_proxy;
+
+DROP TABLE IF EXISTS "MicroservicePublicPorts";
+
+ALTER TABLE "MicroserviceEnvs" ADD COLUMN value_from_secret TEXT;
+ALTER TABLE "MicroserviceEnvs" ADD COLUMN value_from_config_map TEXT;
+
+CREATE TABLE IF NOT EXISTS "ConfigMaps" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    immutable BOOLEAN DEFAULT false,
+    data TEXT NOT NULL,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE INDEX idx_config_maps_name ON "ConfigMaps" (name);
+
+CREATE TABLE IF NOT EXISTS "VolumeMounts" (
+    uuid VARCHAR(32) PRIMARY KEY NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    config_map_name VARCHAR(255),
+    secret_name VARCHAR(255),
+    version INT DEFAULT 1,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (config_map_name) REFERENCES "ConfigMaps" (name) ON DELETE CASCADE,
+    FOREIGN KEY (secret_name) REFERENCES "Secrets" (name) ON DELETE CASCADE    
+);
+
+CREATE INDEX idx_volume_mounts_uuid ON "VolumeMounts" (uuid);
+CREATE INDEX idx_volume_mounts_config_map_name ON "VolumeMounts" (config_map_name);
+CREATE INDEX idx_volume_mounts_secret_name ON "VolumeMounts" (secret_name);
+
+CREATE TABLE IF NOT EXISTS "FogVolumeMounts" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    fog_uuid VARCHAR(32),
+    volume_mount_uuid VARCHAR(32),
+    FOREIGN KEY (fog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE,
+    FOREIGN KEY (volume_mount_uuid) REFERENCES "VolumeMounts" (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fog_volume_mounts_fog_uuid ON "FogVolumeMounts" (fog_uuid);
+CREATE INDEX idx_fog_volume_mounts_volume_mount_uuid ON "FogVolumeMounts" (volume_mount_uuid);
+
+ALTER TABLE "Fogs" ADD COLUMN active_volume_mounts BIGINT DEFAULT 0;
+ALTER TABLE "Fogs" ADD COLUMN volume_mount_last_update BIGINT DEFAULT 0;
+
+ALTER TABLE "ChangeTrackings" ADD COLUMN volume_mounts BOOLEAN DEFAULT false;
+ALTER TABLE "ChangeTrackings" ADD COLUMN exec_sessions BOOLEAN DEFAULT false;
+
+ALTER TABLE "Services" ADD COLUMN provisioning_status VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "Services" ADD COLUMN provisioning_error TEXT;
+
+ALTER TABLE "Fogs" ADD COLUMN warning_message TEXT DEFAULT 'HEALTHY';
+ALTER TABLE "Fogs" ADD COLUMN gps_device VARCHAR(32);
+ALTER TABLE "Fogs" ADD COLUMN gps_scan_frequency INT DEFAULT 60;
+ALTER TABLE "Fogs" ADD COLUMN edge_guard_frequency INT DEFAULT 0;
+
+ALTER TABLE "Microservices" ADD COLUMN pid_mode VARCHAR(32);
+ALTER TABLE "Microservices" ADD COLUMN ipc_mode VARCHAR(32);
+ALTER TABLE "Microservices" ADD COLUMN exec_enabled BOOLEAN DEFAULT false;
+
+ALTER TABLE "MicroserviceStatuses" ADD COLUMN exec_session_id TEXT;

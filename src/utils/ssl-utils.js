@@ -58,9 +58,14 @@ function createSSLOptions ({ key, cert, intermedKey, isBase64 = false }) {
     rejectUnauthorized: false
   }
 
-  // Only add CA if intermediate certificate is provided
+  // Only add CA if intermediate certificate is provided and exists
   if (intermedKey) {
     try {
+      // Check if file exists when not using base64
+      if (!isBase64 && !fs.existsSync(intermedKey)) {
+        logger.warn(`Intermediate certificate file not found at path: ${intermedKey}, continuing without it`)
+        return sslOptions
+      }
       sslOptions.ca = loadCertificate(intermedKey, isBase64)
     } catch (e) {
       logger.warn('Intermediate certificate could not be loaded, continuing without it')

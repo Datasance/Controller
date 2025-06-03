@@ -29,7 +29,9 @@ const events = Object.freeze({
     diagnostics: false,
     isImageSnapshot: false,
     prune: false,
-    routerChanged: false
+    routerChanged: false,
+    volumeMounts: false,
+    execSessions: false
   },
   diagnostics: {
     diagnostics: true
@@ -81,6 +83,12 @@ const events = Object.freeze({
   },
   prune: {
     prune: true
+  },
+  volumeMounts: {
+    volumeMounts: true
+  },
+  microserviceExecSessions: {
+    execSessions: true
   }
 })
 

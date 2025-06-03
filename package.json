@@ -1,7 +1,7 @@
 {
   "name": "@datasance/iofogcontroller",
   "version": "3.5.0",
-  "description": "ioFog Controller project for Eclipse IoFog @ iofog.org \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
+  "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
   "contributors": [
@@ -59,6 +59,7 @@
     "@kubernetes/client-node": "^0.22.3",
     "axios": "1.8.4",
     "body-parser": "^1.20.3",
+    "bignumber.js": "^9.3.0",
     "child_process": "1.0.2",
     "command-line-args": "5.2.1",
     "command-line-usage": "7.0.3",
@@ -102,6 +103,7 @@
     "sqlite3": "^5.1.7",
     "string-format": "2.0.0",
     "umzug": "^3.7.0",
+    "uuid": "11.1.0",
     "underscore": "1.13.6",
     "xss-clean": "0.1.1",
     "@opentelemetry/api": "^1.9.0",

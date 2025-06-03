@@ -138,7 +138,7 @@ const rvaluesVarSubstition = async (subjects, templateContext) => {
   let context = templateContext
   // Due to the recursive nature of this function, user will only be defined on the first iteration
   context = {
-    ...templateContext,
+    ...templateContext
     // Private context
     // _user: user // need by edge resource and every on demand request
   }
@@ -169,7 +169,7 @@ const substitutionMiddleware = async (req, res, next) => {
   if (['POST', 'PUT', 'PATCH'].indexOf(req.method) > -1) {
     // let user
     let tmplContext = {
-      self: req.body,
+      self: req.body
       // Private context
       // _user: user // need by edge resource and every on demand request
     }

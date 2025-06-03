@@ -2271,6 +2271,120 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/microservices/{uuid}/exec":
+    post:
+      tags:
+        - Microservices
+      summary: Enables a exec for microservice
+      operationId: enableMicroserviceExec
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Invalid Microservice UUID
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Microservices
+      summary: Disables a exec for microservice
+      operationId: disableMicroserviceExec
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Invalid Microservice UUID
+        "500":
+          description: Internal Server Error
+  "/microservices/system/{uuid}/exec": 
+    post:
+      tags:
+        - Microservices
+      summary: Enables a exec for system microservice
+      operationId: enableSystemMicroserviceExec
+      parameters:
+        - in: path  
+          name: uuid
+          description: Microservice UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Invalid Microservice UUID
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Microservices
+      summary: Disables a exec for system microservice
+      operationId: disableSystemMicroserviceExec
+      parameters:
+        - in: path
+          name: uuid
+          description: Microservice UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Invalid Microservice UUID
+        "500":
+          description: Internal Server Error
   "/microservices/{uuid}/image-snapshot":
     post:
       tags:
@@ -3258,7 +3372,7 @@ paths:
           description: Secret Not Found
         "500":
           description: Internal Server Error
-    put:
+    patch:
       tags:
         - Secrets
       summary: Updates an existing secret
@@ -3349,7 +3463,7 @@ paths:
         "500":
           description: Internal Server Error
   "/secrets/yaml/{name}":
-    put:
+    patch:
       tags:
         - Secrets
       summary: Updates an existing secret using YAML
@@ -3630,6 +3744,739 @@ paths:
           description: Not Found - Referenced CA not found
         '409':
           description: Conflict - Certificate or CA already exists
+  /services:
+    get:
+      tags:
+        - Services
+      summary: Gets list of services
+      operationId: getServicesList
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - Services
+      summary: Creates a new service
+      operationId: createService
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Service"
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Duplicate Name
+        "500":
+          description: Internal Server Error
+  /services/{name}:
+    get:
+      tags:
+        - Services
+      summary: Gets a service info
+      operationId: getServiceInfo
+      parameters:
+        - in: path
+          name: name
+          description: Service name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Services
+      summary: Deletes a service
+      operationId: deleteService
+      parameters:
+        - in: path
+          name: name
+          description: Service name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - Services
+      summary: Patches a service
+      operationId: patchService
+      parameters:
+        - in: path
+          name: name
+          description: Service name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Service"
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /services/yaml:
+    post:
+      tags:
+        - Services
+      summary: Creates a new service from YAML
+      operationId: createServiceYAML
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: number
+                  name:
+                    type: string
+                  type:
+                    type: string
+                  resource:
+                    type: string
+                  targetPort:
+                    type: number
+                  defaultBridge:
+                    type: string
+                  bridgePort:
+                    type: number
+                  updatedAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Duplicate Name
+        "500":
+          description: Internal Server Error
+  "/services/yaml/{name}":
+    patch:
+      tags:
+        - Services
+      summary: Updates a service using YAML
+      operationId: updateServiceYAML
+      parameters:
+        - in: path
+          name: name
+          description: Service name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /configmaps:
+    post:
+      tags:
+        - ConfigMap
+      summary: Creates a new ConfigMap
+      operationId: createConfigMap
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigMapCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: ConfigMap Already Exists
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - ConfigMap
+      summary: Lists all ConfigMaps
+      operationId: listConfigMaps
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapListResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+  /configmaps/yaml:
+    post:
+      tags:
+        - ConfigMap
+      summary: Creates a new ConfigMap from YAML
+      operationId: createConfigMapFromYaml
+      security:
+        - userToken: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                configMap:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: ConfigMap Already Exists
+        "500":
+          description: Internal Server Error
+  /configmaps/{name}:
+    get:
+      tags:
+        - ConfigMap
+      summary: Gets a ConfigMap by name
+      operationId: getConfigMap
+      security:
+        - userToken: []
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: ConfigMap Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - ConfigMap
+      summary: Updates a ConfigMap
+      operationId: updateConfigMap
+      security:
+        - userToken: []
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigMapUpdate"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: ConfigMap Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - ConfigMap
+      summary: Deletes a ConfigMap
+      operationId: deleteConfigMap
+      security:
+        - userToken: []
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+        "401":
+          description: Not Authorized
+        "404":
+          description: ConfigMap Not Found
+        "500":
+          description: Internal Server Error
+  /configmaps/yaml/{name}:
+    patch:
+      tags:
+        - ConfigMap
+      summary: Updates a ConfigMap from YAML
+      operationId: updateConfigMapFromYaml
+      security:
+        - userToken: []
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                configMap:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigMapResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: ConfigMap Not Found
+        "500":
+          description: Internal Server Error
+  /volumeMounts:
+    get:
+      tags:
+        - VolumeMounts
+      summary: Returns list of volume mounts
+      operationId: listVolumeMounts
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: List of volume mounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VolumeMount"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - VolumeMounts
+      summary: Creates a new volume mount
+      operationId: createVolumeMount
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeMountCreate"
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+
+  /volumeMounts/yaml:
+    post:
+      tags:
+        - VolumeMounts
+      summary: Creates a new volume mount from YAML
+      operationId: createVolumeMountYaml
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/x-yaml:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+
+  "/volumeMounts/{name}":
+    get:
+      tags:
+        - VolumeMounts
+      summary: Gets volume mount info
+      operationId: getVolumeMount
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - VolumeMounts
+      summary: Updates existing volume mount
+      operationId: updateVolumeMount
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeMountUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - VolumeMounts
+      summary: Deletes a volume mount
+      operationId: deleteVolumeMount
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      responses:
+        "202":
+          description: Accepted
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+
+  "/volumeMounts/yaml/{name}":
+    patch:
+      tags:
+        - VolumeMounts
+      summary: Updates existing volume mount from YAML
+      operationId: updateVolumeMountYaml
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/x-yaml:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+
+  "/volumeMounts/{name}/link":
+    post:
+      tags:
+        - VolumeMounts
+      summary: Links volume mount to fog nodes
+      operationId: linkVolumeMount
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeMountLink"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - VolumeMounts
+      summary: Unlinks volume mount from fog nodes
+      operationId: unlinkVolumeMount
+      parameters:
+        - in: path
+          name: name
+          description: Volume mount name
+          required: true
+          schema:
+            type: string
+      security:
+        - userToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolumeMountUnlink"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolumeMount"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
 tags:
   - name: Controller
     description: Manage your controller
@@ -3661,6 +4508,12 @@ tags:
     description: Manage your secrets
   - name: Certificates
     description: Manage your certificates
+  - name: Services
+    description: Manage your services
+  - name: VolumeMounts
+    description: Manage your volume mounts
+  - name: ConfigMap
+    description: Manage your config maps
 servers:
   - url: http://localhost:51121/api/v3
 components:
@@ -4231,6 +5084,10 @@ components:
           type: string
         dockerUrl:
           type: string
+        containerEngine:
+          type: string
+        deploymentType:
+          type: string
         diskLimit:
           type: number
         diskDirectory:
@@ -4307,6 +5164,12 @@ components:
         dockerUrl:
           type: string
           default: unix:///var/run/docker.sock
+        containerEngine:
+          type: string
+          default: docker
+        deploymentType:
+          type: string
+          default: native
         diskLimit:
           type: number
           default: 50
@@ -4470,6 +5333,10 @@ components:
           type: string
         dockerUrl:
           type: string
+        containerEngine:
+          type: string
+        deploymentType:
+          type: string
         diskLimit:
           type: number
         diskDirectory:
@@ -4512,6 +5379,10 @@ components:
         networkInterface:
           type: string
         dockerUrl:
+          type: string
+        containerEngine:
+          type: string
+        deploymentType:
           type: string
         diskLimit:
           type: number
@@ -4787,31 +5658,6 @@ components:
           enum:
             - tcp
             - udp
-        public:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            schemes:
-              type: array
-              items:
-                type: string
-            protocol:
-              type: string
-              enum:
-                - tcp
-                - http
-            router:
-              type: object
-              properties:
-                host:
-                  type: string
-                port:
-                  type: number
-              required: []
-          required:
-            - schemes
-            - protocol
       required:
         - internal
         - external
@@ -4828,31 +5674,6 @@ components:
           enum:
             - tcp
             - udp
-        public:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            schemes:
-              type: array
-              items:
-                type: string
-            protocol:
-              type: string
-              enum:
-                - tcp
-                - http
-            router:
-              type: object
-              properties:
-                host:
-                  type: string
-                port:
-                  type: number
-              required: []
-          required:
-            - schemes
-            - protocol
       required:
         - internal
         - external
@@ -4868,31 +5689,6 @@ components:
           enum:
             - tcp
             - udp
-        public:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            schemes:
-              type: array
-              items:
-                type: string
-            protocol:
-              type: string
-              enum:
-                - tcp
-                - http
-            router:
-              type: object
-              properties:
-                host:
-                  type: string
-                port:
-                  type: number
-              required: []
-          required:
-            - schemes
-            - protocol
       required:
         - internal
         - external
@@ -4916,31 +5712,6 @@ components:
           enum:
             - tcp
             - udp
-        public:
-          type: object
-          properties:
-            enabled:
-              type: boolean
-            schemes:
-              type: array
-              items:
-                type: string
-            protocol:
-              type: string
-              enum:
-                - tcp
-                - http
-            router:
-              type: object
-              properties:
-                host:
-                  type: string
-                port:
-                  type: number
-              required: []
-          required:
-            - schemes
-            - protocol
       required:
         - internal
         - external
@@ -5821,3 +6592,158 @@ components:
         renewed:
           type: boolean
           description: True if certificate was successfully renewed
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        resource:
+          type: string
+        defaultBridge:
+          type: string
+        bridgePort:
+          type: number
+        targetPort:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+    ConfigMapCreate:
+      type: object
+      required:
+        - name
+        - data
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        data:
+          type: object
+    ConfigMapUpdate:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+    ConfigMapResponse:
+      type: object
+      required:
+        - id
+        - name
+        - data
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        data:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConfigMapListResponse:
+      type: object
+      required:
+        - configMaps
+      properties:
+        configMaps:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - created_at
+              - updated_at
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+              updated_at:
+                type: string
+                format: date-time
+    VolumeMount:
+      type: object
+      properties:
+        uuid:
+          type: string
+        name:
+          type: string
+        secretName:
+          type: string
+        configMapName:
+          type: string
+        version:
+          type: integer
+      required:
+        - uuid
+        - name
+        - version
+
+    VolumeMountCreate:
+      type: object
+      properties:
+        name:
+          type: string
+        secretName:
+          type: string
+        configMapName:
+          type: string
+      required:
+        - name
+      oneOf:
+        - required:
+            - secretName
+        - required:
+            - configMapName
+
+    VolumeMountUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        secretName:
+          type: string
+        configMapName:
+          type: string
+      oneOf:
+        - required:
+            - secretName
+        - required:
+            - configMapName
+
+    VolumeMountLink:
+      type: object
+      properties:
+        fogUuids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+        - fogUuids
+
+    VolumeMountUnlink:
+      type: object
+      properties:
+        fogUuids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+        - fogUuids

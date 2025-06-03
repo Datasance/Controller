@@ -186,14 +186,14 @@ initialize().then(() => {
   const viewerURL = process.env.VIEWER_URL || config.get('viewer.url')
 
   // File-based SSL configuration
-  const sslKey = process.env.SSL_KEY || config.get('server.ssl.path.key')
-  const sslCert = process.env.SSL_CERT || config.get('server.ssl.path.cert')
-  const intermedKey = process.env.INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
+  const sslKey = process.env.SSL_PATH_KEY || config.get('server.ssl.path.key')
+  const sslCert = process.env.SSL_PATH_CERT || config.get('server.ssl.path.cert')
+  const intermedKey = process.env.SSL_PATH_INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
 
   // Base64 SSL configuration
-  const sslKeyBase64 = config.get('server.ssl.base64.key')
-  const sslCertBase64 = config.get('server.ssl.base64.cert')
-  const intermedKeyBase64 = config.get('server.ssl.base64.intermediateCert')
+  const sslKeyBase64 = process.env.SSL_BASE64_KEY || config.get('server.ssl.base64.key')
+  const sslCertBase64 = process.env.SSL_BASE64_CERT || config.get('server.ssl.base64.cert')
+  const intermedKeyBase64 = process.env.SSL_BASE64_INTERMEDIATE_CERT || config.get('server.ssl.base64.intermediateCert')
 
   const hasFileBasedSSL = !devMode && sslKey && sslCert
   const hasBase64SSL = !devMode && sslKeyBase64 && sslCertBase64

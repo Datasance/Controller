@@ -23,6 +23,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       field: 'gps_mode'
     },
+    gpsDevice: {
+      type: DataTypes.TEXT,
+      field: 'gps_device'
+    },
+    gpsScanFrequency: {
+      type: DataTypes.INTEGER,
+      field: 'gps_scan_frequency',
+      defaultValue: 60
+    },
     latitude: {
       type: DataTypes.FLOAT,
       field: 'latitude'
@@ -44,7 +53,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     daemonStatus: {
       type: DataTypes.TEXT,
-      defaultValue: 'UNKNOWN',
+      defaultValue: 'NOT_PROVISIONED',
       field: 'daemon_status'
     },
     daemonOperatingDuration: {
@@ -193,6 +202,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'unix:///var/run/docker.sock',
       field: 'docker_url'
     },
+    containerEngine: {
+      type: DataTypes.ENUM('docker', 'podman'),
+      allowNull: false,
+      field: 'container_engine',
+      defaultValue: 'docker'
+    },
+    deploymentType: {
+      type: DataTypes.ENUM('native', 'container'),
+      allowNull: false,
+      field: 'deployment_type',
+      defaultValue: 'native'
+    },
     diskLimit: {
       type: DataTypes.FLOAT,
       defaultValue: 50,
@@ -277,12 +298,17 @@ module.exports = (sequelize, DataTypes) => {
     },
     watchdogEnabled: {
       type: DataTypes.BOOLEAN,
-      defaultValue: true,
+      defaultValue: false,
       field: 'isolated_docker_container'
+    },
+    edgeGuardFrequency: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      field: 'edge_guard_frequency'
     },
     dockerPruningFrequency: {
       type: DataTypes.INTEGER,
-      defaultValue: 1,
+      defaultValue: 0,
       field: 'docker_pruning_freq'
     },
     availableDiskThreshold: {
@@ -308,6 +334,26 @@ module.exports = (sequelize, DataTypes) => {
     timeZone: {
       type: DataTypes.TEXT,
       field: 'time_zone'
+    },
+    activeVolumeMounts: {
+      type: DataTypes.BIGINT,
+      defaultValue: 0,
+      get () {
+        return convertToInt(this.getDataValue('activeVolumeMounts'), 0)
+      },
+      field: 'active_volume_mounts'
+    },
+    volumeMountLastUpdate: {
+      type: DataTypes.BIGINT,
+      get () {
+        return convertToInt(this.getDataValue('volumeMountLastUpdate'), 0)
+      },
+      field: 'volume_mount_last_update'
+    },
+    warningMessage: {
+      type: DataTypes.TEXT,
+      field: 'warning_message',
+      defaultValue: 'HEALTHY'
     }
   }, {
     tableName: 'Fogs',
@@ -324,10 +370,10 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 0
     })
 
-    Fog.hasOne(models.FogAccessToken, {
-      foreignKey: 'iofog_uuid',
-      as: 'accessToken'
-    })
+    // Fog.hasOne(models.FogAccessToken, {
+    //   foreignKey: 'iofog_uuid',
+    //   as: 'accessToken'
+    // })
 
     Fog.hasOne(models.FogPublicKey, {
       foreignKey: 'iofog_uuid',
@@ -351,6 +397,7 @@ module.exports = (sequelize, DataTypes) => {
 
     Fog.belongsToMany(models.Tags, { through: 'IofogTags', as: 'tags' })
     Fog.belongsToMany(models.EdgeResource, { through: 'AgentEdgeResources', as: 'edgeResources' })
+    Fog.belongsToMany(models.VolumeMount, { through: 'FogVolumeMounts', as: 'volumeMounts' })
   }
 
   return Fog

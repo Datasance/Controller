@@ -7,6 +7,14 @@ module.exports = {
   'SERVER_PORT': 'server.port',
   'SERVER_DEV_MODE': 'server.devMode',
 
+  // SSL Configuration
+  'SSL_PATH_KEY': 'server.ssl.path.key',
+  'SSL_PATH_CERT': 'server.ssl.path.cert',
+  'SSL_PATH_INTERMEDIATE_CERT': 'server.ssl.path.intermediateCert',
+  'SSL_BASE64_KEY': 'server.ssl.base64.key',
+  'SSL_BASE64_CERT': 'server.ssl.base64.cert',
+  'SSL_BASE64_INTERMEDIATE_CERT': 'server.ssl.base64.intermediateCert',
+
   // Viewer Configuration
   'VIEWER_PORT': 'viewer.port',
   'VIEWER_URL': 'viewer.url',
@@ -49,14 +57,12 @@ module.exports = {
   'KC_CLIENT_SECRET': 'auth.client.secret',
   'KC_VIEWER_CLIENT': 'auth.viewerClient',
 
-  // Public Ports Configuration
-  'PUBLIC_PORTS_RANGE': 'publicPorts.range',
+  // Bridge Ports Configuration
+  'BRIDGE_PORTS_RANGE': 'bridgePorts.range',
 
   // System Images Configuration
   'ROUTER_IMAGE_1': 'systemImages.router.1',
   'ROUTER_IMAGE_2': 'systemImages.router.2',
-  'PROXY_IMAGE_1': 'systemImages.proxy.1',
-  'PROXY_IMAGE_2': 'systemImages.proxy.2',
 
   // Diagnostics Configuration
   'DIAGNOSTICS_DIRECTORY': 'diagnostics.directory',

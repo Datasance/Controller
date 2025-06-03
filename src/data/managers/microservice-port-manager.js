@@ -14,26 +14,10 @@
 const BaseManager = require('./base-manager')
 const models = require('../models')
 const MicroservicePort = models.MicroservicePort
-const MicroservicePublicPort = models.MicroservicePublicPort
 
 class MicroservicePortManager extends BaseManager {
   getEntity () {
     return MicroservicePort
-  }
-
-  findAllPublicPorts (transaction) {
-    return MicroservicePort.findAll({
-      include: [
-        {
-          model: MicroservicePublicPort,
-          as: 'publicPort',
-          required: true,
-          attributes: ['queueName', 'publicPort', 'protocol', 'isTcp', 'hostId']
-        }
-      ],
-      where: { isPublic: true },
-      attributes: ['microserviceUuid']
-    }, { transaction: transaction })
   }
 }
 

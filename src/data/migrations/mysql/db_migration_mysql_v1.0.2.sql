@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS Fogs (
     longitude FLOAT,
     description TEXT,
     last_active BIGINT,
-    daemon_status VARCHAR(32) DEFAULT 'UNKNOWN',
+    daemon_status VARCHAR(32) DEFAULT 'NOT_PROVISIONED',
     daemon_operating_duration BIGINT DEFAULT 0,
     daemon_last_start BIGINT,
     memory_usage FLOAT DEFAULT 0.000,
@@ -77,9 +77,9 @@ CREATE TABLE IF NOT EXISTS Fogs (
     memory_violation TEXT,
     disk_violation TEXT,
     cpu_violation TEXT,
-    `system-available-disk` BIGINT,
-    `system-available-memory` BIGINT,
-    `system-total-cpu` FLOAT,
+    system_available_disk BIGINT,
+    system_available_memory BIGINT,
+    system_total_cpu FLOAT,
     security_status VARCHAR(32) DEFAULT 'OK',
     security_violation_info VARCHAR(32) DEFAULT 'No violation',
     catalog_item_status TEXT,
@@ -112,8 +112,8 @@ CREATE TABLE IF NOT EXISTS Fogs (
     change_frequency INT DEFAULT 20,
     device_scan_frequency INT DEFAULT 20,
     tunnel VARCHAR(255) DEFAULT '',
-    isolated_docker_container BOOLEAN DEFAULT TRUE,
-    docker_pruning_freq INT DEFAULT 1,
+    isolated_docker_container BOOLEAN DEFAULT FALSE,
+    docker_pruning_freq INT DEFAULT 0,
     available_disk_threshold FLOAT DEFAULT 20,
     log_level VARCHAR(10) DEFAULT 'INFO',
     is_system BOOLEAN DEFAULT FALSE,
@@ -568,18 +568,6 @@ ADD COLUMN run_as_user TEXT DEFAULT NULL,
 ADD COLUMN platform TEXT DEFAULT NULL,
 ADD COLUMN runtime TEXT DEFAULT NULL;
 
-ALTER TABLE Fogs
-RENAME COLUMN `system-available-disk` TO system_available_disk,
-RENAME COLUMN `system-available-memory` TO system_available_memory,
-RENAME COLUMN `system-total-cpu` TO system_total_cpu;
-
-ALTER TABLE Routers DROP COLUMN IF EXISTS require_ssl;
-ALTER TABLE Routers DROP COLUMN IF EXISTS ssl_profile;
-ALTER TABLE Routers DROP COLUMN IF EXISTS sasl_mechanisms;
-ALTER TABLE Routers DROP COLUMN IF EXISTS authenticate_peer;
-ALTER TABLE Routers DROP COLUMN IF EXISTS ca_cert;
-ALTER TABLE Routers DROP COLUMN IF EXISTS tls_cert;
-ALTER TABLE Routers DROP COLUMN IF EXISTS tls_key;
 
 CREATE TABLE IF NOT EXISTS MicroservicePubTags (
     id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
@@ -678,8 +666,8 @@ CREATE TABLE IF NOT EXISTS Certificates (
     FOREIGN KEY (secret_id) REFERENCES Secrets (id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_certificates_name_unique ON Certificates ((name(255)));
-CREATE INDEX idx_certificates_valid_to ON Certificates ((valid_to));
+CREATE UNIQUE INDEX idx_certificates_name_unique ON Certificates (name(255));
+CREATE INDEX idx_certificates_valid_to ON Certificates (valid_to);
 CREATE INDEX idx_certificates_is_ca ON Certificates (is_ca);
 CREATE INDEX idx_certificates_signed_by_id ON Certificates (signed_by_id);
 CREATE INDEX idx_certificates_secret_id ON Certificates (secret_id);
@@ -691,10 +679,12 @@ CREATE TABLE IF NOT EXISTS Services (
     resource TEXT NOT NULL,
     target_port INT NOT NULL,
     service_port INT,
+    k8s_type TEXT,
     bridge_port INT,
+    default_bridge TEXT,
     service_endpoint TEXT,
     created_at DATETIME,
-    updated_at DATETIME,
+    updated_at DATETIME
 );
 
 CREATE INDEX idx_services_name ON Services (name);
@@ -712,5 +702,76 @@ CREATE TABLE IF NOT EXISTS ServiceTags (
 
 CREATE INDEX idx_service_tags_service_id ON ServiceTags (service_id);
 CREATE INDEX idx_service_tags_tag_id ON ServiceTags (tag_id);
+
+ALTER TABLE Fogs ADD COLUMN container_engine VARCHAR(32);
+ALTER TABLE Fogs ADD COLUMN deployment_type VARCHAR(32);
+
+ALTER TABLE MicroserviceExtraHost DROP COLUMN public_port;
+ALTER TABLE MicroservicePorts DROP COLUMN is_public;
+ALTER TABLE MicroservicePorts DROP COLUMN is_proxy;
+
+DROP TABLE IF EXISTS MicroservicePublicPorts;
+
+ALTER TABLE MicroserviceEnvs ADD COLUMN value_from_secret TEXT;
+ALTER TABLE MicroserviceEnvs ADD COLUMN value_from_config_map TEXT;
+
+CREATE TABLE IF NOT EXISTS ConfigMaps (
+    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    immutable BOOLEAN DEFAULT false,
+    data TEXT NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE INDEX idx_config_maps_name ON ConfigMaps (name);
+
+CREATE TABLE IF NOT EXISTS VolumeMounts (
+    uuid VARCHAR(32) PRIMARY KEY NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    config_map_name VARCHAR(255),
+    secret_name VARCHAR(255),
+    version INT DEFAULT 1,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (config_map_name) REFERENCES ConfigMaps (name) ON DELETE CASCADE,
+    FOREIGN KEY (secret_name) REFERENCES Secrets (name) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_volume_mounts_uuid ON VolumeMounts (uuid);
+CREATE INDEX idx_volume_mounts_config_map_name ON VolumeMounts (config_map_name);
+CREATE INDEX idx_volume_mounts_secret_name ON VolumeMounts (secret_name);
+
+CREATE TABLE IF NOT EXISTS FogVolumeMounts (
+    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    fog_uuid VARCHAR(32),
+    volume_mount_uuid VARCHAR(32),
+    FOREIGN KEY (fog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE,
+    FOREIGN KEY (volume_mount_uuid) REFERENCES VolumeMounts (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fog_volume_mounts_fog_uuid ON FogVolumeMounts (fog_uuid);
+CREATE INDEX idx_fog_volume_mounts_volume_mount_uuid ON FogVolumeMounts (volume_mount_uuid);
+
+ALTER TABLE Fogs ADD COLUMN active_volume_mounts BIGINT DEFAULT 0;
+ALTER TABLE Fogs ADD COLUMN volume_mount_last_update BIGINT DEFAULT 0;
+
+ALTER TABLE ChangeTrackings ADD COLUMN volume_mounts BOOLEAN DEFAULT false;
+ALTER TABLE ChangeTrackings ADD COLUMN exec_sessions BOOLEAN DEFAULT false;
+
+ALTER TABLE Services ADD COLUMN provisioning_status VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE Services ADD COLUMN provisioning_error TEXT;
+
+ALTER TABLE Fogs ADD COLUMN warning_message TEXT;
+ALTER TABLE Fogs ADD COLUMN gps_device VARCHAR(32);
+ALTER TABLE Fogs ADD COLUMN gps_scan_frequency INT DEFAULT 60;
+ALTER TABLE Fogs ADD COLUMN edge_guard_frequency INT DEFAULT 0;
+
+ALTER TABLE Microservices ADD COLUMN pid_mode VARCHAR(32);
+ALTER TABLE Microservices ADD COLUMN ipc_mode VARCHAR(32);
+ALTER TABLE Microservices ADD COLUMN exec_enabled BOOLEAN DEFAULT false;
+
+ALTER TABLE MicroserviceStatuses ADD COLUMN exec_session_id TEXT;
+
 
 COMMIT;

@@ -12,10 +12,10 @@ server:
   #     key: ""              # SSL key file path
   #     cert: ""             # SSL certificate file path
   #     intermediateCert: "" # Intermediate certificate file path
-  #   # base64:
-  #   #   key:  # SSL key in base64 format
-  #   #   cert:  # SSL certificate in base64 format
-  #   #   intermediateCert: # Intermediate certificate in base64 format
+  #   base64:
+  #     key:  # SSL key in base64 format
+  #     cert:  # SSL certificate in base64 format
+  #     intermediateCert: # Intermediate certificate in base64 format
 
 # Viewer Configuration
 viewer:
@@ -43,13 +43,13 @@ database:
   #   port: 3306          # MySQL port
   #   username: ""        # MySQL username
   #   password: ""        # MySQL password
-  #   database: ""   # MySQL database name
+  #   databaseName: ""   # MySQL database name
   # postgres:
   #   host: ""   # PostgreSQL host
   #   port: 5432         # PostgreSQL port
   #   username: ""       # PostgreSQL username
   #   password: ""       # PostgreSQL password
-  #   database: ""  # PostgreSQL database name
+  #   databaseName: ""  # PostgreSQL database name
   sqlite:
     databaseName: dev_database.sqlite  # SQLite database file name
     logging: false     # Enable SQLite query logging
@@ -71,18 +71,15 @@ database:
 #     secret:        # ControllerClient Client secret
 #   viewerClient:   # Viewer client ID
 
-# Public Ports Configuration
-publicPorts:
-  range: "6001-7999"  # Public ports range
+# Bridge Ports Configuration for Services
+bridgePorts:
+  range: "10024-65535"  # Bridge ports range
 
 # System Images Configuration
 systemImages:
   router:
     "1": "ghcr.io/datasance/router:latest"
     "2": "ghcr.io/datasance/router:latest"
-  proxy:
-    "1": "ghcr.io/datasance/proxy:latest"
-    "2": "ghcr.io/datasance/proxy:latest"
 
 # Diagnostics Configuration
 diagnostics:

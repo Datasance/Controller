@@ -53,7 +53,7 @@ async function parseSecretFile (fileContent, options = {}) {
     if (doc.kind !== 'Secret') {
       throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
     }
-    if (doc.metadata == null || doc.spec == null) {
+    if (doc.metadata == null || doc.type == null || doc.data == null) {
       throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
     }
 
@@ -65,7 +65,7 @@ async function parseSecretFile (fileContent, options = {}) {
 
       // For updates, we only need the data
       return {
-        data: doc.spec.data
+        data: doc.data
       }
     }
 
@@ -73,7 +73,145 @@ async function parseSecretFile (fileContent, options = {}) {
     return {
       name: lget(doc, 'metadata.name', undefined),
       type: doc.spec.type,
-      data: doc.spec.data
+      data: doc.data
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing YAML: ${error.message}`)
+  }
+}
+
+async function parseVolumeMountFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || !doc.kind) {
+      throw new Errors.ValidationError(`Invalid YAML format: missing kind field`)
+    }
+    if (doc.kind !== 'VolumeMount') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
+    }
+
+    // Validate that either secretName or configMapName is provided, but not both
+    if (doc.spec.secretName && doc.spec.configMapName) {
+      throw new Errors.ValidationError('Cannot specify both secretName and configMapName')
+    }
+    if (!doc.spec.secretName && !doc.spec.configMapName) {
+      throw new Errors.ValidationError('Must specify either secretName or configMapName')
+    }
+
+    // If this is an update, validate that the name matches
+    if (options.isUpdate && options.volumeMountName) {
+      if (doc.metadata.name !== options.volumeMountName) {
+        throw new Errors.ValidationError(`VolumeMount name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.volumeMountName})`)
+      }
+
+      return {
+        name: lget(doc, 'metadata.name', undefined),
+        secretName: doc.spec.secretName,
+        configMapName: doc.spec.configMapName
+      }
+    }
+
+    // For creates, return full object
+    return {
+      name: lget(doc, 'metadata.name', undefined),
+      secretName: doc.spec.secretName,
+      configMapName: doc.spec.configMapName
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing YAML: ${error.message}`)
+  }
+}
+
+async function parseConfigMapFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || !doc.kind) {
+      throw new Errors.ValidationError(`Invalid YAML format: missing kind field`)
+    }
+    if (doc.kind !== 'ConfigMap') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
+    }
+    if (doc.metadata == null || doc.data == null) {
+      throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
+    }
+
+    // If this is an update, validate that the name matches
+    if (options.isUpdate && options.configMapName) {
+      if (doc.metadata.name !== options.configMapName) {
+        throw new Errors.ValidationError(`ConfigMap name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.configMapName})`)
+      }
+
+      // For updates, we only need the data
+      return {
+        data: doc.data
+      }
+    }
+
+    // For creates, return full object
+    return {
+      name: lget(doc, 'metadata.name', undefined),
+      data: doc.data,
+      immutable: doc.spec.immutable
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing YAML: ${error.message}`)
+  }
+}
+
+async function parseServiceFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || !doc.kind) {
+      throw new Errors.ValidationError(`Invalid YAML format: missing kind field`)
+    }
+    if (doc.kind !== 'Service') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: missing metadata or spec')
+    }
+
+    // If this is an update, validate that the name matches
+    if (options.isUpdate && options.serviceName) {
+      if (doc.metadata.name !== options.serviceName) {
+        throw new Errors.ValidationError(`Service name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.serviceName})`)
+      }
+
+      // For updates, we only need the spec and tags fields
+      return {
+        name: lget(doc, 'metadata.name', undefined),
+        tags: lget(doc, 'metadata.tags', []),
+        type: doc.spec.type,
+        resource: doc.spec.resource,
+        targetPort: doc.spec.targetPort,
+        defaultBridge: doc.spec.defaultBridge,
+        servicePort: doc.spec.servicePort,
+        k8sType: doc.spec.k8sType
+      }
+    }
+
+    // For creates, return full object
+    return {
+      name: lget(doc, 'metadata.name', undefined),
+      tags: lget(doc, 'metadata.tags', []),
+      type: doc.spec.type,
+      resource: doc.spec.resource,
+      targetPort: doc.spec.targetPort,
+      defaultBridge: doc.spec.defaultBridge,
+      servicePort: doc.spec.servicePort,
+      k8sType: doc.spec.k8sType
     }
   } catch (error) {
     if (error instanceof Errors.ValidationError) {
@@ -127,6 +265,9 @@ const parseMicroserviceYAML = async (microservice) => {
     agentName: lget(microservice, 'agent.name'),
     registryId,
     ...container,
+    rootHostAccess: lget(microservice, 'rootHostAccess', false),
+    pidMode: lget(microservice, 'pidMode', ''),
+    ipcMode: lget(microservice, 'ipcMode', ''),
     annotations: container.annotations != null ? JSON.stringify(container.annotations) : undefined,
     capAdd: lget(microservice, 'container.capAdd', []),
     capDrop: lget(microservice, 'container.capDrop', []),
@@ -216,5 +357,8 @@ module.exports = {
   parseAppFile: parseAppFile,
   parseMicroserviceFile: parseMicroserviceFile,
   parseSecretFile: parseSecretFile,
-  parseCertificateFile: parseCertificateFile
+  parseVolumeMountFile: parseVolumeMountFile,
+  parseConfigMapFile: parseConfigMapFile,
+  parseCertificateFile: parseCertificateFile,
+  parseServiceFile: parseServiceFile
 }

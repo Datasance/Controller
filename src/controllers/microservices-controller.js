@@ -168,8 +168,24 @@ const deleteSystemMicroserviceVolumeMappingEndPoint = async function (req) {
   return MicroservicesService.deleteSystemVolumeMappingEndPoint(uuid, id, false)
 }
 
-const listAllPublicPortsEndPoint = async function (req) {
-  return MicroservicesService.listAllPublicPortsEndPoint()
+const createMicroserviceExecEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.createExecEndPoint(uuid, false)
+}
+
+const deleteMicroserviceExecEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.deleteExecEndPoint(uuid, false)
+}
+
+const createSystemMicroserviceExecEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.createSystemExecEndPoint(uuid, false)
+}
+
+const deleteSystemMicroserviceExecEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.deleteSystemExecEndPoint(uuid, false)
 }
 
 module.exports = {
@@ -195,7 +211,10 @@ module.exports = {
   listMicroserviceVolumeMappingsEndPoint: (listMicroserviceVolumeMappingsEndPoint),
   deleteMicroserviceVolumeMappingEndPoint: (deleteMicroserviceVolumeMappingEndPoint),
   deleteSystemMicroserviceVolumeMappingEndPoint: (deleteSystemMicroserviceVolumeMappingEndPoint),
-  listAllPublicPortsEndPoint: (listAllPublicPortsEndPoint),
   createMicroserviceYAMLEndPoint: (createMicroserviceYAMLEndPoint),
-  updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint)
+  updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint),
+  createMicroserviceExecEndPoint: (createMicroserviceExecEndPoint),
+  deleteMicroserviceExecEndPoint: (deleteMicroserviceExecEndPoint),
+  createSystemMicroserviceExecEndPoint: (createSystemMicroserviceExecEndPoint),
+  deleteSystemMicroserviceExecEndPoint: (deleteSystemMicroserviceExecEndPoint)
 }

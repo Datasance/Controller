@@ -12,7 +12,8 @@ const forge = require('node-forge')
 
 // Helper function to check Kubernetes environment
 function checkKubernetesEnvironment () {
-  const isKubernetes = process.env.CONTROL_PLANE || config.get('app.ControlPlane') === 'kubernetes'
+  const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')
+  const isKubernetes = controlPlane && controlPlane.toLowerCase() === 'kubernetes'
   if (!isKubernetes) {
     throw new Errors.ValidationError(ErrorMessages.NOT_KUBERNETES_ENV)
   }
@@ -113,7 +114,10 @@ async function createCAEndpoint (caData, transaction) {
     ca = await require('../utils/cert').getCAFromK8sSecret(caData.secretName)
     certDetails = parseCertificate(ca.certificate)
     // Store the CA locally with the same name as the secret
-    await storeCA({ cert: ca.certificate, key: ca.key }, caData.secretName)
+    const checkedSecret = await SecretManager.findOne({ name: caData.secretName || caData.name }, transaction)
+    if (!checkedSecret) {
+      await storeCA({ cert: ca.certificate, key: ca.key }, caData.secretName)
+    }
   } else if (caData.type === 'direct') {
     // Load from internal secret
     const caObj = await require('../utils/cert').loadCA(caData.secretName)
@@ -126,16 +130,18 @@ async function createCAEndpoint (caData, transaction) {
   // Get the secret that was just created or referenced
   const secret = await SecretManager.findOne({ name: caData.secretName || caData.name }, transaction)
 
-  // Create certificate record in database
-  await CertificateManager.createCertificateRecord({
-    name: caData.secretName || caData.name, // Use secretName if available, otherwise use provided name
-    subject: certDetails.subject,
-    isCA: true,
-    validFrom: certDetails.validFrom,
-    validTo: certDetails.validTo,
-    serialNumber: certDetails.serialNumber,
-    secretId: secret ? secret.id : null
-  }, transaction)
+  if (caData.type !== 'k8s-secret') {
+    // Create certificate record in database
+    await CertificateManager.createCertificateRecord({
+      name: caData.secretName || caData.name, // Use secretName if available, otherwise use provided name
+      subject: certDetails.subject,
+      isCA: true,
+      validFrom: certDetails.validFrom,
+      validTo: certDetails.validTo,
+      serialNumber: certDetails.serialNumber,
+      secretId: secret ? secret.id : null
+    }, transaction)
+  }
 
   return {
     name: caData.secretName || caData.name, // Use secretName if available, otherwise use provided name
@@ -160,16 +166,20 @@ async function getCAEndpoint (name, transaction) {
     throw new Errors.NotFoundError(`CA with name ${name} not found`)
   }
 
+  // Normalize line endings in the certificate and private key
+  const certificate = normalizeLineEndings(Buffer.from(secret.data['tls.crt'], 'base64').toString())
+  const privateKey = normalizeLineEndings(Buffer.from(secret.data['tls.key'], 'base64').toString())
+
   return {
     name: certRecord.name,
     subject: certRecord.subject,
-    is_ca: certRecord.isCA,
-    valid_from: certRecord.validFrom,
-    valid_to: certRecord.validTo,
-    serial_number: certRecord.serialNumber,
+    isCA: certRecord.isCA,
+    validFrom: certRecord.validFrom,
+    validTo: certRecord.validTo,
+    serialNumber: certRecord.serialNumber,
     data: {
-      certificate: Buffer.from(secret.data['tls.crt'], 'base64').toString(),
-      private_key: Buffer.from(secret.data['tls.key'], 'base64').toString()
+      certificate,
+      privateKey: privateKey
     }
   }
 }
@@ -360,21 +370,25 @@ async function getCertificateEndpoint (name, transaction) {
     ? certChain.slice(1).map(c => ({ name: c.name, subject: c.subject }))
     : []
 
+  // Normalize line endings in the certificate and private key
+  const certificate = normalizeLineEndings(Buffer.from(secret.data['tls.crt'], 'base64').toString())
+  const privateKey = normalizeLineEndings(Buffer.from(secret.data['tls.key'], 'base64').toString())
+
   return {
     name: certRecord.name,
     subject: certRecord.subject,
     hosts: certRecord.hosts,
-    is_ca: certRecord.isCA,
-    valid_from: certRecord.validFrom,
-    valid_to: certRecord.validTo,
-    serial_number: certRecord.serialNumber,
-    ca_name: certRecord.signingCA ? certRecord.signingCA.name : null,
-    certificate_chain: chainInfo,
-    days_remaining: certRecord.getDaysUntilExpiration(),
-    is_expired: certRecord.isExpired(),
+    isCA: certRecord.isCA,
+    validFrom: certRecord.validFrom,
+    validTo: certRecord.validTo,
+    serialNumber: certRecord.serialNumber,
+    caName: certRecord.signingCA ? certRecord.signingCA.name : null,
+    certificateChain: chainInfo,
+    daysRemaining: certRecord.getDaysUntilExpiration(),
+    isExpired: certRecord.isExpired(),
     data: {
-      certificate: Buffer.from(secret.data['tls.crt'], 'base64').toString(),
-      private_key: Buffer.from(secret.data['tls.key'], 'base64').toString()
+      certificate,
+      privateKey: privateKey
     }
   }
 }
@@ -387,12 +401,12 @@ async function listCertificatesEndpoint (transaction) {
       name: cert.name,
       subject: cert.subject,
       hosts: cert.hosts,
-      is_ca: cert.isCA,
-      valid_from: cert.validFrom,
-      valid_to: cert.validTo,
-      days_remaining: cert.getDaysUntilExpiration(),
-      is_expired: cert.isExpired(),
-      ca_name: cert.signingCA ? cert.signingCA.name : null
+      isCA: cert.isCA,
+      validFrom: cert.validFrom,
+      validTo: cert.validTo,
+      daysRemaining: cert.getDaysUntilExpiration(),
+      isExpired: cert.isExpired(),
+      caName: cert.signingCA ? cert.signingCA.name : null
     }))
   }
 }
@@ -589,6 +603,18 @@ async function listExpiringCertificatesEndpoint (days = 30, transaction) {
       ca_name: cert.signingCA ? cert.signingCA.name : null
     })) : []
   }
+}
+
+/**
+ * Normalizes line endings to Unix style (\n)
+ * Handles both \r\n and \n cases to ensure consistent output
+ * @param {string} str - String to normalize
+ * @returns {string} - String with normalized line endings
+ */
+function normalizeLineEndings (str) {
+  // First replace all \r\n with \n
+  // Then replace any remaining \r with \n
+  return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
 }
 
 module.exports = {

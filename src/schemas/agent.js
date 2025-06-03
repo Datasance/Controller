@@ -55,6 +55,9 @@ const updateAgentConfig = {
     'latitude': { 'type': 'number', 'minimum': -90, 'maximum': 90 },
     'longitude': { 'type': 'number', 'minimum': -180, 'maximum': 180 },
     'gpsMode': { 'type': 'string' },
+    'gpsDevice': { 'type': 'string' },
+    'gpsScanFrequency': { 'type': 'integer', 'minimum': 0 },
+    'edgeGuardFrequency': { 'type': 'integer', 'minimum': 0 },
     'dockerPruningFrequency': { 'type': 'integer', 'minimum': 0 },
     'availableDiskThreshold': { 'type': 'integer', 'minimum': 0 },
     'logLevel': { 'type': 'string' },
@@ -68,6 +71,7 @@ const updateAgentStatus = {
   'type': 'object',
   'properties': {
     'daemonStatus': { 'type': 'string' },
+    'warningMessage': { 'type': 'string' },
     'daemonOperatingDuration': { 'type': 'integer', 'minimum': 0 },
     'daemonLastStart': { 'type': 'integer', 'minimum': 0 },
     'memoryUsage': { 'type': 'number', 'minimum': 0 },
@@ -92,6 +96,10 @@ const updateAgentStatus = {
     'microserviceMessageCounts': { 'type': 'string' },
     'messageSpeed': { 'type': 'number', 'minimum': 0 },
     'lastCommandTime': { 'type': 'integer', 'minimum': 0 },
+    'gpsMode': { 'type': 'string' },
+    'gpsDevice': { 'type': 'string' },
+    'gpsScanFrequency': { 'type': 'integer', 'minimum': 0 },
+    'edgeGuardFrequency': { 'type': 'integer', 'minimum': 0 },
     'tunnelStatus': { 'type': 'string' },
     'version': { 'type': 'string' },
     'isReadyToUpgrade': { 'type': 'boolean' },
@@ -134,7 +142,10 @@ const microserviceStatus = {
     'startTime': { 'type': 'integer' },
     'operatingDuration': { 'type': 'integer' },
     'cpuUsage': { 'type': 'number' },
-    'memoryUsage': { 'type': 'number' }
+    'memoryUsage': { 'type': 'number' },
+    'ipAddress': { 'type': 'string' },
+    'ipAddressExternal': { 'type': 'string' },
+    'execSessionId': { 'type': 'string' }
   },
   'required': ['id'],
   'additionalProperties': true

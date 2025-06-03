@@ -17,6 +17,8 @@ const AppHelper = require('../helpers/app-helper')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const Validator = require('../schemas/index')
+const VolumeMountService = require('./volume-mount-service')
+const VolumeMountingManager = require('../data/managers/volume-mounting-manager')
 
 function validateBase64 (value) {
   try {
@@ -79,6 +81,7 @@ async function updateSecretEndpoint (secretName, secretData, transaction) {
   validateSecretData(existingSecret.type, secretData.data)
 
   const secret = await SecretManager.updateSecret(secretName, secretData.data, transaction)
+  await _updateChangeTrackingForFogs(secretName, transaction)
   return {
     id: secret.id,
     name: secret.name,
@@ -125,6 +128,19 @@ async function deleteSecretEndpoint (secretName, transaction) {
 
   await SecretManager.deleteSecret(secretName, transaction)
   return {}
+}
+
+async function _updateChangeTrackingForFogs (secretName, transaction) {
+  const secretVolumeMounts = await VolumeMountingManager.findAll({ secretName: secretName }, transaction)
+  if (secretVolumeMounts.length > 0) {
+    for (const secretVolumeMount of secretVolumeMounts) {
+      const volumeMountObj = {
+        name: secretVolumeMount.name,
+        secretName: secretName
+      }
+      await VolumeMountService.updateVolumeMountEndpoint(secretVolumeMount.name, volumeMountObj, transaction)
+    }
+  }
 }
 
 module.exports = {

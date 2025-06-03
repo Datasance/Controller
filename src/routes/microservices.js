@@ -20,36 +20,6 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 module.exports = [
   {
     method: 'get',
-    path: '/api/v3/microservices/public-ports',
-    middleware: async (req, res) => {
-      logger.apiReq(req)
-
-      const successCode = constants.HTTP_CODE_SUCCESS
-      const errorCodes = [
-        {
-          code: constants.HTTP_CODE_UNAUTHORIZED,
-          errors: [Errors.AuthenticationError]
-        }
-      ]
-
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
-        const listAllPublicPortsEndPoint = ResponseDecorator.handleErrors(
-          MicroservicesController.listAllPublicPortsEndPoint,
-          successCode,
-          errorCodes
-        )
-        const responseObject = await listAllPublicPortsEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
-        res
-          .status(responseObject.code)
-          .send(responseObject.body)
-
-        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
-      })
-    }
-  },
-  {
-    method: 'get',
     path: '/api/v3/microservices/',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -861,5 +831,157 @@ module.exports = [
         logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
-  }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/microservices/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const createMicroserviceExecEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createMicroserviceExecEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createMicroserviceExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/microservices/system/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const createSystemMicroserviceExecEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.createSystemMicroserviceExecEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await createSystemMicroserviceExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v3/microservices/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const deleteMicroserviceExecEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteMicroserviceExecEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await deleteMicroserviceExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v3/microservices/system/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_CREATED
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const deleteSystemMicroserviceExecEndPoint = ResponseDecorator.handleErrors(
+          MicroservicesController.deleteSystemMicroserviceExecEndPoint,
+          successCode,
+          errorCodes
+        )
+        const responseObject = await deleteSystemMicroserviceExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
 ]
