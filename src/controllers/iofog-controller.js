@@ -94,6 +94,23 @@ async function setFogPruneCommandEndPoint (req) {
   return FogService.setFogPruneCommandEndPoint(fog, false)
 }
 
+async function enableNodeExecEndPoint (req) {
+  const execData = {
+    uuid: req.params.uuid,
+    image: req.body.image
+  }
+
+  return FogService.enableNodeExecEndPoint(execData, false)
+}
+
+async function disableNodeExecEndPoint (req) {
+  const fogData = {
+    uuid: req.params.uuid
+  }
+
+  return FogService.disableNodeExecEndPoint(fogData, false)
+}
+
 module.exports = {
   createFogEndPoint: (createFogEndPoint),
   updateFogEndPoint: (updateFogEndPoint),
@@ -105,5 +122,7 @@ module.exports = {
   setFogRebootCommandEndPoint: (setFogRebootCommandEndPoint),
   getHalHardwareInfoEndPoint: (getHalHardwareInfoEndPoint),
   getHalUsbInfoEndPoint: (getHalUsbInfoEndPoint),
-  setFogPruneCommandEndPoint: (setFogPruneCommandEndPoint)
+  setFogPruneCommandEndPoint: (setFogPruneCommandEndPoint),
+  enableNodeExecEndPoint: (enableNodeExecEndPoint),
+  disableNodeExecEndPoint: (disableNodeExecEndPoint)
 }

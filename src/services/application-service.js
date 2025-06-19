@@ -344,6 +344,20 @@ async function getApplication (conditions, isCLI, transaction) {
   return application
 }
 
+async function getSystemApplication (conditions, isCLI, transaction) {
+  const where = isCLI
+    ? { ...conditions, isSystem: true }
+    : { ...conditions, isSystem: true }
+  const attributes = { exclude: ['created_at', 'updated_at'] }
+
+  const applicationRaw = await ApplicationManager.findOnePopulated(where, attributes, transaction)
+  if (!applicationRaw) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, conditions.name || conditions.id))
+  }
+  const application = await _buildApplicationObject(applicationRaw, transaction)
+  return application
+}
+
 const getApplicationEndPoint = async function (conditions, isCLI, transaction) {
   const application = await getApplication(conditions, isCLI, transaction)
   return application
@@ -362,6 +376,10 @@ const _checkForDuplicateName = async function (name, applicationId, transaction)
   }
 }
 
+const getSystemApplicationEndPoint = async function (conditions, isCLI, transaction) {
+  const application = await getSystemApplication(conditions, isCLI, transaction)
+  return application
+}
 async function _updateChangeTrackingsAndDeleteMicroservicesByApplicationId (conditions, deleteMicroservices, transaction) {
   const microservices = await ApplicationManager.findApplicationMicroservices(conditions, transaction)
   if (!microservices) {
@@ -392,5 +410,7 @@ module.exports = {
   getSystemApplicationsEndPoint: TransactionDecorator.generateTransaction(getSystemApplicationsEndPoint),
   getAllApplicationsEndPoint: TransactionDecorator.generateTransaction(getAllApplicationsEndPoint),
   getApplicationEndPoint: TransactionDecorator.generateTransaction(getApplicationEndPoint),
-  getApplication: getApplication
+  getSystemApplicationEndPoint: TransactionDecorator.generateTransaction(getSystemApplicationEndPoint),
+  getApplication: getApplication,
+  getSystemApplication: getSystemApplication
 }

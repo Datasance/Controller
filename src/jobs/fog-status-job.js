@@ -16,8 +16,9 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogManager = require('../data/managers/iofog-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const MicroserviceService = require('../services/microservices-service')
-const MicroserviceStates = require('../enums/microservice-state')
+const { microserviceState, microserviceExecState } = require('../enums/microservice-state')
 const FogStates = require('../enums/fog-state')
 const Config = require('../config')
 
@@ -64,7 +65,11 @@ async function _updateMicroserviceStatus (unknownFogUuids, transaction) {
   const microserviceStatusIds = microservices
     .filter((microservice) => microservice.microserviceStatus)
     .map((microservice) => microservice.microserviceStatus.id)
-  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: MicroserviceStates.UNKNOWN }, transaction)
+  const microserviceExecStatusIds = microservices
+    .filter((microservice) => microservice.microserviceExecStatus)
+    .map((microservice) => microservice.microserviceExecStatus.id)
+  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: microserviceState.UNKNOWN }, transaction)
+  await MicroserviceExecStatusManager.update({ id: microserviceExecStatusIds }, { execSesssionId: '', status: microserviceExecState.INACTIVE }, transaction)
   return microservices
 }
 

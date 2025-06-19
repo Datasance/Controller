@@ -32,6 +32,11 @@ const getMicroserviceEndPoint = async function (req) {
   return MicroservicesService.getMicroserviceEndPoint(microserviceUuid, false)
 }
 
+const getSystemMicroserviceEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.getSystemMicroserviceEndPoint(microserviceUuid, false)
+}
+
 const listMicroserviceByPubTagEndPoint = async function (req) {
   const pubTag = req.params.tag
   return MicroservicesService.listMicroserviceByPubTagEndPoint(pubTag)
@@ -72,6 +77,14 @@ const updateMicroserviceYAMLEndPoint = async function (req) {
   return MicroservicesService.updateMicroserviceEndPoint(microserviceUuid, microservice, false)
 }
 
+const updateSystemMicroserviceYAMLEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  const fileContent = req.file.buffer.toString()
+  const microservice = await YAMLParserService.parseMicroserviceFile(fileContent)
+  await rvaluesVarSubstition(microservice, { self: microservice })
+  return MicroservicesService.updateSystemMicroserviceEndPoint(microserviceUuid, microservice, false)
+}
+
 const deleteMicroserviceEndPoint = async function (req) {
   const microserviceUuid = req.params.uuid
   const microserviceData = req.body || {}
@@ -84,6 +97,14 @@ const getMicroservicesByApplicationEndPoint = async function (req) {
 
   const applicationName = req.query.application
   return MicroservicesService.listMicroservicesEndPoint({ applicationName, flowId }, false)
+}
+
+const getSystemMicroservicesByApplicationEndPoint = async function (req) {
+  // API Retro compatibility
+  const flowId = req.query.flowId
+
+  const applicationName = req.query.application
+  return MicroservicesService.listSystemMicroservicesEndPoint({ applicationName, flowId }, false)
 }
 
 const createMicroserviceRouteEndPoint = async function (req) {
@@ -191,6 +212,7 @@ const deleteSystemMicroserviceExecEndPoint = async function (req) {
 module.exports = {
   createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
   getMicroserviceEndPoint: (getMicroserviceEndPoint),
+  getSystemMicroserviceEndPoint: (getSystemMicroserviceEndPoint),
   listMicroserviceByPubTagEndPoint: (listMicroserviceByPubTagEndPoint),
   listMicroserviceBySubTagEndPoint: (listMicroserviceBySubTagEndPoint),
   updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
@@ -199,6 +221,7 @@ module.exports = {
   rebuildSystemMicroserviceEndPoint: (rebuildSystemMicroserviceEndPoint),
   deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),
   getMicroservicesByApplicationEndPoint: (getMicroservicesByApplicationEndPoint),
+  getSystemMicroservicesByApplicationEndPoint: (getSystemMicroservicesByApplicationEndPoint),
   createMicroserviceRouteEndPoint: (createMicroserviceRouteEndPoint),
   deleteMicroserviceRouteEndPoint: (deleteMicroserviceRouteEndPoint),
   createMicroservicePortMappingEndPoint: (createMicroservicePortMappingEndPoint),
@@ -213,6 +236,7 @@ module.exports = {
   deleteSystemMicroserviceVolumeMappingEndPoint: (deleteSystemMicroserviceVolumeMappingEndPoint),
   createMicroserviceYAMLEndPoint: (createMicroserviceYAMLEndPoint),
   updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint),
+  updateSystemMicroserviceYAMLEndPoint: (updateSystemMicroserviceYAMLEndPoint),
   createMicroserviceExecEndPoint: (createMicroserviceExecEndPoint),
   deleteMicroserviceExecEndPoint: (deleteMicroserviceExecEndPoint),
   createSystemMicroserviceExecEndPoint: (createSystemMicroserviceExecEndPoint),

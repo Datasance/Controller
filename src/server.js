@@ -18,6 +18,7 @@ initialize().then(() => {
   const logger = require('./logger')
   const db = require('./data/models')
   const CleanupService = require('./services/cleanup-service')
+  const WebSocketServer = require('./websocket/server')
 
   const bodyParser = require('body-parser')
   const cookieParser = require('cookie-parser')
@@ -88,14 +89,21 @@ initialize().then(() => {
   global.appRoot = path.resolve(__dirname)
 
   const registerRoute = (route) => {
-    const middlewares = [route.middleware]
-    if (route.supportSubstitution) {
-      middlewares.unshift(substitutionMiddleware)
+    if (route.method.toLowerCase() === 'ws') {
+      // Handle WebSocket routes by registering them with our custom WebSocket server
+      const wsServer = WebSocketServer.getInstance()
+      wsServer.registerRoute(route.path, route.middleware)
+    } else {
+      // Handle HTTP routes
+      const middlewares = [route.middleware]
+      if (route.supportSubstitution) {
+        middlewares.unshift(substitutionMiddleware)
+      }
+      if (route.fileInput) {
+        middlewares.unshift(uploadFile(route.fileInput))
+      }
+      app[route.method.toLowerCase()](route.path, ...middlewares)
     }
-    if (route.fileInput) {
-      middlewares.unshift(uploadFile(route.fileInput))
-    }
-    app[route.method.toLowerCase()](route.path, ...middlewares)
   }
 
   const setupMiddleware = function (routeName) {
@@ -145,6 +153,12 @@ initialize().then(() => {
       logger.info(`==> 🌎 API Listening on port ${ports.api}. Open up http://localhost:${ports.api}/ in your browser.`)
       jobs.forEach((job) => job.run())
     })
+
+    // Initialize WebSocket server
+    const wsConfig = config.get('server.webSocket')
+    const wsServer = new WebSocketServer(wsConfig)
+    wsServer.initialize(apiServer)
+    logger.info(`==> 🌎 Webscoker API server listening on port ${ports.api}. Open up ws://localhost:${ports.api}/.`)
     registerServers(apiServer, viewerServer)
   }
 
@@ -174,6 +188,13 @@ initialize().then(() => {
         logger.info(`==> 🌎 HTTPS API server listening on port ${ports.api}. Open up https://localhost:${ports.api}/ in your browser.`)
         jobs.forEach((job) => job.run())
       })
+
+      // Initialize WebSocket server with SSL
+      const wsConfig = config.get('server.webSocket')
+      const wsServer = new WebSocketServer(wsConfig)
+      wsServer.initialize(apiServer)
+      logger.info(`==> 🌎 WSS API server listening on port ${ports.api}. Open up wss://localhost:${ports.api}/.`)
+
       registerServers(apiServer, viewerServer)
     } catch (e) {
       logger.error('Error loading SSL certificates. Please check your configuration.')

@@ -71,6 +71,7 @@ db.initDB = async (isStart) => {
     // Configure system images
     const fogTypes = await db.FogType.findAll({})
     await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('systemImages.router', {}))
+    await configureImage(db, constants.DEBUG_CATALOG_NAME, fogTypes, config.get('systemImages.debug', {}))
   }
 }
 

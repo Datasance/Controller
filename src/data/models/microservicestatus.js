@@ -66,10 +66,21 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: '',
       field: 'ip_address'
     },
-    execSessionId: {
+    execSessionIds: {
       type: DataTypes.TEXT,
-      defaultValue: '',
-      field: 'exec_session_id'
+      defaultValue: '[]',
+      field: 'exec_session_ids',
+      get () {
+        const value = this.getDataValue('execSessionIds')
+        try {
+          return JSON.parse(value)
+        } catch (e) {
+          return []
+        }
+      },
+      set (value) {
+        this.setDataValue('execSessionIds', JSON.stringify(value))
+      }
     }
   }, {
     tableName: 'MicroserviceStatuses',

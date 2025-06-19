@@ -6,7 +6,23 @@ app:
 # Server Configuration
 server:
   port: 51121             # Server port number
-  devMode: true          # Development mode flag
+  devMode: true   
+  webSocket:
+    perMessageDeflate: false
+    allowExtensions: false        # Disable all extensions
+    pingInterval: 30000             # Ping interval in milliseconds (30 seconds)
+    pongTimeout: 10000             # Pong timeout in milliseconds (10 seconds)
+    handshakeTimeout: 10000      # 10 seconds
+    maxPayload: 1048576          # 1MB
+    maxFrameSize: 65536          # 64KB
+    session:
+      timeout: 3600000             # Session timeout in milliseconds (1 hour)
+      maxConnections: 100          # Maximum connections per session
+      cleanupInterval: 30000       # Session cleanup interval (30 seconds)
+    security:
+      maxConnectionsPerIp: 10
+      maxRequestsPerMinute: 60
+      maxPayload: 1048576  # 1MB
   # ssl:
   #   path:
   #     key: ""              # SSL key file path
@@ -80,6 +96,9 @@ systemImages:
   router:
     "1": "ghcr.io/datasance/router:latest"
     "2": "ghcr.io/datasance/router:latest"
+  debug:
+    "1": "ghcr.io/datasance/node-debugger:latest"
+    "2": "ghcr.io/datasance/node-debugger:latest"
 
 # Diagnostics Configuration
 diagnostics:

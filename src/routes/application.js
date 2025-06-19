@@ -174,6 +174,39 @@ module.exports = [
     }
   },
   {
+    method: 'get',
+    path: '/api/v3/application/system/:name',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      const getSystemApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.getSystemApplicationEndPoint, successCode, errorCodes)
+
+      // Add keycloak.protect() middleware to protect the route
+      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+        const responseObject = await getSystemApplicationEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+        return null
+      })
+    }
+  },
+  {
     method: 'patch',
     path: '/api/v3/application/:name',
     supportSubstitution: true,

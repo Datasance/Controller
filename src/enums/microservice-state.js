@@ -30,4 +30,10 @@ const microserviceState = {
   CREATING: 'CREATING'
 }
 
-module.exports = microserviceState
+const microserviceExecState = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+}
+
+module.exports = { microserviceState, microserviceExecState }

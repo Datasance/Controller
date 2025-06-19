@@ -75,6 +75,11 @@ module.exports = (sequelize, DataTypes) => {
       field: 'ipc_mode',
       defaultValue: ''
     },
+    schedule: {
+      type: DataTypes.INTEGER,
+      field: 'schedule',
+      defaultValue: 50
+    },
     imageSnapshot: {
       type: DataTypes.TEXT,
       field: 'image_snapshot',
@@ -166,6 +171,11 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasOne(models.MicroserviceStatus, {
       foreignKey: 'microservice_uuid',
       as: 'microserviceStatus'
+    })
+
+    Microservice.hasOne(models.MicroserviceExecStatus, {
+      foreignKey: 'microservice_uuid',
+      as: 'microserviceExecStatus'
     })
 
     Microservice.hasMany(models.MicroserviceEnv, {

@@ -7,6 +7,16 @@ module.exports = {
   'SERVER_PORT': 'server.port',
   'SERVER_DEV_MODE': 'server.devMode',
 
+  'WS_PING_INTERVAL': 'server.webSocket.pingInterval',
+  'WS_PONG_TIMEOUT': 'server.webSocket.pongTimeout',
+  'WS_MAX_PAYLOAD': 'server.webSocket.maxPayload',
+  'WS_SESSION_TIMEOUT': 'server.webSocket.session.timeout',
+  'WS_SESSION_MAX_CONNECTIONS': 'server.webSocket.session.maxConnections',
+  'WS_CLEANUP_INTERVAL': 'server.webSocket.session.cleanupInterval',
+  'WS_SECURITY_MAX_CONNECTIONS_PER_IP': 'server.webSocket.security.maxConnectionsPerIp',
+  'WS_SECURITY_MAX_REQUESTS_PER_MINUTE': 'server.webSocket.security.maxRequestsPerMinute',
+  'WS_SECURITY_MAX_PAYLOAD': 'server.webSocket.security.maxPayload',
+
   // SSL Configuration
   'SSL_PATH_KEY': 'server.ssl.path.key',
   'SSL_PATH_CERT': 'server.ssl.path.cert',
@@ -63,6 +73,8 @@ module.exports = {
   // System Images Configuration
   'ROUTER_IMAGE_1': 'systemImages.router.1',
   'ROUTER_IMAGE_2': 'systemImages.router.2',
+  'DEBUG_IMAGE_1': 'systemImages.debug.1',
+  'DEBUG_IMAGE_2': 'systemImages.debug.2',
 
   // Diagnostics Configuration
   'DIAGNOSTICS_DIRECTORY': 'diagnostics.directory',

@@ -20,6 +20,7 @@ const ErrorMessages = require('../helpers/error-messages')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceCapAddManager = require('../data/managers/microservice-cap-add-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const ApplicationManager = require('../data/managers/application-manager')
 const MicroservicePortManager = require('../data/managers/microservice-port-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
@@ -308,6 +309,7 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
     iofogUuid: uuid,
     rootHostAccess: false,
     logSize: constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 0,
     configLastUpdated: Date.now(),
     env: [
       {
@@ -334,6 +336,7 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
   routerMicroserviceData.applicationId = application.id
   const routerMicroservice = await MicroserviceManager.create(routerMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: routerMicroserviceData.uuid }, transaction)
+  await MicroserviceExecStatusManager.create({ microserviceUuid: routerMicroserviceData.uuid }, transaction)
   for (const capAdd of capAddValues) {
     await MicroserviceCapAddManager.create({
       microserviceUuid: routerMicroserviceData.uuid,

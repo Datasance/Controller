@@ -60,9 +60,10 @@ const updateCatalogItemEndPoint = async function (id, data, isCLI, transaction) 
 const listCatalogItemsEndPoint = async function (isCLI, transaction) {
   const where = isCLI
     ? {}
-    : {
-      [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
-    }
+    // : {
+    //   [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
+    // }
+    : {}
 
   const attributes = isCLI
     ? {}
@@ -77,10 +78,11 @@ const listCatalogItemsEndPoint = async function (isCLI, transaction) {
 async function getCatalogItem (id, isCLI, transaction) {
   const where = isCLI
     ? { id: id }
-    : {
-      id: id,
-      [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
-    }
+    // : {
+    //   id: id,
+    //   [Op.or]: [{ category: { [Op.ne]: 'SYSTEM' } }, { category: null }]
+    // }
+    : { id: id }
 
   const attributes = isCLI
     ? {}
@@ -155,6 +157,15 @@ async function getRouterCatalogItem (transaction) {
 async function getProxyCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.PROXY_CATALOG_NAME,
+    category: 'SYSTEM',
+    publisher: 'Datasance',
+    registry_id: 1
+  }, transaction)
+}
+
+async function getDebugCatalogItem (transaction) {
+  return CatalogItemManager.findOne({
+    name: DBConstants.DEBUG_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Datasance',
     registry_id: 1
@@ -379,5 +390,6 @@ module.exports = {
   getBluetoothCatalogItem: getBluetoothCatalogItem,
   getHalCatalogItem: getHalCatalogItem,
   getRouterCatalogItem: getRouterCatalogItem,
+  getDebugCatalogItem: getDebugCatalogItem,
   getProxyCatalogItem: getProxyCatalogItem
 }

@@ -31,6 +31,11 @@ const microserviceCreate = {
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
     'rootHostAccess': { 'type': 'boolean' },
+    'schedule': {
+      'type': 'integer',
+      'minimum': 0,
+      'maximum': 100
+    },
     'logSize': { 'type': 'integer' },
     'imageSnapshot': { 'type': 'string' },
     'volumeMappings': {
@@ -91,6 +96,11 @@ const microserviceUpdate = {
     'agentName': { 'type': 'string' },
     'rootHostAccess': { 'type': 'boolean' },
     'logSize': { 'type': 'integer', 'minimum': 0 },
+    'schedule': {
+      'type': 'integer',
+      'minimum': 0,
+      'maximum': 100
+    },
     'volumeMappings': {
       'type': 'array',
       'items': { '$ref': '/volumeMappings' }

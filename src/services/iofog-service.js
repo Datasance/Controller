@@ -33,7 +33,9 @@ const EdgeResourceService = require('./edge-resource-service')
 const RouterManager = require('../data/managers/router-manager')
 const MicroserviceExtraHostManager = require('../data/managers/microservice-extra-host-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
+const CatalogItemImageManager = require('../data/managers/catalog-item-image-manager')
 const RouterService = require('./router-service')
 const Constants = require('../helpers/constants')
 const Op = require('sequelize').Op
@@ -683,7 +685,7 @@ async function _deleteFogRouter (fogData, transaction) {
   // Delete router msvc
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   await MicroserviceManager.delete({ catalogItemId: routerCatalog.id, iofogUuid: fogData.uuid }, transaction)
-  await ApplicationManager.delete({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  // await ApplicationManager.delete({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
 }
 
 async function deleteFogEndPoint (fogData, isCLI, transaction) {
@@ -858,7 +860,7 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
 
   const newProvision = {
     iofogUuid: fogData.uuid,
-    provisionKey: AppHelper.generateRandomString(16),
+    provisionKey: AppHelper.generateUUID(),
     expirationTime: new Date().getTime() + (10 * 60 * 1000)
   }
 
@@ -1024,13 +1026,26 @@ async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 1,
     configLastUpdated: Date.now()
   }
 
-  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${fogData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  }
   halMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(halMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: halMicroserviceData.uuid }, transaction)
+  await MicroserviceExecStatusManager.create({ microserviceUuid: halMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteHalMicroserviceByFog (fogData, transaction) {
@@ -1056,13 +1071,26 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction)
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 1,
     configLastUpdated: Date.now()
   }
 
-  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${fogData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  }
   bluetoothMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(bluetoothMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: bluetoothMicroserviceData.uuid }, transaction)
+  await MicroserviceExecStatusManager.create({ microserviceUuid: bluetoothMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
@@ -1088,6 +1116,140 @@ async function setFogPruneCommandEndPoint (fogData, isCLI, transaction) {
   }
 
   await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.prune, transaction)
+}
+
+async function enableNodeExecEndPoint (execData, isCLI, transaction) {
+  await Validator.validate(execData, Validator.schemas.enableNodeExec)
+  const fog = await FogManager.findOne({ uuid: execData.uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, execData.uuid))
+  }
+
+  const debugMicroserviceData = {
+    uuid: AppHelper.generateUUID(),
+    name: `debug-${execData.uuid.toLowerCase()}`,
+    config: '{}',
+    iofogUuid: execData.uuid,
+    ipcMode: 'host',
+    pidMode: 'host',
+    rootHostAccess: true,
+    logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 0,
+    execEnabled: true,
+    configLastUpdated: Date.now()
+  }
+
+  if (execData.image) {
+    const images = [
+      { fogTypeId: 1, containerImage: execData.image },
+      { fogTypeId: 2, containerImage: execData.image }
+    ]
+    debugMicroserviceData.images = images
+  } else {
+    const debugCatalog = await CatalogService.getDebugCatalogItem(transaction)
+    debugMicroserviceData.catalogItemId = debugCatalog.id
+  }
+
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${execData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${execData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${execData.uuid.toLowerCase()}` }, transaction)
+  }
+  debugMicroserviceData.applicationId = application.id
+  let microservice
+
+  // Check if microservice already exists
+  const existingMicroservice = await MicroserviceManager.findOneWithCategory({ name: `debug-${execData.uuid.toLowerCase()}` }, transaction)
+
+  if (existingMicroservice) {
+    // Update existing microservice
+    const updateData = {
+      ipcMode: debugMicroserviceData.ipcMode,
+      pidMode: debugMicroserviceData.pidMode,
+      rootHostAccess: debugMicroserviceData.rootHostAccess,
+      logSize: debugMicroserviceData.logSize,
+      schedule: debugMicroserviceData.schedule,
+      configLastUpdated: debugMicroserviceData.configLastUpdated,
+      execEnabled: debugMicroserviceData.execEnabled
+    }
+
+    if (execData.image) {
+      updateData.images = debugMicroserviceData.images
+    } else {
+      updateData.catalogItemId = debugMicroserviceData.images
+    }
+
+    microservice = await MicroserviceManager.updateAndFind(
+      { uuid: existingMicroservice.uuid },
+      updateData,
+      transaction
+    )
+
+    if (execData.image) {
+      const images = [
+        { fogTypeId: 1, containerImage: execData.image },
+        { fogTypeId: 2, containerImage: execData.image }
+      ]
+      await _updateImages(images, existingMicroservice.uuid, transaction)
+    }
+
+    await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+    await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+    return microservice
+  } else {
+    // Create new microservice
+    try {
+      const microservice = await MicroserviceManager.create(debugMicroserviceData, transaction)
+      await MicroserviceStatusManager.create({ microserviceUuid: debugMicroserviceData.uuid }, transaction)
+      await MicroserviceExecStatusManager.create({ microserviceUuid: debugMicroserviceData.uuid }, transaction)
+
+      if (execData.image) {
+        const images = [
+          { fogTypeId: 1, containerImage: execData.image },
+          { fogTypeId: 2, containerImage: execData.image }
+        ]
+        await _createMicroserviceImages(microservice, images, transaction)
+      }
+
+      await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+      await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+      return microservice
+    } catch (error) {
+      logger.error(`Error in enableNodeExecEndPoint: ${error.message}`)
+      throw error
+    }
+  }
+}
+
+async function disableNodeExecEndPoint (fogData, isCLI, transaction) {
+  await Validator.validate(fogData, Validator.schemas.disableNodeExec)
+
+  try {
+    const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
+    if (!fog) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
+    }
+
+    const microservice = await MicroserviceManager.findOne({ name: `debug-${fogData.uuid.toLowerCase()}` }, transaction)
+    if (!microservice) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, fogData.uuid))
+    }
+
+    await MicroserviceManager.delete({ uuid: microservice.uuid }, transaction)
+    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+  } catch (error) {
+    logger.error(`Error in disableNodeExecEndPoint: ${error.message}`)
+    throw error
+  }
 }
 
 /**
@@ -1219,6 +1381,23 @@ function _mergeTcpListener (routerConfig, listenerObj) {
   return routerConfig
 }
 
+async function _createMicroserviceImages (microservice, images, transaction) {
+  const newImages = []
+  for (const img of images) {
+    const newImg = Object.assign({}, img)
+    newImg.microserviceUuid = microservice.uuid
+    newImages.push(newImg)
+  }
+  return CatalogItemImageManager.bulkCreate(newImages, transaction)
+}
+
+async function _updateImages (images, microserviceUuid, transaction) {
+  await CatalogItemImageManager.delete({
+    microserviceUuid: microserviceUuid
+  }, transaction)
+  return _createMicroserviceImages({ uuid: microserviceUuid }, images, transaction)
+}
+
 module.exports = {
   createFogEndPoint: TransactionDecorator.generateTransaction(createFogEndPoint),
   updateFogEndPoint: TransactionDecorator.generateTransaction(updateFogEndPoint),
@@ -1232,6 +1411,8 @@ module.exports = {
   getHalUsbInfoEndPoint: TransactionDecorator.generateTransaction(getHalUsbInfoEndPoint),
   getFog: getFog,
   setFogPruneCommandEndPoint: TransactionDecorator.generateTransaction(setFogPruneCommandEndPoint),
+  enableNodeExecEndPoint: TransactionDecorator.generateTransaction(enableNodeExecEndPoint),
+  disableNodeExecEndPoint: TransactionDecorator.generateTransaction(disableNodeExecEndPoint),
   _extractServiceTags,
   _findMatchingServices: TransactionDecorator.generateTransaction(_findMatchingServices),
   _buildTcpListenerForFog,

@@ -758,4 +758,18 @@ ALTER TABLE Microservices ADD COLUMN pid_mode VARCHAR(32);
 ALTER TABLE Microservices ADD COLUMN ipc_mode VARCHAR(32);
 ALTER TABLE Microservices ADD COLUMN exec_enabled BOOLEAN DEFAULT false;
 
-ALTER TABLE MicroserviceStatuses ADD COLUMN exec_session_id TEXT;
+ALTER TABLE MicroserviceStatuses ADD COLUMN exec_session_ids TEXT;
+
+ALTER TABLE Microservices ADD COLUMN schedule INT DEFAULT 50;
+
+CREATE TABLE IF NOT EXISTS MicroserviceExecStatuses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    status VARCHAR(255) DEFAULT 'PENDING',
+    exec_session_id VARCHAR(255),
+    microservice_uuid VARCHAR(32),
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservice_exec_status_microservice_uuid ON MicroserviceExecStatuses (microservice_uuid);

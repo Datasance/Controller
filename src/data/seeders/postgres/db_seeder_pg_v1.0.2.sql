@@ -11,7 +11,8 @@ VALUES
     ('RESTBlue', 'REST API for Bluetooth Low Energy layer.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
     ('HAL', 'REST API for Hardware Abstraction layer.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
     ('EdgeGuard', 'Security and monitoring component for edge devices running ioFog Agents.', 'UTILITIES', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
-    ('Router', 'The built-in router for Datasance PoT.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1);
+    ('Router', 'The built-in router for Datasance PoT.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1),
+    ('Debug', 'The built-in debugger for Datasance PoT IoFog Agent.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1);
 
 INSERT INTO "FogTypes" (id, name, image, description, network_catalog_item_id, hal_catalog_item_id, bluetooth_catalog_item_id)
 VALUES 
@@ -34,6 +35,8 @@ VALUES
     (4, 1, 'ghcr.io/datasance/edge-guard:latest'),
     (4, 2, 'ghcr.io/datasance/edge-guard:latest'),
     (5, 1, 'ghcr.io/datasance/router:latest'),
-    (5, 2, 'ghcr.io/datasance/router:latest');
+    (5, 2, 'ghcr.io/datasance/router:latest'),
+    (6, 1, 'ghcr.io/datasance/node-debugger:latest'),
+    (6, 2, 'ghcr.io/datasance/node-debugger:latest');
 
 COMMIT;

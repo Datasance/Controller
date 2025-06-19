@@ -28,7 +28,8 @@ const FogVersionCommandManager = require('../data/managers/iofog-version-command
 const StraceManager = require('../data/managers/strace-manager')
 const RegistryManager = require('../data/managers/registry-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
-const MicroserviceStates = require('../enums/microservice-state')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
+const { microserviceState, microserviceExecState } = require('../enums/microservice-state')
 const FogStates = require('../enums/fog-state')
 const Validator = require('../schemas')
 const Errors = require('../helpers/errors')
@@ -104,7 +105,13 @@ const agentDeprovision = async function (deprovisionData, fog, transaction) {
 
   await MicroserviceStatusManager.update(
     { microserviceUuid: deprovisionData.microserviceUuids },
-    { status: MicroserviceStates.DELETING },
+    { status: microserviceState.DELETING },
+    transaction
+  )
+
+  await MicroserviceExecStatusManager.update(
+    { microserviceUuid: deprovisionData.microserviceUuids },
+    { status: microserviceExecState.INACTIVE },
     transaction
   )
 
@@ -290,7 +297,7 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
       percentage: status.percentage,
       errorMessage: status.errorMessage,
       ipAddress: status.ipAddress,
-      execSessionId: status.execSessionId
+      execSessionIds: status.execSessionIds
     }
     microserviceStatus = AppHelper.deleteUndefinedFields(microserviceStatus)
     const microservice = await MicroserviceManager.findOne({
@@ -368,7 +375,8 @@ const getAgentMicroservices = async function (fog, transaction) {
       routes,
       isConsumer,
       isRouter,
-      execEnabled: microservice.execEnabled
+      execEnabled: microservice.execEnabled,
+      schedule: microservice.schedule
     }
 
     response.push(responseMicroservice)

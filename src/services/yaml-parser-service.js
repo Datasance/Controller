@@ -265,9 +265,9 @@ const parseMicroserviceYAML = async (microservice) => {
     agentName: lget(microservice, 'agent.name'),
     registryId,
     ...container,
-    rootHostAccess: lget(microservice, 'rootHostAccess', false),
-    pidMode: lget(microservice, 'pidMode', ''),
-    ipcMode: lget(microservice, 'ipcMode', ''),
+    rootHostAccess: lget(microservice, 'container.rootHostAccess', false),
+    pidMode: lget(microservice, 'container.pidMode', ''),
+    ipcMode: lget(microservice, 'container.ipcMode', ''),
     annotations: container.annotations != null ? JSON.stringify(container.annotations) : undefined,
     capAdd: lget(microservice, 'container.capAdd', []),
     capDrop: lget(microservice, 'container.capDrop', []),
@@ -280,7 +280,8 @@ const parseMicroserviceYAML = async (microservice) => {
     ...microservice.msRoutes,
     pubTags: lget(microservice, 'msRoutes.pubTags', []),
     subTags: lget(microservice, 'msRoutes.subTags', []),
-    application: microservice.application
+    application: microservice.application,
+    schedule: lget(microservice, 'schedule', 50)
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData

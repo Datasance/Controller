@@ -145,7 +145,7 @@ const microserviceStatus = {
     'memoryUsage': { 'type': 'number' },
     'ipAddress': { 'type': 'string' },
     'ipAddressExternal': { 'type': 'string' },
-    'execSessionId': { 'type': 'string' }
+    'execSessionIds': { 'type': 'array', 'items': { 'type': 'string' } }
   },
   'required': ['id'],
   'additionalProperties': true

@@ -375,5 +375,75 @@ module.exports = [
         logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
+  },
+  {
+    method: 'post',
+    path: '/api/v3/iofog/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errCodes = [
+        {
+          code: 400,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: 401,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: 404,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const enableNodeExecEndPoint = ResponseDecorator.handleErrors(FogController.enableNodeExecEndPoint,
+          successCode, errCodes)
+        const responseObject = await enableNodeExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'delete',
+    path: '/api/v3/iofog/:uuid/exec',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errCodes = [
+        {
+          code: 400,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: 401,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: 404,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE'])(req, res, async () => {
+        const disableNodeExecEndPoint = ResponseDecorator.handleErrors(FogController.disableNodeExecEndPoint,
+          successCode, errCodes)
+        const responseObject = await disableNodeExecEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
   }
 ]

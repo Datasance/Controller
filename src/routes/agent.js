@@ -14,7 +14,7 @@
 const constants = require('../helpers/constants')
 const AgentController = require('../controllers/agent-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
-
+const WebSocketServer = require('../websocket/server')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
 
@@ -637,6 +637,49 @@ module.exports = [
         .send(responseObject.body)
 
       logger.apiRes({ req: req, res: res, responseObject: responseObject })
+    }
+  },
+  {
+    method: 'ws',
+    path: '/api/v3/agent/exec/:microserviceUuid',
+    middleware: async (ws, req) => {
+      logger.apiReq(req)
+      try {
+        const token = req.headers.authorization
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token')
+          try {
+            ws.close(1008, 'Missing authentication token')
+          } catch (error) {
+            logger.error('Error closing WebSocket:' + JSON.stringify({
+              error: error.message,
+              originalError: 'Missing authentication token'
+            }))
+          }
+          return
+        }
+
+        // Initialize WebSocket connection for agent
+        const wsServer = WebSocketServer.getInstance()
+        await wsServer.handleConnection(ws, req)
+      } catch (error) {
+        logger.error('Error in agent WebSocket connection:' + JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          url: req.url,
+          microserviceUuid: req.params.microserviceUuid
+        }))
+        try {
+          if (ws.readyState === ws.OPEN) {
+            ws.close(1008, error.message || 'Authentication failed')
+          }
+        } catch (closeError) {
+          logger.error('Error closing agent WebSocket:' + JSON.stringify({
+            error: closeError.message,
+            originalError: error.message
+          }))
+        }
+      }
     }
   }
 ]

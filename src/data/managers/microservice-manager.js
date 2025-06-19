@@ -492,6 +492,36 @@ class MicroserviceManager extends BaseManager {
     }, { transaction: transaction })
   }
 
+  async findAllSystemExcludeFields (where, transaction) {
+    return Microservice.findAll({
+      include: [
+        {
+          model: Application,
+          as: 'application',
+          required: true,
+          where: { isSystem: true }
+        },
+        {
+          model: Tags,
+          as: 'pubTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        },
+        {
+          model: Tags,
+          as: 'subTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        }
+      ],
+      where: where,
+      order: [['name', 'ASC']],
+      attributes: {
+        exclude: microserviceExcludedFields
+      }
+    }, { transaction: transaction })
+  }
+
   findOneWithCategory (where, transaction) {
     return Microservice.findOne({
       include: [

@@ -15,7 +15,9 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
-const MicroserviceStates = require('../enums/microservice-state')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
+const { microserviceState, microserviceExecState } = require('../enums/microservice-state')
+
 const Config = require('../config')
 const ApplicationManager = require('../data/managers/application-manager')
 
@@ -41,10 +43,19 @@ async function _updateMicroserviceStatusStopped (stoppedMicroservices, transacti
   const microserviceUuids = stoppedMicroservices.map((microservice) => microservice.uuid)
   const microservices = await MicroserviceManager.findAllWithStatuses({ uuid: microserviceUuids }, transaction)
   const microserviceStatusIds = microservices
-    .filter((microservice) => microservice.microserviceStatus && (microservice.microserviceStatus.status === MicroserviceStates.DELETED ||
-       microservice.microserviceStatus.status === MicroserviceStates.DELETING))
+    .filter((microservice) => microservice.microserviceStatus && (microservice.microserviceStatus.status === microserviceState.DELETED ||
+       microservice.microserviceStatus.status === microserviceState.DELETING))
     .map((microservice) => microservice.microserviceStatus.id)
-  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: MicroserviceStates.STOPPED }, transaction)
+  const microserviceExecStatusIds = microservices
+    .filter((microservice) =>
+      microservice.microserviceStatus &&
+      (microservice.microserviceStatus.status === microserviceState.DELETED ||
+       microservice.microserviceStatus.status === microserviceState.DELETING) &&
+      microservice.microserviceExecStatus
+    )
+    .map((microservice) => microservice.microserviceExecStatus.id)
+  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: microserviceState.STOPPED }, transaction)
+  await MicroserviceExecStatusManager.update({ id: microserviceExecStatusIds }, { execSesssionId: '', status: microserviceExecState.INACTIVE }, transaction)
   return microservices
 }
 
