@@ -849,7 +849,7 @@ class WebSocketServer {
       }
 
       // Check if we're in development mode (mock Keycloak)
-      const isDevMode = config.get('server.devMode', true)
+      const isDevMode = process.env.SERVER_DEV_MODE || config.get('server.devMode', true)
       const hasAuthConfig = this.isAuthConfigured()
 
       if (!hasAuthConfig && isDevMode) {
@@ -890,7 +890,7 @@ class WebSocketServer {
       // Check if user has required roles
       const hasRequiredRole = userRoles.some(role => ['SRE', 'Developer'].includes(role))
       if (!hasRequiredRole) {
-        throw new Errors.AuthenticationError('Insufficient permissions. Required roles: SRE or Developer')
+        throw new Errors.AuthenticationError('Insufficient permissions. Required roles: SRE for Node Exec or Developer for Microservice Exec')
       }
 
       // 2. Only now check microservice, application, etc.
