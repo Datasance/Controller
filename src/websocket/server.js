@@ -839,27 +839,59 @@ class WebSocketServer {
 
   async validateUserConnection (token, microserviceUuid, transaction) {
     try {
-      // 1. Authenticate user first (Keycloak)
-      const req = { headers: { authorization: token } }
-      const res = {}
+      // 1. Authenticate user first (Keycloak) - Direct token verification
       let userRoles = []
-      await new Promise((resolve, reject) => {
-        keycloak.protect(['SRE', 'Developer'])(req, res, (err) => {
-          if (err) {
-            logger.error('User authentication failed:' + err)
-            reject(new Errors.AuthenticationError('Authentication failed'))
-            return
+
+      // Extract Bearer token
+      const bearerToken = token.replace('Bearer ', '')
+      if (!bearerToken) {
+        throw new Errors.AuthenticationError('Missing or invalid authorization token')
+      }
+
+      // Check if we're in development mode (mock Keycloak)
+      const isDevMode = config.get('server.devMode', true)
+      const hasAuthConfig = this.isAuthConfigured()
+
+      if (!hasAuthConfig && isDevMode) {
+        // Use mock roles for development
+        userRoles = ['SRE', 'Developer', 'Viewer']
+        logger.debug('Using mock authentication for development mode')
+      } else {
+        // Use real Keycloak token verification
+        try {
+          // Create a grant from the access token
+          const grant = await keycloak.grantManager.createGrant({
+            access_token: bearerToken
+          })
+
+          // Extract roles from the token - get client-specific roles
+          const clientId = process.env.KC_CLIENT || config.get('auth.client.id')
+          const resourceAccess = grant.access_token.content.resource_access
+
+          if (resourceAccess && resourceAccess[clientId] && resourceAccess[clientId].roles) {
+            userRoles = resourceAccess[clientId].roles
+          } else {
+            // Fallback to realm roles if client roles not found
+            userRoles = grant.access_token.content.realm_access && grant.access_token.content.realm_access.roles
+              ? grant.access_token.content.realm_access.roles
+              : []
           }
-          // Extract roles from token
-          userRoles = req.kauth && req.kauth.grant && req.kauth.grant.access_token && req.kauth.grant.access_token.content && req.kauth.grant.access_token.content.realm_access && req.kauth.grant.access_token.content.realm_access.roles
-            ? req.kauth.grant.access_token.content.realm_access.roles
-            : []
-          resolve()
-        })
-      }).catch((err) => {
-        // Immediately throw on authentication error
-        throw err
-      })
+
+          logger.debug('Token verification successful, user roles:' + JSON.stringify(userRoles))
+        } catch (keycloakError) {
+          logger.error('Keycloak token verification failed:' + JSON.stringify({
+            error: keycloakError.message,
+            stack: keycloakError.stack
+          }))
+          throw new Errors.AuthenticationError('Invalid or expired token')
+        }
+      }
+
+      // Check if user has required roles
+      const hasRequiredRole = userRoles.some(role => ['SRE', 'Developer'].includes(role))
+      if (!hasRequiredRole) {
+        throw new Errors.AuthenticationError('Insufficient permissions. Required roles: SRE or Developer')
+      }
 
       // 2. Only now check microservice, application, etc.
       const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
@@ -1016,6 +1048,21 @@ class WebSocketServer {
       }))
       return false
     }
+  }
+
+  // Helper method to check if auth is configured
+  isAuthConfigured () {
+    const requiredConfigs = [
+      'auth.realm',
+      'auth.realmKey',
+      'auth.url',
+      'auth.client.id',
+      'auth.client.secret'
+    ]
+    return requiredConfigs.every(configKey => {
+      const value = config.get(configKey)
+      return value !== undefined && value !== null && value !== ''
+    })
   }
 }
 
