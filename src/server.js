@@ -205,6 +205,7 @@ initialize().then(() => {
   const apiPort = process.env.API_PORT || config.get('server.port')
   const viewerPort = process.env.VIEWER_PORT || config.get('viewer.port')
   const viewerURL = process.env.VIEWER_URL || config.get('viewer.url')
+  const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')
 
   // File-based SSL configuration
   const sslKey = process.env.SSL_PATH_KEY || config.get('server.ssl.path.key')
@@ -258,6 +259,9 @@ initialize().then(() => {
     }
     if (viewerURL) {
       ecnViewerControllerConfig.url = viewerURL
+    }
+    if (controlPlane) {
+      ecnViewerControllerConfig.controlPlane = controlPlane
     }
     const ecnViewerConfigScript = `
       window.controllerConfig = ${JSON.stringify(ecnViewerControllerConfig)}

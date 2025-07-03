@@ -1573,16 +1573,21 @@ async function _validateApplication (name, isCLI, transaction) {
 
   const application = await ApplicationManager.findOne(where, transaction)
   if (!application) {
-    // Try with id
-    const where = isCLI
-      ? { id: name, isSystem: false }
-      : { id: name, isSystem: false }
+    // Try with id - but only if name is actually a valid integer
+    if (Number.isInteger(Number(name)) && !isNaN(name)) {
+      const where = isCLI
+        ? { id: parseInt(name), isSystem: false }
+        : { id: parseInt(name), isSystem: false }
 
-    const application = await ApplicationManager.findOne(where, transaction)
-    if (!application) {
+      const application = await ApplicationManager.findOne(where, transaction)
+      if (!application) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
+      }
+      return application
+    } else {
+      // If name is not a valid integer, it's not a valid ID either
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
     }
-    return application
   }
   return application
 }
@@ -1599,16 +1604,21 @@ async function _validateSystemApplication (name, isCLI, transaction) {
 
   const application = await ApplicationManager.findOne(where, transaction)
   if (!application) {
-    // Try with id
-    const where = isCLI
-      ? { id: name, isSystem: true }
-      : { id: name, isSystem: true }
+    // Try with id - but only if name is actually a valid integer
+    if (Number.isInteger(Number(name)) && !isNaN(name)) {
+      const where = isCLI
+        ? { id: parseInt(name), isSystem: true }
+        : { id: parseInt(name), isSystem: true }
 
-    const application = await ApplicationManager.findOne(where, transaction)
-    if (!application) {
+      const application = await ApplicationManager.findOne(where, transaction)
+      if (!application) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
+      }
+      return application
+    } else {
+      // If name is not a valid integer, it's not a valid ID either
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
     }
-    return application
   }
   return application
 }

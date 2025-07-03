@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.5.0",
+  "version": "3.5.0-beta",
   "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "0.5.4",
+    "@datasance/ecn-viewer": "1.0.0-alpha1",
     "@kubernetes/client-node": "^0.22.3",
     "@msgpack/msgpack": "^3.1.2",
     "@opentelemetry/api": "^1.9.0",

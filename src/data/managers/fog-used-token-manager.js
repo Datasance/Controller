@@ -26,22 +26,40 @@ class FogUsedTokenManager {
    */
   static async storeJti (jti, fogUuid, exp, transaction) {
     try {
+      // Input validation
+      if (!jti || typeof jti !== 'string') {
+        throw new Error('JTI must be a non-empty string')
+      }
+      if (!fogUuid || typeof fogUuid !== 'string') {
+        throw new Error('Fog UUID must be a non-empty string')
+      }
+
+      // Ensure exp is a valid integer (Unix timestamp)
+      const expiryTime = parseInt(exp, 10)
+      if (isNaN(expiryTime) || expiryTime <= 0) {
+        throw new Error('Expiration timestamp must be a positive integer')
+      }
+
+      // Prepare the data object
+      const tokenData = {
+        jti,
+        iofogUuid: fogUuid,
+        expiryTime: expiryTime
+      }
+
+      // Create the record with or without transaction
       if (!transaction || transaction.fakeTransaction) {
-        // If no transaction or fake transaction, create a new one
-        await models.FogUsedToken.create({
-          jti,
-          iofogUuid: fogUuid,
-          expiryTime: exp
-        })
+        await models.FogUsedToken.create(tokenData)
       } else {
-        // Use the provided transaction
-        await models.FogUsedToken.create({
-          jti,
-          iofogUuid: fogUuid,
-          expiryTime: exp
-        }, { transaction })
+        await models.FogUsedToken.create(tokenData, { transaction })
       }
     } catch (error) {
+      // Check if it's a duplicate JTI error
+      if (error.name === 'SequelizeUniqueConstraintError' && error.fields && error.fields.jti) {
+        logger.warn(`JTI already exists: ${jti}`)
+        throw new Error('JWT token already used')
+      }
+
       logger.error(`Failed to store JTI: ${error.message}`)
       throw error
     }
@@ -81,7 +99,7 @@ class FogUsedTokenManager {
    */
   static async cleanupExpiredJtis () {
     try {
-      const now = new Date().getTime() / 1000 // Convert to Unix timestamp
+      const now = Math.floor(Date.now() / 1000) // Convert to Unix timestamp (seconds)
       const result = await models.FogUsedToken.destroy({
         where: {
           expiryTime: {

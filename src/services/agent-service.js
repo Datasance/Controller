@@ -18,6 +18,7 @@ const formidable = require('formidable')
 const Sequelize = require('sequelize')
 const moment = require('moment')
 const Op = Sequelize.Op
+const logger = require('../logger')
 
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogProvisionKeyManager = require('../data/managers/iofog-provision-key-manager')
@@ -647,11 +648,20 @@ const getControllerCA = async function (fog, transaction) {
   if (hasFileBasedSSL) {
     try {
       if (intermedKey) {
-        const certData = fs.readFileSync(intermedKey)
-        return Buffer.from(certData).toString('base64')
+        // Check if intermediate certificate file exists before trying to read it
+        if (fs.existsSync(intermedKey)) {
+          const certData = fs.readFileSync(intermedKey, 'utf8')
+          return Buffer.from(certData).toString('base64')
+        } else {
+          // Intermediate certificate file doesn't exist, don't provide any CA cert
+          // Let the system's default trust store handle validation
+          logger.info(`Intermediate certificate file not found at path: ${intermedKey}, not providing CA certificate`)
+          return ''
+        }
       } else {
-        const certData = fs.readFileSync(sslCert)
-        return Buffer.from(certData).toString('base64')
+        // No intermediate certificate path provided, don't provide any CA cert
+        // Let the system's default trust store handle validation
+        return ''
       }
     } catch (error) {
       throw new Errors.ValidationError('Failed to read SSL certificate file')
@@ -661,8 +671,10 @@ const getControllerCA = async function (fog, transaction) {
   if (hasBase64SSL) {
     if (intermedKeyBase64) {
       return intermedKeyBase64
-    } else if (sslCertBase64) {
-      return sslCertBase64
+    } else {
+      // No intermediate certificate base64 provided, don't provide any CA cert
+      // Let the system's default trust store handle validation
+      return ''
     }
   }
 

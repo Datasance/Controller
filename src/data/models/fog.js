@@ -5,7 +5,7 @@ const { convertToInt } = require('../../helpers/app-helper')
 module.exports = (sequelize, DataTypes) => {
   const Fog = sequelize.define('Fog', {
     uuid: {
-      type: DataTypes.STRING(32),
+      type: DataTypes.STRING(36),
       primaryKey: true,
       allowNull: false,
       field: 'uuid'
@@ -17,7 +17,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     location: {
       type: DataTypes.TEXT,
-      field: 'location'
+      field: 'location',
+      defaultValue: ''
     },
     gpsMode: {
       type: DataTypes.TEXT,
@@ -42,7 +43,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     description: {
       type: DataTypes.TEXT,
-      field: 'description'
+      field: 'description',
+      defaultValue: ''
     },
     lastActive: {
       type: DataTypes.BIGINT,
@@ -369,11 +371,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'fogType',
       defaultValue: 0
     })
-
-    // Fog.hasOne(models.FogAccessToken, {
-    //   foreignKey: 'iofog_uuid',
-    //   as: 'accessToken'
-    // })
 
     Fog.hasOne(models.FogPublicKey, {
       foreignKey: 'iofog_uuid',

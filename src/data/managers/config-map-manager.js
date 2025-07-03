@@ -41,6 +41,7 @@ class ConfigMapManager extends BaseManager {
     return configMaps.map(configMap => ({
       id: configMap.id,
       name: configMap.name,
+      immutable: configMap.immutable,
       created_at: configMap.created_at,
       updated_at: configMap.updated_at
     }))

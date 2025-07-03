@@ -57,6 +57,12 @@ module.exports = {
   'DB_NAME': {
     path: (provider) => `database.${provider}.databaseName`
   },
+  'DB_USE_SSL': {
+    path: (provider) => `database.${provider}.useSSL`
+  },
+  'DB_SSL_CA': {
+    path: (provider) => `database.${provider}.sslCA`
+  },
 
   // Auth Configuration
   'KC_REALM': 'auth.realm',

@@ -60,12 +60,16 @@ database:
   #   username: ""        # MySQL username
   #   password: ""        # MySQL password
   #   databaseName: ""   # MySQL database name
+  #   useSSL: false       # Use SSL for MySQL connection
+  #   sslCA: ""           # MySQL SSL CA in base64 encoded string
   # postgres:
   #   host: ""   # PostgreSQL host
   #   port: 5432         # PostgreSQL port
   #   username: ""       # PostgreSQL username
   #   password: ""       # PostgreSQL password
   #   databaseName: ""  # PostgreSQL database name
+  #   useSSL: false       # Use SSL for PostgreSQL connection
+  #   sslCA: ""           # PostgreSQL SSL CA in base64 encoded string
   sqlite:
     databaseName: dev_database.sqlite  # SQLite database file name
     logging: false     # Enable SQLite query logging

@@ -58,7 +58,7 @@ CREATE INDEX idx_fog_type_bluetooth_catalog_item_id ON "FogTypes" (bluetooth_cat
 
 
 CREATE TABLE IF NOT EXISTS "Fogs" (
-    uuid VARCHAR(32) PRIMARY KEY NOT NULL,
+    uuid VARCHAR(36) PRIMARY KEY NOT NULL,
     name VARCHAR(255) DEFAULT 'Unnamed ioFog 1',
     location TEXT,
     gps_mode TEXT,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     longitude DOUBLE PRECISION,
     description TEXT,
     last_active BIGINT,
-    daemon_status VARCHAR(32) DEFAULT 'NOT_PROVISIONED',
+    daemon_status VARCHAR(36) DEFAULT 'NOT_PROVISIONED',
     daemon_operating_duration BIGINT DEFAULT 0,
     daemon_last_start BIGINT,
     memory_usage DOUBLE PRECISION DEFAULT 0.000,
@@ -78,21 +78,21 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     system_available_disk BIGINT,
     system_available_memory BIGINT,
     system_total_cpu DOUBLE PRECISION,
-    security_status VARCHAR(32) DEFAULT 'OK',
-    security_violation_info VARCHAR(32) DEFAULT 'No violation',
+    security_status VARCHAR(36) DEFAULT 'OK',
+    security_violation_info VARCHAR(36) DEFAULT 'No violation',
     catalog_item_status TEXT,
     repository_count BIGINT DEFAULT 0,
     repository_status TEXT,
     system_time BIGINT,
     last_status_time BIGINT,
-    ip_address VARCHAR(32) DEFAULT '0.0.0.0',
-    ip_address_external VARCHAR(32) DEFAULT '0.0.0.0',
-    host VARCHAR(32),
+    ip_address VARCHAR(36) DEFAULT '0.0.0.0',
+    ip_address_external VARCHAR(36) DEFAULT '0.0.0.0',
+    host VARCHAR(36),
     processed_messages BIGINT DEFAULT 0,
     catalog_item_message_counts TEXT,
     message_speed DOUBLE PRECISION DEFAULT 0.000,
     last_command_time BIGINT,
-    network_interface VARCHAR(32) DEFAULT 'dynamic',
+    network_interface VARCHAR(36) DEFAULT 'dynamic',
     docker_url VARCHAR(255) DEFAULT 'unix:///var/run/docker.sock',
     disk_limit DOUBLE PRECISION DEFAULT 50,
     disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog/',
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     log_level VARCHAR(10) DEFAULT 'INFO',
     is_system BOOLEAN DEFAULT FALSE,
     router_id INT DEFAULT 0,
-    time_zone VARCHAR(32) DEFAULT 'Etc/UTC',
+    time_zone VARCHAR(36) DEFAULT 'Etc/UTC',
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     fog_type_id INT DEFAULT 0,
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS "ChangeTrackings" (
     prune BOOLEAN DEFAULT false,
     linked_edge_resources BOOLEAN DEFAULT false,
     last_updated VARCHAR(255) DEFAULT false,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS "FogAccessTokens" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     expiration_time BIGINT,
     token TEXT,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS "FogProvisionKeys" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     provisioning_string VARCHAR(100),
     expiration_time BIGINT,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -171,7 +171,7 @@ CREATE INDEX idx_fog_provision_keys_iofogUuid ON "FogProvisionKeys" (iofog_uuid)
 CREATE TABLE IF NOT EXISTS "FogVersionCommands" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     version_command VARCHAR(100),
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS "HWInfos" (
     info TEXT,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -193,7 +193,7 @@ CREATE TABLE IF NOT EXISTS "USBInfos" (
     info TEXT,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
@@ -208,14 +208,14 @@ CREATE TABLE IF NOT EXISTS "Tunnels" (
     local_port INT DEFAULT 22,
     rsa_key TEXT,
     closed BOOLEAN DEFAULT false,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_tunnels_iofogUuid ON "Tunnels" (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS "Microservices" (
-    uuid VARCHAR(32) PRIMARY KEY NOT NULL,
+    uuid VARCHAR(36) PRIMARY KEY NOT NULL,
     config TEXT,
     name VARCHAR(255) DEFAULT 'New Microservice',
     config_last_updated BIGINT,
@@ -229,7 +229,7 @@ CREATE TABLE IF NOT EXISTS "Microservices" (
     updated_at TIMESTAMP(0),
     catalog_item_id INT,
     registry_id INT DEFAULT 1,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     application_id INT,
     FOREIGN KEY (catalog_item_id) REFERENCES "CatalogItems" (id) ON DELETE CASCADE,
     FOREIGN KEY (registry_id) REFERENCES "Registries" (id) ON DELETE SET NULL,
@@ -245,7 +245,7 @@ CREATE INDEX idx_microservices_applicationId ON "Microservices" (application_id)
 CREATE TABLE IF NOT EXISTS "MicroserviceArgs" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     cmd TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -255,7 +255,7 @@ CREATE TABLE IF NOT EXISTS "MicroserviceEnvs" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     key TEXT,
     value TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -268,9 +268,9 @@ CREATE TABLE IF NOT EXISTS "MicroserviceExtraHost" (
     public_port INT,
     template TEXT,
     value TEXT,
-    microservice_uuid VARCHAR(32),
-    target_microservice_uuid VARCHAR(32),
-    target_fog_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
+    target_microservice_uuid VARCHAR(36),
+    target_fog_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (target_microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (target_fog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
@@ -289,7 +289,7 @@ CREATE TABLE IF NOT EXISTS "MicroservicePorts" (
     is_proxy BOOLEAN,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS "MicroserviceStatuses" (
     container_id VARCHAR(255) DEFAULT '',
     percentage DOUBLE PRECISION DEFAULT 0.00,
     error_message TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
@@ -338,7 +338,7 @@ CREATE TABLE IF NOT EXISTS "StraceDiagnostics" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     strace_run BOOLEAN,
     buffer VARCHAR(255) DEFAULT '',
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -350,7 +350,7 @@ CREATE TABLE IF NOT EXISTS "VolumeMappings" (
     container_destination TEXT,
     access_mode TEXT,
     type TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -361,7 +361,7 @@ CREATE TABLE IF NOT EXISTS "CatalogItemImages" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     container_image TEXT,
     catalog_item_id INT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     fog_type_id INT,
     FOREIGN KEY (catalog_item_id) REFERENCES "CatalogItems" (id) ON DELETE CASCADE,
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
@@ -396,8 +396,8 @@ CREATE INDEX idx_catalog_item_output_type_catalog_item_id ON "CatalogItemOutputT
 CREATE TABLE IF NOT EXISTS "Routings" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
-    source_microservice_uuid VARCHAR(32),
-    dest_microservice_uuid VARCHAR(32),
+    source_microservice_uuid VARCHAR(36),
+    dest_microservice_uuid VARCHAR(36),
     application_id INT,
     FOREIGN KEY (source_microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (dest_microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
@@ -416,7 +416,7 @@ CREATE TABLE IF NOT EXISTS "Routers" (
     inter_router_port INT,
     host TEXT,
     is_default BOOLEAN DEFAULT false,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
@@ -459,7 +459,7 @@ CREATE TABLE IF NOT EXISTS "Tags" (
 
 CREATE TABLE IF NOT EXISTS "IofogTags" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    fog_uuid VARCHAR(32),
+    fog_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (fog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES "Tags" (id) ON DELETE CASCADE
@@ -484,7 +484,7 @@ CREATE TABLE IF NOT EXISTS "EdgeResources" (
 
 CREATE TABLE IF NOT EXISTS "AgentEdgeResources" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    fog_uuid VARCHAR(32),
+    fog_uuid VARCHAR(36),
     edge_resource_id INT,
     FOREIGN KEY (fog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (edge_resource_id) REFERENCES "EdgeResources" (id) ON DELETE CASCADE
@@ -555,7 +555,7 @@ CREATE INDEX idx_applicationtemplatevariables_application_template_id ON "Applic
 CREATE TABLE IF NOT EXISTS "MicroserviceCdiDevices" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     cdi_devices TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -569,7 +569,7 @@ ADD COLUMN runtime TEXT DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS "MicroservicePubTags" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES "Tags" (id) ON DELETE CASCADE
@@ -577,7 +577,7 @@ CREATE TABLE IF NOT EXISTS "MicroservicePubTags" (
 
 CREATE TABLE IF NOT EXISTS "MicroserviceSubTags" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES "Tags" (id) ON DELETE CASCADE
@@ -591,7 +591,7 @@ CREATE INDEX idx_microservicesubtags_tag_id ON "MicroserviceSubTags" (tag_id);
 CREATE TABLE IF NOT EXISTS "MicroserviceCapAdd" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     cap_add TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -600,7 +600,7 @@ CREATE INDEX idx_microservice_capAdd_microserviceUuid ON "MicroserviceCapAdd" (m
 CREATE TABLE IF NOT EXISTS "MicroserviceCapDrop" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     cap_drop TEXT,
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
 );
 
@@ -612,7 +612,7 @@ ADD COLUMN annotations TEXT;
 CREATE TABLE IF NOT EXISTS "FogPublicKeys" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     public_key TEXT,
-    iofog_uuid VARCHAR(32),
+    iofog_uuid VARCHAR(36),
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
@@ -623,8 +623,8 @@ CREATE INDEX idx_fog_public_keys_iofogUuid ON "FogPublicKeys" (iofog_uuid);
 CREATE TABLE IF NOT EXISTS "FogUsedTokens" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     jti VARCHAR(255) NOT NULL,
-    iofog_uuid VARCHAR(32),
-    expiry_time TIMESTAMP(0) NOT NULL,
+    iofog_uuid VARCHAR(36),
+    expiry_time BIGINT NOT NULL,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
@@ -703,8 +703,8 @@ CREATE INDEX idx_service_tags_service_id ON "ServiceTags" (service_id);
 CREATE INDEX idx_service_tags_tag_id ON "ServiceTags" (tag_id);
 
 
-ALTER TABLE "Fogs" ADD COLUMN container_engine VARCHAR(32);
-ALTER TABLE "Fogs" ADD COLUMN deployment_type VARCHAR(32);
+ALTER TABLE "Fogs" ADD COLUMN container_engine VARCHAR(36);
+ALTER TABLE "Fogs" ADD COLUMN deployment_type VARCHAR(36);
 
 ALTER TABLE "MicroserviceExtraHost" DROP COLUMN IF EXISTS public_port;
 ALTER TABLE "MicroservicePorts" DROP COLUMN IF EXISTS is_public;
@@ -727,7 +727,7 @@ CREATE TABLE IF NOT EXISTS "ConfigMaps" (
 CREATE INDEX idx_config_maps_name ON "ConfigMaps" (name);
 
 CREATE TABLE IF NOT EXISTS "VolumeMounts" (
-    uuid VARCHAR(32) PRIMARY KEY NOT NULL,
+    uuid VARCHAR(36) PRIMARY KEY NOT NULL,
     name VARCHAR(255) NOT NULL,
     config_map_name VARCHAR(255),
     secret_name VARCHAR(255),
@@ -744,8 +744,8 @@ CREATE INDEX idx_volume_mounts_secret_name ON "VolumeMounts" (secret_name);
 
 CREATE TABLE IF NOT EXISTS "FogVolumeMounts" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    fog_uuid VARCHAR(32),
-    volume_mount_uuid VARCHAR(32),
+    fog_uuid VARCHAR(36),
+    volume_mount_uuid VARCHAR(36),
     FOREIGN KEY (fog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE,
     FOREIGN KEY (volume_mount_uuid) REFERENCES "VolumeMounts" (uuid) ON DELETE CASCADE
 );
@@ -759,16 +759,16 @@ ALTER TABLE "Fogs" ADD COLUMN volume_mount_last_update BIGINT DEFAULT 0;
 ALTER TABLE "ChangeTrackings" ADD COLUMN volume_mounts BOOLEAN DEFAULT false;
 ALTER TABLE "ChangeTrackings" ADD COLUMN exec_sessions BOOLEAN DEFAULT false;
 
-ALTER TABLE "Services" ADD COLUMN provisioning_status VARCHAR(32) DEFAULT 'pending';
+ALTER TABLE "Services" ADD COLUMN provisioning_status VARCHAR(36) DEFAULT 'pending';
 ALTER TABLE "Services" ADD COLUMN provisioning_error TEXT;
 
 ALTER TABLE "Fogs" ADD COLUMN warning_message TEXT DEFAULT 'HEALTHY';
-ALTER TABLE "Fogs" ADD COLUMN gps_device VARCHAR(32);
+ALTER TABLE "Fogs" ADD COLUMN gps_device VARCHAR(36);
 ALTER TABLE "Fogs" ADD COLUMN gps_scan_frequency INT DEFAULT 60;
 ALTER TABLE "Fogs" ADD COLUMN edge_guard_frequency INT DEFAULT 0;
 
-ALTER TABLE "Microservices" ADD COLUMN pid_mode VARCHAR(32);
-ALTER TABLE "Microservices" ADD COLUMN ipc_mode VARCHAR(32);
+ALTER TABLE "Microservices" ADD COLUMN pid_mode VARCHAR(36);
+ALTER TABLE "Microservices" ADD COLUMN ipc_mode VARCHAR(36);
 ALTER TABLE "Microservices" ADD COLUMN exec_enabled BOOLEAN DEFAULT false;
 
 ALTER TABLE "MicroserviceStatuses" ADD COLUMN exec_session_ids TEXT;
@@ -777,9 +777,9 @@ ALTER TABLE "Microservices" ADD COLUMN schedule INT DEFAULT 50;
 
 CREATE TABLE IF NOT EXISTS "MicroserviceExecStatuses" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    status VARCHAR(255) DEFAULT 'PENDING',
+    status VARCHAR(255) DEFAULT 'INACTIVE',
     exec_session_id VARCHAR(255),
-    microservice_uuid VARCHAR(32),
+    microservice_uuid VARCHAR(36),
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE

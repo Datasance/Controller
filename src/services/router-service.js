@@ -330,9 +330,10 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
   const capAddValues = [
     { capAdd: 'NET_RAW' }
   ]
-
-  await ApplicationManager.create(routerApplicationData, transaction)
-  const application = await ApplicationManager.findOne({ name: routerApplicationData.name }, transaction)
+  let application = await ApplicationManager.findOne({ name: routerApplicationData.name }, transaction)
+  if (!application) {
+    application = await ApplicationManager.create(routerApplicationData, transaction)
+  }
   routerMicroserviceData.applicationId = application.id
   const routerMicroservice = await MicroserviceManager.create(routerMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: routerMicroserviceData.uuid }, transaction)

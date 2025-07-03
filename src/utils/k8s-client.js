@@ -209,10 +209,13 @@ async function watchLoadBalancerIP (serviceName, maxRetries = 10, retryInterval 
             service.status.loadBalancer &&
             service.status.loadBalancer.ingress &&
             service.status.loadBalancer.ingress.length > 0) {
-          const ip = service.status.loadBalancer.ingress[0].ip
-          if (ip) {
-            logger.info(`Found LoadBalancer IP: ${ip} for service: ${serviceName}`)
-            return ip
+          const ingress = service.status.loadBalancer.ingress[0]
+          if (ingress.ip) {
+            logger.info(`Found LoadBalancer IP: ${ingress.ip} for service: ${serviceName}`)
+            return ingress.ip
+          } else if (ingress.hostname) {
+            logger.info(`Found LoadBalancer hostname: ${ingress.hostname} for service: ${serviceName}`)
+            return ingress.hostname
           }
         }
         logger.info(`Service ${serviceName} is LoadBalancer type but IP not yet assigned (attempt ${attempt + 1}/${maxRetries})`)

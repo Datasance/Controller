@@ -3,7 +3,7 @@
 module.exports = (sequelize, DataTypes) => {
   const VolumeMount = sequelize.define('VolumeMount', {
     uuid: {
-      type: DataTypes.STRING(32),
+      type: DataTypes.STRING(36),
       primaryKey: true,
       allowNull: false,
       field: 'uuid'

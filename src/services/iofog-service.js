@@ -56,7 +56,7 @@ async function checkKubernetesEnvironment () {
 
 async function getLocalCertificateHosts (isKubernetes, namespace) {
   if (isKubernetes) {
-    return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local`
+    return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local,127.0.0.1,localhost,host.docker.internal,host.containers.internal`
   }
   return '127.0.0.1,localhost,host.docker.internal,host.containers.internal'
 }
@@ -239,14 +239,13 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
 
 async function createFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogCreate)
-
   let createFogData = {
     uuid: AppHelper.generateUUID(),
     name: fogData.name,
     location: fogData.location,
     latitude: fogData.latitude,
     longitude: fogData.longitude,
-    gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
+    // gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
     networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
@@ -273,6 +272,15 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     host: fogData.host,
     routerId: null,
     timeZone: fogData.timeZone
+  }
+
+  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+    createFogData.gpsMode = 'manual'
+  } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
+    createFogData.gpsMode = fogData.gpsMode
+    createFogData.gpsDevice = fogData.gpsDevice
+  } else {
+    createFogData.gpsMode = undefined
   }
 
   createFogData = AppHelper.deleteUndefinedFields(createFogData)
@@ -363,7 +371,7 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
         // Set fog node as healthy
         await FogManager.update({ uuid: fog.uuid }, { warningMessage: 'HEALTHY' }, transaction)
       } catch (err) {
-        logger.error('Background orchestration failed in createFogEndPoint:', err)
+        logger.error('Background orchestration failed in createFogEndPoint: ' + err.message)
         // Set fog node as warning with error message
         await FogManager.update(
           { uuid: fog.uuid },
@@ -404,7 +412,7 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     location: fogData.location,
     latitude: fogData.latitude,
     longitude: fogData.longitude,
-    gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
+    // gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
     networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
@@ -430,6 +438,15 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     host: fogData.host,
     availableDiskThreshold: fogData.availableDiskThreshold,
     timeZone: fogData.timeZone
+  }
+
+  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+    updateFogData.gpsMode = 'manual'
+  } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
+    updateFogData.gpsMode = fogData.gpsMode
+    updateFogData.gpsDevice = fogData.gpsDevice
+  } else {
+    updateFogData.gpsMode = undefined
   }
   updateFogData = AppHelper.deleteUndefinedFields(updateFogData)
 
@@ -486,7 +503,8 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     (async () => {
       try {
         // --- Begin orchestration logic ---
-        await _handleRouterCertificates(fogData, fogData.uuid, isRouterModeChanged, transaction)
+        const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
+        await _handleRouterCertificates(fogData, fog.uuid, isRouterModeChanged, transaction)
 
         if (routerMode === 'none') {
           networkRouter = await RouterService.getNetworkRouter(fogData.networkRouter)
@@ -597,7 +615,7 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
         // Set fog node as healthy
         await FogManager.update({ uuid: fogData.uuid }, { warningMessage: 'HEALTHY' }, transaction)
       } catch (err) {
-        logger.error('Background orchestration failed in updateFogEndPoint:', err)
+        logger.error('Background orchestration failed in updateFogEndPoint: ' + err.message)
         await FogManager.update(
           { uuid: fogData.uuid },
           {
@@ -884,11 +902,20 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
     if (hasFileBasedSSL) {
       try {
         if (intermedKey) {
-          const certData = fs.readFileSync(intermedKey)
-          caCert = Buffer.from(certData).toString('base64')
+          // Check if intermediate certificate file exists before trying to read it
+          if (fs.existsSync(intermedKey)) {
+            const certData = fs.readFileSync(intermedKey)
+            caCert = Buffer.from(certData).toString('base64')
+          } else {
+            // Intermediate certificate file doesn't exist, don't provide any CA cert
+            // Let the system's default trust store handle validation
+            logger.info(`Intermediate certificate file not found at path: ${intermedKey}, not providing CA certificate`)
+            caCert = ''
+          }
         } else {
-          const certData = fs.readFileSync(sslCert)
-          caCert = Buffer.from(certData).toString('base64')
+          // No intermediate certificate path provided, don't provide any CA cert
+          // Let the system's default trust store handle validation
+          caCert = ''
         }
       } catch (error) {
         throw new Errors.ValidationError('Failed to read SSL certificate file')
@@ -897,8 +924,10 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
     if (hasBase64SSL) {
       if (intermedKeyBase64) {
         caCert = intermedKeyBase64
-      } else if (sslCertBase64) {
-        caCert = sslCertBase64
+      } else {
+        // No intermediate certificate base64 provided, don't provide any CA cert
+        // Let the system's default trust store handle validation
+        caCert = ''
       }
     }
   }
@@ -1010,7 +1039,7 @@ async function _processDeleteCommand (fog, transaction) {
   for (const microservice of microservices) {
     await MicroserviceService.deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   }
-
+  await ApplicationManager.delete({ name: `system-${fog.uuid.toLowerCase()}` }, transaction)
   await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.deleteNode, transaction)
   await FogManager.delete({ uuid: fog.uuid }, transaction)
 }

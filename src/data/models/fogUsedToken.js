@@ -19,7 +19,11 @@ module.exports = (sequelize, DataTypes) => {
     expiryTime: {
       type: DataTypes.BIGINT,
       get () {
-        return convertToInt(this.getDataValue('daemonLastStart'), 0)
+        return convertToInt(this.getDataValue('expiryTime'), 0)
+      },
+      set (value) {
+        // Ensure the value is stored as a BIGINT (Unix timestamp)
+        this.setDataValue('expiryTime', parseInt(value, 10))
       },
       field: 'expiry_time'
     }

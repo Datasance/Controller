@@ -21,6 +21,20 @@ class MySqlDatabaseProvider extends DatabaseProvider {
       connectTimeout: 10000
     }
 
+    // Configure SSL if enabled
+    const useSSL = process.env.DB_USE_SSL === 'true' || mysqlConfig.useSsl === true
+    if (useSSL) {
+      const caBase64 = process.env.DB_SSL_CA_B64
+      const sslOptions = caBase64
+        ? {
+          ca: Buffer.from(caBase64, 'base64').toString('utf-8'),
+          rejectUnauthorized: true
+        }
+        : { rejectUnauthorized: false }
+
+      connectionOptions.ssl = sslOptions
+    }
+
     // Sequelize configuration
     const sequelizeConfig = {
       dialect: 'mysql',
@@ -33,6 +47,17 @@ class MySqlDatabaseProvider extends DatabaseProvider {
         connectTimeout: connectionOptions.connectTimeout
       },
       logging: false
+    }
+
+    // Add SSL configuration to Sequelize if enabled
+    if (useSSL) {
+      const caBase64 = process.env.DB_SSL_CA_B64
+      sequelizeConfig.dialectOptions.ssl = caBase64
+        ? {
+          ca: Buffer.from(caBase64, 'base64').toString('utf-8'),
+          rejectUnauthorized: true
+        }
+        : { rejectUnauthorized: false }
     }
 
     this.sequelize = new Sequelize(sequelizeConfig)

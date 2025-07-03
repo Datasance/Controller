@@ -136,7 +136,7 @@ const deleteCatalogItemEndPoint = async function (id, isCLI, transaction) {
   return affectedRows
 }
 
-async function getNetworkCatalogItem (transaction) {
+async function getNatsCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'NATs',
     category: 'UTILITIES',
@@ -148,15 +148,6 @@ async function getNetworkCatalogItem (transaction) {
 async function getRouterCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.ROUTER_CATALOG_NAME,
-    category: 'SYSTEM',
-    publisher: 'Datasance',
-    registry_id: 1
-  }, transaction)
-}
-
-async function getProxyCatalogItem (transaction) {
-  return CatalogItemManager.findOne({
-    name: DBConstants.PROXY_CATALOG_NAME,
     category: 'SYSTEM',
     publisher: 'Datasance',
     registry_id: 1
@@ -386,10 +377,9 @@ module.exports = {
   updateCatalogItemEndPoint: TransactionDecorator.generateTransaction(updateCatalogItemEndPoint),
   getCatalogItem: getCatalogItem,
   getSystemCatalogItem: getSystemCatalogItem,
-  getNetworkCatalogItem: getNetworkCatalogItem,
+  getNatsCatalogItem: getNatsCatalogItem,
   getBluetoothCatalogItem: getBluetoothCatalogItem,
   getHalCatalogItem: getHalCatalogItem,
   getRouterCatalogItem: getRouterCatalogItem,
-  getDebugCatalogItem: getDebugCatalogItem,
-  getProxyCatalogItem: getProxyCatalogItem
+  getDebugCatalogItem: getDebugCatalogItem
 }

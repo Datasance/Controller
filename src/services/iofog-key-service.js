@@ -12,9 +12,9 @@
  */
 
 const crypto = require('crypto')
-const AppHelper = require('../helpers/app-helper')
 const FogPublicKeyManager = require('../data/managers/iofog-public-key-manager')
 const FogUsedTokenManager = require('../data/managers/fog-used-token-manager')
+const SecretHelper = require('../helpers/secret-helper')
 const jose = require('jose')
 
 /**
@@ -47,8 +47,8 @@ const generateKeyPair = async function (transaction) {
  * @returns {Promise} Promise resolving to the stored public key
  */
 const storePublicKey = async function (fogUuid, publicKey, transaction) {
-  // Encrypt the public key using the fog UUID as salt
-  const encryptedPublicKey = AppHelper.encryptText(publicKey, fogUuid)
+  // Encrypt the public key using SecretHelper for better security and database compatibility
+  const encryptedPublicKey = await SecretHelper.encryptSecret(publicKey, fogUuid)
 
   // Store the encrypted public key
   return FogPublicKeyManager.updateOrCreate(fogUuid, encryptedPublicKey, transaction)
@@ -68,8 +68,8 @@ const getPublicKey = async function (fogUuid, transaction) {
     return null
   }
 
-  // Decrypt the public key using the fog UUID as salt
-  return AppHelper.decryptText(fogPublicKey.publicKey, fogUuid)
+  // Decrypt the public key using SecretHelper for better security and database compatibility
+  return SecretHelper.decryptSecret(fogPublicKey.publicKey, fogUuid)
 }
 
 /**

@@ -5,12 +5,11 @@ VALUES
 
 INSERT INTO `CatalogItems` (name, description, category, publisher, disk_required, ram_required, picture, config_example, is_public, registry_id)
 VALUES 
-    ('NATs', 'NATs server microservice for Datasance PoT', 'UTILITIES', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
+    ('Router', 'The built-in router for Datasance PoT.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1),
     ('RESTBlue', 'REST API for Bluetooth Low Energy layer.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
     ('HAL', 'REST API for Hardware Abstraction layer.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
-    ('EdgeGuard', 'Security and monitoring component for edge devices running ioFog Agents.', 'UTILITIES', 'Datasance', 0, 0, 'none.png', NULL, true, 1),
-    ('Router', 'The built-in router for Datasance PoT.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1),
-    ('Debug', 'The built-in debugger for Datasance PoT IoFog Agent.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1);
+    ('Debug', 'The built-in debugger for Datasance PoT IoFog Agent.', 'SYSTEM', 'Datasance', 0, 0, 'none.png', NULL, false, 1),
+    ('NATs', 'NATs server microservice for Datasance PoT', 'UTILITIES', 'Datasance', 0, 0, 'none.png', NULL, true, 1);
 
 INSERT INTO `FogTypes` (id, name, image, description, network_catalog_item_id, hal_catalog_item_id, bluetooth_catalog_item_id)
 VALUES 
@@ -24,15 +23,13 @@ WHERE fog_type_id IS NULL;
 
 INSERT INTO `CatalogItemImages` (catalog_item_id, fog_type_id, container_image)
 VALUES 
-    (1, 1, 'ghcr.io/datasance/nats:latest'),
-    (1, 2, 'ghcr.io/datasance/nats:latest'),
+    (1, 1, 'ghcr.io/datasance/router:latest'),
+    (1, 2, 'ghcr.io/datasance/router:latest'),
     (2, 1, 'ghcr.io/datasance/restblue:latest'),
     (2, 2, 'ghcr.io/datasance/restblue:latest'),
     (3, 1, 'ghcr.io/datasance/hal:latest'),
     (3, 2, 'ghcr.io/datasance/hal:latest'),
-    (4, 1, 'ghcr.io/datasance/edge-guard:latest'),
-    (4, 2, 'ghcr.io/datasance/edge-guard:latest'),
-    (5, 1, 'ghcr.io/datasance/router:latest'),
-    (5, 2, 'ghcr.io/datasance/router:latest'),
-    (6, 1, 'ghcr.io/datasance/node-debugger:latest'),
-    (6, 2, 'ghcr.io/datasance/node-debugger:latest');
+    (4, 1, 'ghcr.io/datasance/node-debugger:latest'),
+    (4, 2, 'ghcr.io/datasance/node-debugger:latest'),
+    (5, 1, 'ghcr.io/datasance/nats:latest'),
+    (5, 2, 'ghcr.io/datasance/nats:latest');

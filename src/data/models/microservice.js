@@ -5,7 +5,7 @@ const { convertToInt } = require('../../helpers/app-helper')
 module.exports = (sequelize, DataTypes) => {
   const Microservice = sequelize.define('Microservice', {
     uuid: {
-      type: DataTypes.STRING(32),
+      type: DataTypes.STRING(36),
       primaryKey: true,
       allowNull: false,
       field: 'uuid'
@@ -181,11 +181,6 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasMany(models.MicroserviceEnv, {
       foreignKey: 'microservice_uuid',
       as: 'env'
-    })
-
-    Microservice.hasMany(models.VolumeMount, {
-      foreignKey: 'microservice_uuid',
-      as: 'volumeMounts'
     })
 
     Microservice.hasMany(models.MicroserviceArg, {

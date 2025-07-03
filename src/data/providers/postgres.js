@@ -21,6 +21,20 @@ class PostgresDatabaseProvider extends DatabaseProvider {
       connectTimeout: 10000
     }
 
+    // Configure SSL if enabled
+    const useSSL = process.env.DB_USE_SSL === 'true' || postgresConfig.useSsl === true
+    if (useSSL) {
+      const caBase64 = process.env.DB_SSL_CA_B64
+      const sslOptions = caBase64
+        ? {
+          ca: Buffer.from(caBase64, 'base64').toString('utf-8'),
+          rejectUnauthorized: true
+        }
+        : { rejectUnauthorized: false }
+
+      connectionOptions.ssl = sslOptions
+    }
+
     // Sequelize configuration
     const sequelizeConfig = {
       dialect: 'postgres',
@@ -33,6 +47,16 @@ class PostgresDatabaseProvider extends DatabaseProvider {
         connectTimeout: connectionOptions.connectTimeout
       },
       logging: false
+    }
+    // Add SSL configuration to Sequelize if enabled
+    if (useSSL) {
+      const caBase64 = process.env.DB_SSL_CA_B64
+      sequelizeConfig.dialectOptions.ssl = caBase64
+        ? {
+          ca: Buffer.from(caBase64, 'base64').toString('utf-8'),
+          rejectUnauthorized: true
+        }
+        : { rejectUnauthorized: false }
     }
 
     this.sequelize = new Sequelize(sequelizeConfig)
@@ -50,7 +74,11 @@ class PostgresDatabaseProvider extends DatabaseProvider {
         // Database doesn't exist, try to create it
         logger.info('Database does not exist, attempting to create it...')
         const { database, ...connectionConfig } = this.connectionOptions
-        const pool = new Pool(connectionConfig)
+        // Connect to the default 'postgres' database to create the target database
+        const pool = new Pool({
+          ...connectionConfig,
+          database: 'postgres'
+        })
         try {
           await pool.query(`CREATE DATABASE "${database}"`)
           logger.info(`Database ${database} created successfully`)

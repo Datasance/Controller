@@ -658,8 +658,15 @@ async function _deleteTcpConnector (serviceName, transaction) {
   if (service.type === 'microservice') {
     microserviceSource = await MicroserviceManager.findOne({ uuid: service.resource }, transaction)
   }
+  let fogSource = null
+  if (service.type === 'agent') {
+    fogSource = await FogManager.findOne({ uuid: service.resource }, transaction)
+    if (!fogSource) {
+      fogSource = await FogManager.findOne({ name: service.resource }, transaction)
+    }
+  }
 
-  if (isDefaultRouter && !microserviceSource) {
+  if (isDefaultRouter && (!microserviceSource || !fogSource)) {
     if (isK8s) {
       // Update K8s router config
       const configMap = await K8sClient.getConfigMap(K8S_ROUTER_CONFIG_MAP)
@@ -690,22 +697,26 @@ async function _deleteTcpConnector (serviceName, transaction) {
 
       await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
     }
-  } else {
-    let fogNodeUuid = null
-    if (microserviceSource) {
-      fogNodeUuid = microserviceSource.iofogUuid
-    } else {
-      fogNodeUuid = service.defaultBridge // This is the actual fogNodeUuid for non-default router
-    }
-    const routerMicroservice = await _getRouterMicroservice(fogNodeUuid, transaction)
-    const currentConfig = JSON.parse(routerMicroservice.config || '{}')
-
-    if (currentConfig.bridges && currentConfig.bridges.tcpConnectors) {
-      delete currentConfig.bridges.tcpConnectors[connectorName]
-    }
-
-    await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
   }
+
+  let fogNodeUuid = null
+  if (!isDefaultRouter && (!microserviceSource || !fogSource)) {
+    fogNodeUuid = service.defaultBridge
+  }
+  if (microserviceSource) {
+    fogNodeUuid = microserviceSource.iofogUuid
+  }
+  if (fogSource) {
+    fogNodeUuid = fogSource.uuid
+  }
+  const routerMicroservice = await _getRouterMicroservice(fogNodeUuid, transaction)
+  const currentConfig = JSON.parse(routerMicroservice.config || '{}')
+
+  if (currentConfig.bridges && currentConfig.bridges.tcpConnectors) {
+    delete currentConfig.bridges.tcpConnectors[connectorName]
+  }
+
+  await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
 }
 
 // Helper function to delete tcpListener from router config
@@ -798,20 +809,18 @@ async function _createK8sService (serviceConfig, transaction) {
       name: serviceConfig.name,
       annotations: normalizedTags.reduce((acc, tag) => {
         const [key, value] = tag.split(':')
-        acc[key] = value || ''
+        acc[key] = (value || '').trim()
         return acc
       }, {})
     },
     spec: {
       type: serviceConfig.k8sType,
       selector: {
-        application: 'interior-router',
-        name: 'router',
-        'skupper.io/component': 'router'
+        'datasance.com/component': 'router'
       },
       ports: [{
-        port: parseInt(serviceConfig.bridgePort),
-        targetPort: parseInt(serviceConfig.servicePort),
+        targetPort: parseInt(serviceConfig.bridgePort),
+        port: parseInt(serviceConfig.servicePort),
         protocol: 'TCP'
       }]
     }
@@ -841,7 +850,7 @@ async function _updateK8sService (serviceConfig, transaction) {
     metadata: {
       annotations: normalizedTags.reduce((acc, tag) => {
         const [key, value] = tag.split(':')
-        acc[key] = value || ''
+        acc[key] = (value || '').trim()
         return acc
       }, {})
     },
