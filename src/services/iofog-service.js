@@ -44,6 +44,7 @@ const CertificateService = require('./certificate-service')
 const logger = require('../logger')
 const ServiceManager = require('../data/managers/service-manager')
 const FogStates = require('../enums/fog-state')
+const SecretManager = require('../data/managers/secret-manager')
 
 const SITE_CA_CERT = 'pot-site-ca'
 const DEFAULT_ROUTER_LOCAL_CA = 'default-router-local-ca'
@@ -1041,6 +1042,20 @@ async function _processDeleteCommand (fog, transaction) {
   }
   await ApplicationManager.delete({ name: `system-${fog.uuid.toLowerCase()}` }, transaction)
   await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.deleteNode, transaction)
+  // Delete router-related secrets if they exist
+  const secretNames = [
+    `${fog.uuid}-site-server`,
+    `${fog.uuid}-local-ca`,
+    `${fog.uuid}-local-server`,
+    `${fog.uuid}-local-agent`
+  ]
+
+  for (const secretName of secretNames) {
+    const secret = await SecretManager.findOne({ name: secretName }, transaction)
+    if (secret) {
+      await SecretManager.delete({ name: secretName }, transaction)
+    }
+  }
   await FogManager.delete({ uuid: fog.uuid }, transaction)
 }
 
