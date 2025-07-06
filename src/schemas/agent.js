@@ -103,7 +103,8 @@ const updateAgentStatus = {
     'tunnelStatus': { 'type': 'string' },
     'version': { 'type': 'string' },
     'isReadyToUpgrade': { 'type': 'boolean' },
-    'isReadyToRollback': { 'type': 'boolean' }
+    'isReadyToRollback': { 'type': 'boolean' },
+    'gpsStatus': { 'type': 'string' }
   },
   'additionalProperties': true
 }

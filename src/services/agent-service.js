@@ -255,7 +255,8 @@ const updateAgentStatus = async function (agentStatus, fog, transaction) {
     isReadyToUpgrade: agentStatus.isReadyToUpgrade,
     isReadyToRollback: agentStatus.isReadyToRollback,
     activeVolumeMounts: agentStatus.activeVolumeMounts,
-    volumeMountLastUpdate: agentStatus.volumeMountLastUpdate
+    volumeMountLastUpdate: agentStatus.volumeMountLastUpdate,
+    gpsStatus: agentStatus.gpsStatus
   }
 
   fogStatus = AppHelper.deleteUndefinedFields(fogStatus)

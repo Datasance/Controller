@@ -787,4 +787,6 @@ CREATE TABLE IF NOT EXISTS MicroserviceExecStatuses (
 
 CREATE INDEX idx_microservice_exec_status_microservice_uuid ON MicroserviceExecStatuses (microservice_uuid);
 
+ALTER TABLE Fogs ADD COLUMN gps_status VARCHAR(32);
+
 COMMIT;

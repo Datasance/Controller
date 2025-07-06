@@ -356,6 +356,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       field: 'warning_message',
       defaultValue: 'HEALTHY'
+    },
+    gpsStatus: {
+      type: DataTypes.TEXT,
+      field: 'gps_status'
     }
   }, {
     tableName: 'Fogs',
