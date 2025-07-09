@@ -14,6 +14,7 @@ const secretUpdate = {
   id: '/secretUpdate',
   type: 'object',
   properties: {
+    name: { type: 'string', minLength: 1, maxLength: 255 },
     data: { type: 'object' }
   },
   required: ['data'],

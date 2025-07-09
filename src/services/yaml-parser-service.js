@@ -258,6 +258,74 @@ const parseMicroserviceImages = async (fileImages) => {
 const parseMicroserviceYAML = async (microservice) => {
   const { registryId, catalogItemId, images } = await parseMicroserviceImages(microservice.images)
   const container = microservice.container || {}
+
+  // Parse environment variables with support for value, valueFromSecret, and valueFromConfigMap
+  const parseEnvVariables = (envArray) => {
+    if (!envArray || !Array.isArray(envArray)) {
+      return []
+    }
+
+    return envArray.map(env => {
+      if (!env || typeof env !== 'object') {
+        throw new Errors.ValidationError('Invalid environment variable format')
+      }
+
+      if (!env.key) {
+        throw new Errors.ValidationError('Environment variable must have a key')
+      }
+
+      const envVar = {
+        key: env.key.toString()
+      }
+
+      // Check that exactly one of value, valueFromSecret, or valueFromConfigMap is provided
+      const hasValue = env.hasOwnProperty('value')
+      const hasValueFromSecret = env.hasOwnProperty('valueFromSecret')
+      const hasValueFromConfigMap = env.hasOwnProperty('valueFromConfigMap')
+
+      const valueCount = [hasValue, hasValueFromSecret, hasValueFromConfigMap].filter(Boolean).length
+
+      if (valueCount === 0) {
+        throw new Errors.ValidationError(`Environment variable '${env.key}' must have either value, valueFromSecret, or valueFromConfigMap`)
+      }
+
+      if (valueCount > 1) {
+        throw new Errors.ValidationError(`Environment variable '${env.key}' can only have one of: value, valueFromSecret, or valueFromConfigMap`)
+      }
+
+      // Handle simple value
+      if (hasValue) {
+        envVar.value = env.value.toString()
+      }
+
+      // Handle valueFromSecret
+      if (hasValueFromSecret) {
+        if (typeof env.valueFromSecret !== 'string') {
+          throw new Errors.ValidationError(`valueFromSecret for environment variable '${env.key}' must be a string`)
+        }
+        const parts = env.valueFromSecret.split('/')
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+          throw new Errors.ValidationError(`valueFromSecret for environment variable '${env.key}' must be in format 'secret-name/key'`)
+        }
+        envVar.valueFromSecret = env.valueFromSecret
+      }
+
+      // Handle valueFromConfigMap
+      if (hasValueFromConfigMap) {
+        if (typeof env.valueFromConfigMap !== 'string') {
+          throw new Errors.ValidationError(`valueFromConfigMap for environment variable '${env.key}' must be a string`)
+        }
+        const parts = env.valueFromConfigMap.split('/')
+        if (parts.length !== 2 || !parts[0] || !parts[1]) {
+          throw new Errors.ValidationError(`valueFromConfigMap for environment variable '${env.key}' must be in format 'configmap-name/key'`)
+        }
+        envVar.valueFromConfigMap = env.valueFromConfigMap
+      }
+
+      return envVar
+    })
+  }
+
   const microserviceData = {
     config: microservice.config != null ? JSON.stringify(microservice.config) : undefined,
     name: microservice.name,
@@ -274,7 +342,7 @@ const parseMicroserviceYAML = async (microservice) => {
     ports: (lget(microservice, 'container.ports', [])),
     volumeMappings: lget(microservice, 'container.volumes', []),
     cmd: lget(microservice, 'container.commands', []),
-    env: (lget(microservice, 'container.env', [])).map(e => ({ key: e.key.toString(), value: e.value.toString() })),
+    env: parseEnvVariables(lget(microservice, 'container.env', [])),
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
     ...microservice.msRoutes,
