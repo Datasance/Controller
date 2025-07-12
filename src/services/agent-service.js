@@ -292,6 +292,7 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
     let microserviceStatus = {
       containerId: status.containerId,
       status: status.status,
+      healthStatus: status.healthStatus,
       startTime: status.startTime,
       operatingDuration: status.operatingDuration,
       cpuUsage: status.cpuUsage,
@@ -349,6 +350,40 @@ const getAgentMicroservices = async function (fog, transaction) {
 
     const extraHosts = microservice.extraHosts ? microservice.extraHosts.map(_mapExtraHost) : []
 
+    // Process health check data - handle both old and new formats
+    let healthCheck = null
+
+    if (microservice.healthCheck) {
+      // Handle the test field - it could be already an array or a JSON string
+      let testData = microservice.healthCheck.test
+      if (testData && testData !== null && testData !== undefined && testData.length > 0) {
+        if (typeof testData === 'string') {
+          // It's a JSON string, try to parse it
+          try {
+            testData = JSON.parse(testData)
+          } catch (e) {
+            // If not valid JSON, treat as a single string command
+            testData = [testData]
+          }
+        } else if (!Array.isArray(testData)) {
+          // If it's not an array, convert to array
+          testData = [testData]
+        }
+        // If it's already an array, leave as is
+      }
+
+      healthCheck = {
+        test: testData,
+        interval: microservice.healthCheck.interval,
+        timeout: microservice.healthCheck.timeout,
+        startPeriod: microservice.healthCheck.startPeriod,
+        startInterval: microservice.healthCheck.startInterval,
+        retries: microservice.healthCheck.retries
+      }
+    } else {
+      healthCheck = {}
+    }
+
     const responseMicroservice = {
       uuid: microservice.uuid,
       imageId: imageId,
@@ -356,6 +391,9 @@ const getAgentMicroservices = async function (fog, transaction) {
       annotations: microservice.annotations,
       rebuild: microservice.rebuild,
       rootHostAccess: microservice.rootHostAccess,
+      cpuSetCpus: microservice.cpuSetCpus,
+      memoryLimit: microservice.memoryLimit,
+      healthCheck: healthCheck,
       pidMode: microservice.pidMode,
       ipcMode: microservice.ipcMode,
       runAsUser: microservice.runAsUser,

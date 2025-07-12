@@ -66,6 +66,11 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: '',
       field: 'ip_address'
     },
+    healthStatus: {
+      type: DataTypes.TEXT,
+      defaultValue: '',
+      field: 'health_status'
+    },
     execSessionIds: {
       type: DataTypes.TEXT,
       defaultValue: '[]',

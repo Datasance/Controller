@@ -80,6 +80,18 @@ module.exports = (sequelize, DataTypes) => {
       field: 'schedule',
       defaultValue: 50
     },
+    cpuSetCpus: {
+      type: DataTypes.TEXT,
+      field: 'cpu_set_cpus',
+      defaultValue: ''
+    },
+    memoryLimit: {
+      type: DataTypes.BIGINT,
+      get () {
+        return convertToInt(this.getDataValue('memoryLimit'))
+      },
+      field: 'memory_limit'
+    },
     imageSnapshot: {
       type: DataTypes.TEXT,
       field: 'image_snapshot',
@@ -176,6 +188,11 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasOne(models.MicroserviceExecStatus, {
       foreignKey: 'microservice_uuid',
       as: 'microserviceExecStatus'
+    })
+
+    Microservice.hasOne(models.MicroserviceHealthCheck, {
+      foreignKey: 'microservice_uuid',
+      as: 'healthCheck'
     })
 
     Microservice.hasMany(models.MicroserviceEnv, {

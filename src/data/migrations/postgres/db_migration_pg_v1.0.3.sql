@@ -788,3 +788,24 @@ CREATE TABLE IF NOT EXISTS "MicroserviceExecStatuses" (
 CREATE INDEX idx_microservice_exec_status_microservice_uuid ON "MicroserviceExecStatuses" (microservice_uuid);
 
 ALTER TABLE "Fogs" ADD COLUMN gps_status VARCHAR(32);
+
+ALTER TABLE "Microservices" ADD COLUMN cpu_set_cpus TEXT;
+ALTER TABLE "Microservices" ADD COLUMN memory_limit BIGINT;
+
+CREATE TABLE IF NOT EXISTS "MicroserviceHealthChecks" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    test TEXT,
+    interval BIGINT,
+    timeout BIGINT,
+    start_period BIGINT,
+    start_interval BIGINT,
+    retries INT,
+    microservice_uuid VARCHAR(36),
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservice_health_check_microservice_uuid ON "MicroserviceHealthChecks" (microservice_uuid);
+
+ALTER TABLE "MicroserviceStatuses" ADD COLUMN health_status TEXT;

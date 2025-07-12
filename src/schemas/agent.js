@@ -140,6 +140,7 @@ const microserviceStatus = {
     'id': { 'type': 'string' },
     'containerId': { 'type': 'string' },
     'status': { 'type': 'string' },
+    'healthStatus': { 'type': 'string' },
     'startTime': { 'type': 'integer' },
     'operatingDuration': { 'type': 'integer' },
     'cpuUsage': { 'type': 'number' },

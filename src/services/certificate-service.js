@@ -446,7 +446,7 @@ async function renewCertificateEndpoint (name, transaction) {
         const secret = await SecretManager.findOne({ name, type: 'tls' }, transaction)
         if (secret) {
           isNewRecord = true
-          console.log(`Certificate record not found for ${name}, but secret exists. Will create new record.`)
+          // console.log(`Certificate record not found for ${name}, but secret exists. Will create new record.`)
         } else {
           throw new Errors.NotFoundError(`Certificate with name ${name} not found`)
         }

@@ -31,6 +31,7 @@ const Application = models.Application
 const Routing = models.Routing
 const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
+const MicroserviceHealthCheck = models.MicroserviceHealthCheck
 const Op = require('sequelize').Op
 
 const microserviceExcludedFields = [
@@ -146,6 +147,12 @@ class MicroserviceManager extends BaseManager {
           }],
           attributes: { exclude: ['id', 'source_microservice_uuid',
             'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: where,
@@ -252,6 +259,12 @@ class MicroserviceManager extends BaseManager {
           as: 'subTags',
           attributes: ['value'],
           through: { attributes: [] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: {
@@ -367,6 +380,12 @@ class MicroserviceManager extends BaseManager {
           }],
           attributes: { exclude: ['id',
             'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: where,

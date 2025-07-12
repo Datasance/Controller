@@ -21,6 +21,7 @@ const MicroserviceCapAddManager = require('../data/managers/microservice-cap-add
 const MicroserviceCapDropManager = require('../data/managers/microservice-cap-drop-manager')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
 const MicroservicePortService = require('../services/microservice-ports/microservice-port')
+const MicroserviceHealthCheckManager = require('../data/managers/microservice-healthcheck-manager')
 const CatalogItemImageManager = require('../data/managers/catalog-item-image-manager')
 const RegistryManager = require('../data/managers/registry-manager')
 // const RouterManager = require('../data/managers/router-manager')
@@ -377,6 +378,13 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
       await _createCdiDevices(microservice, cdiDevices, transaction)
     }
   }
+  if (microserviceData.healthCheck) {
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceData.healthCheck)
+    }
+    await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+  }
   if (microserviceData.capAdd) {
     for (const capAdd of microserviceData.capAdd) {
       await _createCapAdd(microservice, capAdd, transaction)
@@ -512,6 +520,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
     schedule: microserviceData.schedule,
     pidMode: microserviceData.pidMode,
     ipcMode: microserviceData.ipcMode,
@@ -526,7 +536,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     volumeMappings: microserviceData.volumeMappings,
     env: microserviceData.env,
     cmd: microserviceData.cmd,
-    ports: microserviceData.ports
+    ports: microserviceData.ports,
+    healthCheck: microserviceData.healthCheck
   }
 
   const microserviceDataUpdate = AppHelper.deleteUndefinedFields(microserviceToUpdate)
@@ -632,6 +643,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.pidMode ||
     microserviceDataUpdate.ipcMode ||
+    microserviceDataUpdate.cpuSetCpus ||
+    microserviceDataUpdate.memoryLimit ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
     microserviceDataUpdate.cdiDevices ||
@@ -673,6 +686,19 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 
   if (microserviceDataUpdate.capAdd) {
     await _updateCapAdd(microserviceDataUpdate.capAdd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.healthCheck) {
+    await MicroserviceHealthCheckManager.delete({
+      microserviceUuid: microservice.uuid
+    }, transaction)
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceDataUpdate.healthCheck)
+    }
+    if (healthCheckData.test && healthCheckData.test.length > 0) {
+      await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+    }
   }
 
   if (microserviceDataUpdate.capDrop) {
@@ -737,6 +763,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
     schedule: microserviceData.schedule,
     pidMode: microserviceData.pidMode,
     ipcMode: microserviceData.ipcMode,
@@ -751,7 +779,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     volumeMappings: microserviceData.volumeMappings,
     env: microserviceData.env,
     cmd: microserviceData.cmd,
-    ports: microserviceData.ports
+    ports: microserviceData.ports,
+    healthCheck: microserviceData.healthCheck
   }
 
   const microserviceDataUpdate = AppHelper.deleteUndefinedFields(microserviceToUpdate)
@@ -861,6 +890,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
     microserviceDataUpdate.pidMode ||
     microserviceDataUpdate.ipcMode ||
+    microserviceDataUpdate.cpuSetCpus ||
+    microserviceDataUpdate.memoryLimit ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
     microserviceDataUpdate.cdiDevices ||
@@ -902,6 +933,19 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
   if (microserviceDataUpdate.capAdd) {
     await _updateCapAdd(microserviceDataUpdate.capAdd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.healthCheck) {
+    await MicroserviceHealthCheckManager.delete({
+      microserviceUuid: microservice.uuid
+    }, transaction)
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceDataUpdate.healthCheck)
+    }
+    if (healthCheckData.test && healthCheckData.test.length > 0) {
+      await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+    }
   }
 
   if (microserviceDataUpdate.capDrop) {
@@ -1510,6 +1554,28 @@ function _validateMicroserviceAnnotations (annotations) {
   return result
 }
 
+function _validateMicroserviceHealthCheck (healthCheck) {
+  let result
+  if (healthCheck) {
+    // Convert the health check object to a JSON string for database storage
+    result = JSON.stringify(healthCheck)
+  }
+  return result
+}
+
+function _processHealthCheckForDB (healthCheckData) {
+  if (!healthCheckData) return null
+
+  return {
+    test: _validateMicroserviceHealthCheck(healthCheckData.test),
+    interval: healthCheckData.interval,
+    timeout: healthCheckData.timeout,
+    startPeriod: healthCheckData.startPeriod,
+    startInterval: healthCheckData.startInterval,
+    retries: healthCheckData.retries
+  }
+}
+
 async function _createMicroservice (microserviceData, isCLI, transaction) {
   const config = _validateMicroserviceConfig(microserviceData.config)
   const annotations = _validateMicroserviceAnnotations(microserviceData.annotations)
@@ -1522,6 +1588,8 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
     catalogItemId: microserviceData.catalogItemId,
     iofogUuid: microserviceData.iofogUuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
     pidMode: microserviceData.pidMode,
     ipcMode: microserviceData.ipcMode,
     cdiDevices: microserviceData.cdiDevices,
@@ -1935,6 +2003,7 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const subTags = microservice.subTags ? microservice.subTags.map(t => t.value) : []
   const status = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const execStatus = await MicroserviceExecStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const healthCheck = await MicroserviceHealthCheckManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   // build microservice response
   const res = Object.assign({}, microservice)
   res.ports = []
@@ -1957,6 +2026,53 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   }
   if (execStatus && execStatus.length) {
     res.execStatus = execStatus[0]
+  }
+  if (healthCheck && healthCheck.length) {
+    const healthCheckData = healthCheck[0]
+    // Create a copy of the health check data to avoid modifying the Sequelize object
+    const healthCheckResponse = {
+      test: healthCheckData.test
+    }
+
+    // Only add fields if they are not null
+    if (healthCheckData.interval !== null) {
+      healthCheckResponse.interval = healthCheckData.interval
+    }
+    if (healthCheckData.timeout !== null) {
+      healthCheckResponse.timeout = healthCheckData.timeout
+    }
+    if (healthCheckData.startPeriod !== null) {
+      healthCheckResponse.startPeriod = healthCheckData.startPeriod
+    }
+    if (healthCheckData.startInterval !== null) {
+      healthCheckResponse.startInterval = healthCheckData.startInterval
+    }
+    if (healthCheckData.retries !== null) {
+      healthCheckResponse.retries = healthCheckData.retries
+    }
+
+    // Handle the test field - ensure it's always an array
+    if (healthCheckResponse.test) {
+      if (typeof healthCheckResponse.test === 'string') {
+        // It's a JSON string, try to parse it
+        try {
+          healthCheckResponse.test = JSON.parse(healthCheckResponse.test)
+        } catch (e) {
+          // If not valid JSON, treat as a single string command
+          healthCheckResponse.test = [healthCheckResponse.test]
+        }
+      } else if (!Array.isArray(healthCheckResponse.test)) {
+        // If it's not an array, convert to array
+        healthCheckResponse.test = [healthCheckResponse.test]
+      }
+      // If it's already an array, leave as is
+    }
+
+    if (healthCheckResponse.test && healthCheckResponse.test.length > 0) {
+      res.healthCheck = healthCheckResponse
+    } else {
+      res.healthCheck = {}
+    }
   }
   res.pubTags = pubTags
   res.subTags = subTags

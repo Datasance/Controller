@@ -68,6 +68,8 @@ const microserviceCreate = {
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
     'runtime': { 'type': 'string' },
+    'cpuSetCpus': { 'type': 'string' },
+    'memoryLimit': { 'type': 'integer' },
     'pubTags': {
       'type': 'array',
       'items': { 'type': 'string' }
@@ -75,6 +77,10 @@ const microserviceCreate = {
     'subTags': {
       'type': 'array',
       'items': { 'type': 'string' }
+    },
+    'healthCheck': {
+      'type': 'object',
+      'properties': { '$ref': '/microserviceHealthCheck' }
     }
   },
   'required': ['name'],
@@ -135,6 +141,8 @@ const microserviceUpdate = {
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
     'runtime': { 'type': 'string' },
+    'cpuSetCpus': { 'type': 'string' },
+    'memoryLimit': { 'type': 'integer' },
     'pubTags': {
       'type': 'array',
       'items': { 'type': 'string' }
@@ -142,6 +150,10 @@ const microserviceUpdate = {
     'subTags': {
       'type': 'array',
       'items': { 'type': 'string' }
+    },
+    'healthCheck': {
+      'type': 'object',
+      'properties': { '$ref': '/microserviceHealthCheck' }
     }
   },
   'additionalProperties': true
@@ -230,7 +242,25 @@ const volumeMappings = {
   'additionalProperties': true
 }
 
+const microserviceHealthCheck = {
+
+  'id': '/microserviceHealthCheck',
+  'type': 'object',
+  'properties': {
+    'test': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    },
+    'interval': { 'type': 'integer' },
+    'timeout': { 'type': 'integer' },
+    'startPeriod': { 'type': 'integer' },
+    'startInterval': { 'type': 'integer' },
+    'retries': { 'type': 'integer' }
+  },
+  'required': ['test']
+}
+
 module.exports = {
-  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, extraHosts, portsCreate, microserviceDelete, volumeMappings],
-  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate]
+  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, extraHosts, portsCreate, microserviceDelete, volumeMappings, microserviceHealthCheck],
+  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate, microserviceHealthCheck]
 }
