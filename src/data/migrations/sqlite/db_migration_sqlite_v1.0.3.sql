@@ -777,15 +777,15 @@ CREATE INDEX idx_microservice_exec_status_microservice_uuid ON MicroserviceExecS
 ALTER TABLE Fogs ADD COLUMN gps_status VARCHAR(32);
 
 ALTER TABLE Microservices ADD COLUMN cpu_set_cpus TEXT;
-ALTER TABLE Microservices ADD COLUMN memory_limit BIGINT;
+ALTER TABLE Microservices ADD COLUMN memory_limit FLOAT;
 
 CREATE TABLE IF NOT EXISTS MicroserviceHealthChecks (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     test TEXT,
-    interval BIGINT,
-    timeout BIGINT,
-    start_period BIGINT,
-    start_interval BIGINT,
+    interval FLOAT,
+    timeout FLOAT,
+    start_period FLOAT,
+    start_interval FLOAT,
     retries INT,
     microservice_uuid VARCHAR(36),
     created_at DATETIME,

@@ -790,15 +790,15 @@ CREATE INDEX idx_microservice_exec_status_microservice_uuid ON "MicroserviceExec
 ALTER TABLE "Fogs" ADD COLUMN gps_status VARCHAR(32);
 
 ALTER TABLE "Microservices" ADD COLUMN cpu_set_cpus TEXT;
-ALTER TABLE "Microservices" ADD COLUMN memory_limit BIGINT;
+ALTER TABLE "Microservices" ADD COLUMN memory_limit DOUBLE PRECISION;
 
 CREATE TABLE IF NOT EXISTS "MicroserviceHealthChecks" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     test TEXT,
-    interval BIGINT,
-    timeout BIGINT,
-    start_period BIGINT,
-    start_interval BIGINT,
+    interval DOUBLE PRECISION,
+    timeout DOUBLE PRECISION,
+    start_period DOUBLE PRECISION,
+    start_interval DOUBLE PRECISION,
     retries INT,
     microservice_uuid VARCHAR(36),
     created_at TIMESTAMP(0),

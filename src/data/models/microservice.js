@@ -86,10 +86,7 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: ''
     },
     memoryLimit: {
-      type: DataTypes.BIGINT,
-      get () {
-        return convertToInt(this.getDataValue('memoryLimit'))
-      },
+      type: DataTypes.FLOAT,
       field: 'memory_limit'
     },
     imageSnapshot: {

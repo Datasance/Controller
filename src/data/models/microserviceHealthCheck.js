@@ -13,19 +13,19 @@ module.exports = (sequelize, DataTypes) => {
       field: 'test'
     },
     interval: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.FLOAT,
       field: 'interval'
     },
     timeout: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.FLOAT,
       field: 'timeout'
     },
     startPeriod: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.FLOAT,
       field: 'start_period'
     },
     startInterval: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.FLOAT,
       field: 'start_interval'
     },
     retries: {
