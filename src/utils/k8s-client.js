@@ -170,12 +170,23 @@ async function updateService (serviceName, patchData) {
   try {
     const api = await initializeK8sClient()
 
-    // For strategic merge patch, we send the data as a map
-    const patch = {
-      spec: patchData.spec,
-      metadata: patchData.metadata
+    const patch = []
+
+    // Update spec fields
+    if (patchData.spec.type) {
+      patch.push({ op: 'replace', path: '/spec/type', value: patchData.spec.type })
+    }
+    if (patchData.spec.selector) {
+      patch.push({ op: 'replace', path: '/spec/selector', value: patchData.spec.selector })
+    }
+    if (patchData.spec.ports) {
+      patch.push({ op: 'replace', path: '/spec/ports', value: patchData.spec.ports })
     }
 
+    // Update annotations
+    if (patchData.metadata && patchData.metadata.annotations) {
+      patch.push({ op: 'replace', path: '/metadata/annotations', value: patchData.metadata.annotations })
+    }
     const response = await api.patchNamespacedService(
       serviceName,
       CONTROLLER_NAMESPACE,
