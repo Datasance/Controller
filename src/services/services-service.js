@@ -819,6 +819,7 @@ async function _createK8sService (serviceConfig, transaction) {
         'datasance.com/component': 'router'
       },
       ports: [{
+        name: 'pot-service',
         targetPort: parseInt(serviceConfig.bridgePort),
         port: parseInt(serviceConfig.servicePort),
         protocol: 'TCP'
@@ -845,51 +846,69 @@ async function _createK8sService (serviceConfig, transaction) {
 
 // Helper function to update Kubernetes service
 async function _updateK8sService (serviceConfig, transaction) {
-  const normalizedTags = serviceConfig.tags.map(tag => tag.includes(':') ? tag : `${tag}:`)
-  const patchData = {
-    metadata: {
-      annotations: normalizedTags.reduce((acc, tag) => {
-        const [key, value] = tag.split(':')
-        acc[key] = (value || '').trim()
-        return acc
-      }, {})
-    },
-    spec: {
-      type: serviceConfig.k8sType,
-      selector: {
-        application: 'interior-router',
-        name: 'router',
-        'skupper.io/component': 'router'
+  const existingService = await K8sClient.getService(serviceConfig.name)
+  if (!existingService) {
+    logger.debug(`Service not found: ${serviceConfig.name}, creating new service`)
+    const service = await _createK8sService(serviceConfig, transaction)
+    return service
+  } else {
+    const normalizedTags = serviceConfig.tags.map(tag => tag.includes(':') ? tag : `${tag}:`)
+    const patchData = {
+      metadata: {
+        annotations: normalizedTags.reduce((acc, tag) => {
+          const [key, value] = tag.split(':')
+          acc[key] = (value || '').trim()
+          return acc
+        }, {})
       },
-      ports: [{
-        port: parseInt(serviceConfig.bridgePort),
-        targetPort: parseInt(serviceConfig.servicePort),
-        protocol: 'TCP'
-      }]
+      spec: {
+        type: serviceConfig.k8sType,
+        selector: {
+          application: 'interior-router',
+          name: 'router',
+          'skupper.io/component': 'router'
+        },
+        ports: [{
+          name: 'pot-service',
+          port: parseInt(serviceConfig.bridgePort),
+          targetPort: parseInt(serviceConfig.servicePort),
+          protocol: 'TCP'
+        }]
+      }
     }
-  }
 
-  logger.debug(`Updating service: ${serviceConfig.name}`)
-  const service = await K8sClient.updateService(serviceConfig.name, patchData)
+    logger.debug(`Updating service: ${serviceConfig.name}`)
+    const updatedService = await K8sClient.updateService(serviceConfig.name, patchData)
 
-  // If LoadBalancer type, wait for and set the external IP
-  if (serviceConfig.k8sType === 'LoadBalancer') {
-    const loadBalancerIP = await K8sClient.watchLoadBalancerIP(serviceConfig.name)
-    if (loadBalancerIP) {
-      await ServiceManager.update(
-        { name: serviceConfig.name },
-        { serviceEndpoint: loadBalancerIP },
-        transaction
-      )
+    // If LoadBalancer type, wait for and set the external IP
+    if (serviceConfig.k8sType === 'LoadBalancer') {
+      const loadBalancerIP = await K8sClient.watchLoadBalancerIP(serviceConfig.name)
+      if (loadBalancerIP) {
+        await ServiceManager.update(
+          { name: serviceConfig.name },
+          { serviceEndpoint: loadBalancerIP },
+          transaction
+        )
+      }
     }
+    return updatedService
   }
-
-  return service
 }
 
 // Helper function to delete Kubernetes service
 async function _deleteK8sService (serviceName) {
-  await K8sClient.deleteService(serviceName)
+  try {
+    await K8sClient.deleteService(serviceName)
+  } catch (error) {
+    // If it's a 404 (Not Found), log a warning and continue
+    if (error.response && error.response.status === 404) {
+      logger.warn(`K8s service ${serviceName} not found during delete. It may have already been deleted.`)
+    } else {
+      // For other errors, you may want to log and rethrow, or just log as warning
+      logger.warn(`Failed to delete K8s service ${serviceName}: ${error.message}`)
+    }
+    // Do not throw, so the flow continues
+  }
 }
 
 // Create service endpoint

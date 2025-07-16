@@ -49,6 +49,19 @@ async function getSecret (secretName) {
   }
 }
 
+async function getService (serviceName) {
+  logger.debug(`Getting service: ${serviceName} in namespace: ${CONTROLLER_NAMESPACE}`)
+  try {
+    const api = await initializeK8sClient()
+    const response = await api.readNamespacedService(serviceName, CONTROLLER_NAMESPACE)
+    logger.info(`Successfully retrieved service: ${serviceName}`)
+    return response.body
+  } catch (error) {
+    logger.error(`Failed to get service ${serviceName}: ${error.message}`)
+    throw error
+  }
+}
+
 // ConfigMap methods
 async function getConfigMap (configMapName) {
   logger.debug(`Getting ConfigMap: ${configMapName} in namespace: ${CONTROLLER_NAMESPACE}`)
@@ -240,6 +253,7 @@ async function watchLoadBalancerIP (serviceName, maxRetries = 10, retryInterval 
 
 module.exports = {
   getSecret,
+  getService,
   getConfigMap,
   patchConfigMap,
   getNamespacedServices,
