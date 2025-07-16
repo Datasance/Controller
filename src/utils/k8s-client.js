@@ -185,7 +185,7 @@ async function updateService (serviceName, patchData) {
       undefined,
       undefined,
       undefined,
-      { headers: { 'Content-Type': 'application/strategic-merge-patch+json' } }
+      { headers: { 'Content-Type': 'application/json-patch+json' } }
     )
     logger.info(`Successfully updated service: ${serviceName} in namespace: ${CONTROLLER_NAMESPACE}`)
     return response.body

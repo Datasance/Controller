@@ -864,14 +864,12 @@ async function _updateK8sService (serviceConfig, transaction) {
       spec: {
         type: serviceConfig.k8sType,
         selector: {
-          application: 'interior-router',
-          name: 'router',
-          'skupper.io/component': 'router'
+          'datasance.com/component': 'router'
         },
         ports: [{
           name: 'pot-service',
-          port: parseInt(serviceConfig.bridgePort),
-          targetPort: parseInt(serviceConfig.servicePort),
+          port: parseInt(serviceConfig.servicePort),
+          targetPort: parseInt(serviceConfig.bridgePort),
           protocol: 'TCP'
         }]
       }
