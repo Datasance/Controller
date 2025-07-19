@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.5.0-beta9",
+  "version": "3.5.0-beta10",
   "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "1.0.0-beta9",
+    "@datasance/ecn-viewer": "1.0.0-beta10",
     "@kubernetes/client-node": "^0.22.3",
     "@msgpack/msgpack": "^3.1.2",
     "@opentelemetry/api": "^1.9.0",
@@ -77,7 +77,7 @@
     "dotenv": "^16.5.0",
     "ejs": "3.1.10",
     "express": "4.21.2",
-    "express-session": "1.18.1",
+    "express-session": "1.18.2",
     "formidable": "3.5.4",
     "ftp": "0.3.10",
     "globally": "^0.0.0",
@@ -91,7 +91,6 @@
     "minimatch": "10.0.1",
     "moment": "2.30.1",
     "moment-timezone": "0.5.45",
-    "morgan": "1.10.0",
     "multer": "1.4.5-lts.1",
     "mysql2": "3.10.1",
     "nconf": "0.12.1",

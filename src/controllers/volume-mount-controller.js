@@ -50,6 +50,10 @@ const updateVolumeMountYamlEndpoint = async (req) => {
   return VolumeMountService.updateVolumeMountEndpoint(name, volumeMountData)
 }
 
+const getVolumeMountLinkEndpoint = async (req) => {
+  return VolumeMountService.getVolumeMountLinkEndpoint(req.params.name)
+}
+
 const linkVolumeMountEndpoint = async (req) => {
   return VolumeMountService.linkVolumeMountEndpoint(req.params.name, req.body.fogUuids)
 }
@@ -66,6 +70,7 @@ module.exports = {
   deleteVolumeMountEndpoint,
   createVolumeMountYamlEndpoint,
   updateVolumeMountYamlEndpoint,
+  getVolumeMountLinkEndpoint,
   linkVolumeMountEndpoint,
   unlinkVolumeMountEndpoint
 }

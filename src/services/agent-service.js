@@ -752,7 +752,7 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
           // For TLS secrets, values are already base64 encoded
           data = secret.data
         } else {
-          // For opaque secrets, we need to base64 encode all values
+          // For Opaque secrets, we need to base64 encode all values
           data = Object.entries(secret.data).reduce((acc, [key, value]) => {
             acc[key] = Buffer.from(value).toString('base64')
             return acc

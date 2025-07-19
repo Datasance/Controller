@@ -184,6 +184,13 @@ async function unlinkVolumeMountEndpoint (name, fogUuids, transaction) {
   return {}
 }
 
+async function getVolumeMountLinkEndpoint (name, transaction) {
+  const linkedFogUuids = await findVolumeMountedFogNodes(name, transaction)
+  return {
+    fogUuids: linkedFogUuids
+  }
+}
+
 module.exports = {
   listVolumeMountsEndpoint: TransactionDecorator.generateTransaction(listVolumeMountsEndpoint),
   getVolumeMountEndpoint: TransactionDecorator.generateTransaction(getVolumeMountEndpoint),
@@ -192,5 +199,6 @@ module.exports = {
   deleteVolumeMountEndpoint: TransactionDecorator.generateTransaction(deleteVolumeMountEndpoint),
   linkVolumeMountEndpoint: TransactionDecorator.generateTransaction(linkVolumeMountEndpoint),
   unlinkVolumeMountEndpoint: TransactionDecorator.generateTransaction(unlinkVolumeMountEndpoint),
-  findVolumeMountedFogNodes: TransactionDecorator.generateTransaction(findVolumeMountedFogNodes)
+  findVolumeMountedFogNodes: TransactionDecorator.generateTransaction(findVolumeMountedFogNodes),
+  getVolumeMountLinkEndpoint: TransactionDecorator.generateTransaction(getVolumeMountLinkEndpoint)
 }

@@ -248,6 +248,37 @@ module.exports = [
     }
   },
   {
+    method: 'get',
+    path: '/api/v3/volumeMounts/:name/link',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        }
+      ]
+
+      // Add keycloak.protect() middleware to protect the route for SRE role
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const getVolumeMountLinkEndpoint = ResponseDecorator.handleErrors(VolumeMountController.getVolumeMountLinkEndpoint, successCode, errorCodes)
+        const responseObject = await getVolumeMountLinkEndpoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
     method: 'post',
     path: '/api/v3/volumeMounts/:name/link',
     middleware: async (req, res) => {

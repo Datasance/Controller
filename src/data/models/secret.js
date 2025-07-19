@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'type',
       validate: {
-        isIn: [['opaque', 'tls']]
+        isIn: [['Opaque', 'tls']]
       }
     },
     data: {

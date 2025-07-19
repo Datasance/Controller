@@ -640,7 +640,7 @@ DROP TABLE IF EXISTS "FogAccessTokens";
 CREATE TABLE IF NOT EXISTS "Secrets" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
-    type VARCHAR(50) NOT NULL CHECK (type IN ('opaque', 'tls')),
+    type VARCHAR(50) NOT NULL CHECK (type IN ('Opaque', 'tls')),
     data TEXT NOT NULL,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0)

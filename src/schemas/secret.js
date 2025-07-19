@@ -3,7 +3,7 @@ const secretCreate = {
   type: 'object',
   properties: {
     name: { type: 'string', minLength: 1, maxLength: 255 },
-    type: { type: 'string', enum: ['opaque', 'tls'] },
+    type: { type: 'string', enum: ['Opaque', 'tls'] },
     data: { type: 'object' }
   },
   required: ['name', 'type', 'data'],
@@ -27,7 +27,7 @@ const secretResponse = {
   properties: {
     id: { type: 'integer' },
     name: { type: 'string' },
-    type: { type: 'string', enum: ['opaque', 'tls'] },
+    type: { type: 'string', enum: ['Opaque', 'tls'] },
     data: { type: 'object' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' }
@@ -47,7 +47,7 @@ const secretListResponse = {
         properties: {
           id: { type: 'integer' },
           name: { type: 'string' },
-          type: { type: 'string', enum: ['opaque', 'tls'] },
+          type: { type: 'string', enum: ['Opaque', 'tls'] },
           created_at: { type: 'string', format: 'date-time' },
           updated_at: { type: 'string', format: 'date-time' }
         },
