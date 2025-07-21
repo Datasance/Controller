@@ -294,7 +294,7 @@ paths:
     post:
       tags:
         - ioFog
-      summary: prune reboot fog agent
+      summary: prune remote fog agent
       operationId: setPruneCommand
       parameters:
         - in: path
