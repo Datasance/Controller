@@ -19,6 +19,8 @@ const MicroserviceEnv = models.MicroserviceEnv
 const MicroserviceExtraHost = models.MicroserviceExtraHost
 const MicroserviceArg = models.MicroserviceArg
 const MicroserviceCdiDev = models.MicroserviceCdiDev
+const MicroserviceCapAdd = models.MicroserviceCapAdd
+const MicroserviceCapDrop = models.MicroserviceCapDrop
 const VolumeMapping = models.VolumeMapping
 const StraceDiagnostics = models.StraceDiagnostics
 const CatalogItem = models.CatalogItem
@@ -29,6 +31,7 @@ const Application = models.Application
 const Routing = models.Routing
 const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
+const MicroserviceHealthCheck = models.MicroserviceHealthCheck
 const Op = require('sequelize').Op
 
 const microserviceExcludedFields = [
@@ -73,6 +76,18 @@ class MicroserviceManager extends BaseManager {
           as: 'cdiDevices',
           required: false,
           attributes: ['cdiDevices']
+        },
+        {
+          model: MicroserviceCapAdd,
+          as: 'capAdd',
+          required: false,
+          attributes: ['capAdd']
+        },
+        {
+          model: MicroserviceCapDrop,
+          as: 'capDrop',
+          required: false,
+          attributes: ['capDrop']
         },
         {
           model: MicroservicePort,
@@ -132,6 +147,12 @@ class MicroserviceManager extends BaseManager {
           }],
           attributes: { exclude: ['id', 'source_microservice_uuid',
             'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: where,
@@ -164,6 +185,18 @@ class MicroserviceManager extends BaseManager {
           as: 'cdiDevices',
           required: false,
           attributes: ['cdiDevices']
+        },
+        {
+          model: MicroserviceCapAdd,
+          as: 'capAdd',
+          required: false,
+          attributes: ['capAdd']
+        },
+        {
+          model: MicroserviceCapDrop,
+          as: 'capDrop',
+          required: false,
+          attributes: ['capDrop']
         },
         {
           model: MicroservicePort,
@@ -226,6 +259,12 @@ class MicroserviceManager extends BaseManager {
           as: 'subTags',
           attributes: ['value'],
           through: { attributes: [] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: {
@@ -270,6 +309,18 @@ class MicroserviceManager extends BaseManager {
           as: 'cdiDevices',
           required: false,
           attributes: ['cdiDevices']
+        },
+        {
+          model: MicroserviceCapAdd,
+          as: 'capAdd',
+          required: false,
+          attributes: ['capAdd']
+        },
+        {
+          model: MicroserviceCapDrop,
+          as: 'capDrop',
+          required: false,
+          attributes: ['capDrop']
         },
         {
           model: MicroservicePort,
@@ -329,6 +380,12 @@ class MicroserviceManager extends BaseManager {
           }],
           attributes: { exclude: ['id',
             'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
+        },
+        {
+          model: MicroserviceHealthCheck,
+          as: 'healthCheck',
+          required: false,
+          attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
         }
       ],
       where: where,
@@ -384,7 +441,23 @@ class MicroserviceManager extends BaseManager {
       attributes: ['uuid']
     }, { transaction: transaction })
   }
-
+  findSystemMicroserviceOnGet (where, transaction) {
+    return Microservice.findOne({
+      include: [
+        {
+          model: Application,
+          as: 'application',
+          required: true,
+          where: {
+            isSystem: true
+          },
+          attributes: ['id']
+        }
+      ],
+      where: where,
+      attributes: ['uuid']
+    }, { transaction: transaction })
+  }
   async findOneExcludeFields (where, transaction) {
     return Microservice.findOne({
       include: [
@@ -416,6 +489,36 @@ class MicroserviceManager extends BaseManager {
           as: 'application',
           required: true,
           where: { isSystem: false }
+        },
+        {
+          model: Tags,
+          as: 'pubTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        },
+        {
+          model: Tags,
+          as: 'subTags',
+          attributes: ['value'],
+          through: { attributes: [] }
+        }
+      ],
+      where: where,
+      order: [['name', 'ASC']],
+      attributes: {
+        exclude: microserviceExcludedFields
+      }
+    }, { transaction: transaction })
+  }
+
+  async findAllSystemExcludeFields (where, transaction) {
+    return Microservice.findAll({
+      include: [
+        {
+          model: Application,
+          as: 'application',
+          required: true,
+          where: { isSystem: true }
         },
         {
           model: Tags,

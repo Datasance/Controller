@@ -27,9 +27,7 @@ FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:latest
 
 USER root
 # Install dependencies for logging and development
-RUN microdnf install -y logrotate g++ make && microdnf clean all
-
-COPY logrotate.conf /etc/logrotate.d/iofog-controller
+RUN microdnf install -y g++ make && microdnf clean all
 
 # Install Python and pip
 RUN microdnf install -y python3 && \
@@ -38,7 +36,7 @@ RUN microdnf install -y python3 && \
     pip3 install --no-cache --upgrade pip setuptools && \
     microdnf install shadow-utils && \
     microdnf clean all
-RUN microdnf reinstall -y tzdata &&  microdnf clean all
+RUN microdnf install -y tzdata &&  microdnf clean all
 RUN microdnf -y remove microdnf
 RUN useradd --uid 10000 --create-home runner
 RUN mkdir -p /var/log/iofog-controller && \

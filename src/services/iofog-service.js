@@ -11,6 +11,8 @@
  *
  */
 
+const config = require('../config')
+const fs = require('fs')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const AppHelper = require('../helpers/app-helper')
 const FogManager = require('../data/managers/iofog-manager')
@@ -31,25 +33,225 @@ const EdgeResourceService = require('./edge-resource-service')
 const RouterManager = require('../data/managers/router-manager')
 const MicroserviceExtraHostManager = require('../data/managers/microservice-extra-host-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
+const CatalogItemImageManager = require('../data/managers/catalog-item-image-manager')
 const RouterService = require('./router-service')
 const Constants = require('../helpers/constants')
 const Op = require('sequelize').Op
 const lget = require('lodash/get')
+const CertificateService = require('./certificate-service')
+const logger = require('../logger')
+const ServiceManager = require('../data/managers/service-manager')
+const FogStates = require('../enums/fog-state')
+const SecretManager = require('../data/managers/secret-manager')
+
+const SITE_CA_CERT = 'pot-site-ca'
+const DEFAULT_ROUTER_LOCAL_CA = 'default-router-local-ca'
+const SERVICE_ANNOTATION_TAG = 'service.datasance.com/tag'
+
+async function checkKubernetesEnvironment () {
+  const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')
+  return controlPlane && controlPlane.toLowerCase() === 'kubernetes'
+}
+
+async function getLocalCertificateHosts (isKubernetes, namespace) {
+  if (isKubernetes) {
+    return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local,127.0.0.1,localhost,host.docker.internal,host.containers.internal`
+  }
+  return '127.0.0.1,localhost,host.docker.internal,host.containers.internal'
+}
+
+async function getSiteCertificateHosts (fogData, transaction) {
+  const hosts = new Set()
+  // Add existing hosts if isSystem
+  if (fogData.isSystem) {
+    if (fogData.host) hosts.add(fogData.host)
+    if (fogData.ipAddress) hosts.add(fogData.ipAddress)
+    if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
+  }
+  // Add default router host if not system
+  if (!fogData.isSystem) {
+    const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+    if (defaultRouter.host) hosts.add(defaultRouter.host)
+  }
+  // Add upstream router hosts
+  // const upstreamRouters = (fogData.upstreamRouters || []).filter(uuid => uuid !== 'default-router')
+  // if (upstreamRouters.length) {
+  //   for (const uuid of upstreamRouters) {
+  //     const routerHost = await FogManager.findOne({ uuid: uuid }, transaction)
+  //     if (routerHost.host) hosts.add(routerHost.host)
+  //     if (routerHost.ipAddress) hosts.add(routerHost.ipAddress)
+  //   }
+  // }
+  return Array.from(hosts).join(',') || 'localhost'
+}
+
+async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, transaction) {
+  logger.debug('Starting _handleRouterCertificates for fog: ' + JSON.stringify({ uuid: uuid, host: fogData.host }))
+
+  // Check if we're in Kubernetes environment
+  const isKubernetes = await checkKubernetesEnvironment()
+  const namespace = isKubernetes ? process.env.CONTROLLER_NAMESPACE : null
+
+  // Helper to check CA existence
+  async function ensureCA (name, subject) {
+    logger.debug('Checking CA existence: ' + JSON.stringify({ name, subject }))
+    try {
+      await CertificateService.getCAEndpoint(name, transaction)
+      logger.debug('CA already exists: ' + name)
+      // CA exists
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        logger.debug('CA not found, creating new CA: ' + JSON.stringify({ name, subject }))
+        await CertificateService.createCAEndpoint({
+          name,
+          subject: `${subject}`,
+          expiration: 60, // months
+          type: 'self-signed'
+        }, transaction)
+        logger.debug('Successfully created CA: ' + name)
+      } else if (err.name === 'ConflictError') {
+        logger.debug('CA already exists (conflict): ' + name)
+        // Already exists, ignore
+      } else {
+        logger.error('Error in ensureCA - Name: ' + name + ', Subject: ' + subject + ', Error: ' + err.message + ', Type: ' + err.name + ', Code: ' + err.code)
+        logger.error('Stack trace: ' + err.stack)
+        throw err
+      }
+    }
+  }
+
+  // Helper to check cert existence
+  async function ensureCert (name, subject, hosts, ca, shouldRecreate = false) {
+    logger.debug('Checking certificate existence: ' + JSON.stringify({ name, subject, hosts, ca }))
+    try {
+      const existingCert = await CertificateService.getCertificateEndpoint(name, transaction)
+      if (shouldRecreate && existingCert) {
+        logger.debug('Certificate exists and needs recreation: ' + name)
+        await CertificateService.deleteCertificateEndpoint(name, transaction)
+        logger.debug('Deleted existing certificate: ' + name)
+        // Create new certificate
+        await CertificateService.createCertificateEndpoint({
+          name,
+          subject: `${subject}`,
+          hosts,
+          ca
+        }, transaction)
+        logger.debug('Successfully recreated certificate: ' + name)
+      } else if (!existingCert) {
+        logger.debug('Certificate not found, creating new certificate: ' + JSON.stringify({ name, subject, hosts, ca }))
+        await CertificateService.createCertificateEndpoint({
+          name,
+          subject: `${subject}`,
+          hosts,
+          ca
+        }, transaction)
+        logger.debug('Successfully created certificate: ' + name)
+      } else {
+        logger.debug('Certificate already exists: ' + name)
+      }
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        logger.debug('Certificate not found, creating new certificate: ' + JSON.stringify({ name, subject, hosts, ca }))
+        await CertificateService.createCertificateEndpoint({
+          name,
+          subject: `${subject}`,
+          hosts,
+          ca
+        }, transaction)
+        logger.debug('Successfully created certificate: ' + name)
+      } else if (err.name === 'ConflictError') {
+        logger.debug('Certificate already exists (conflict): ' + name)
+        // Already exists, ignore
+      } else {
+        logger.error('Error in ensureCert - Name: ' + name + ', Subject: ' + subject + ', Hosts: ' + hosts + ', CA: ' + JSON.stringify(ca) + ', Error: ' + err.message + ', Type: ' + err.name + ', Code: ' + err.code)
+        logger.error('Stack trace: ' + err.stack)
+        throw err
+      }
+    }
+  }
+
+  try {
+    // Always ensure SITE_CA_CERT exists
+    logger.debug('Ensuring SITE_CA_CERT exists')
+    await ensureCA(SITE_CA_CERT, SITE_CA_CERT)
+
+    // If routerMode is 'none', only ensure DEFAULT_ROUTER_LOCAL_CA and its signed certificate
+    if (fogData.routerMode === 'none') {
+      logger.debug('Router mode is none, ensuring DEFAULT_ROUTER_LOCAL_CA exists')
+      await ensureCA(DEFAULT_ROUTER_LOCAL_CA, DEFAULT_ROUTER_LOCAL_CA)
+      logger.debug('Ensuring local-agent certificate signed by DEFAULT_ROUTER_LOCAL_CA')
+      const localHosts = await getLocalCertificateHosts(isKubernetes, namespace)
+      await ensureCert(
+        `${uuid}-local-agent`,
+        `${uuid}-local-agent`,
+        localHosts,
+        { type: 'direct', secretName: DEFAULT_ROUTER_LOCAL_CA },
+        isRouterModeChanged
+      )
+      logger.debug('Successfully completed _handleRouterCertificates for routerMode none')
+      return
+    }
+
+    // For other router modes, ensure all other certificates
+    // Always ensure site-server cert exists
+    logger.debug('Ensuring site-server certificate exists')
+    const siteHosts = await getSiteCertificateHosts(fogData, transaction)
+    await ensureCert(
+      `${uuid}-site-server`,
+      `${uuid}-site-server`,
+      siteHosts,
+      { type: 'direct', secretName: SITE_CA_CERT },
+      false
+    )
+
+    // Always ensure local-ca exists
+    logger.debug('Ensuring local-ca exists')
+    await ensureCA(`${uuid}-local-ca`, `${uuid}-local-ca`)
+
+    // Always ensure local-server cert exists
+    logger.debug('Ensuring local-server certificate exists')
+    const localHosts = await getLocalCertificateHosts(isKubernetes, namespace)
+    await ensureCert(
+      `${uuid}-local-server`,
+      `${uuid}-local-server`,
+      localHosts,
+      { type: 'direct', secretName: `${uuid}-local-ca` },
+      isRouterModeChanged
+    )
+
+    // Always ensure local-agent cert exists
+    logger.debug('Ensuring local-agent certificate exists')
+    await ensureCert(
+      `${uuid}-local-agent`,
+      `${uuid}-local-agent`,
+      localHosts,
+      { type: 'direct', secretName: `${uuid}-local-ca` },
+      isRouterModeChanged
+    )
+
+    logger.debug('Successfully completed _handleRouterCertificates')
+  } catch (error) {
+    logger.error('Certificate operation failed - UUID: ' + uuid + ', RouterMode: ' + fogData.routerMode + ', Error: ' + error.message + ', Type: ' + error.name + ', Code: ' + error.code)
+    logger.error('Stack trace: ' + error.stack)
+  }
+}
 
 async function createFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogCreate)
-
   let createFogData = {
-    uuid: AppHelper.generateRandomString(32),
+    uuid: AppHelper.generateUUID(),
     name: fogData.name,
     location: fogData.location,
     latitude: fogData.latitude,
     longitude: fogData.longitude,
-    gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
+    // gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
     networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
+    containerEngine: fogData.containerEngine,
+    deploymentType: fogData.deploymentType,
     diskLimit: fogData.diskLimit,
     diskDirectory: fogData.diskDirectory,
     memoryLimit: fogData.memoryLimit,
@@ -72,6 +274,16 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     routerId: null,
     timeZone: fogData.timeZone
   }
+
+  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+    createFogData.gpsMode = 'manual'
+  } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
+    createFogData.gpsMode = fogData.gpsMode
+    createFogData.gpsDevice = fogData.gpsDevice
+  } else {
+    createFogData.gpsMode = undefined
+  }
+
   createFogData = AppHelper.deleteUndefinedFields(createFogData)
 
   // Default router is edge
@@ -104,32 +316,75 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
 
   const fog = await FogManager.create(createFogData, transaction)
 
-  // Set tags
+  // Set tags (synchronously, as this is a simple DB op)
   await _setTags(fog, fogData.tags, transaction)
 
-  if (fogData.routerMode !== 'none') {
-    if (!fogData.host && !isCLI) {
-      throw new Errors.ValidationError(ErrorMessages.HOST_IS_REQUIRED)
-    }
+  // Return fog UUID immediately
+  const res = { uuid: fog.uuid }
 
-    await RouterService.createRouterForFog(fogData, fog.uuid, upstreamRouters)
-  }
+  // Start background orchestration
+  setImmediate(() => {
+    (async () => {
+      try {
+        // --- Begin orchestration logic (previously inside runWithRetries) ---
+        await _handleRouterCertificates(fogData, createFogData.uuid, false, transaction)
 
-  const res = {
-    uuid: fog.uuid
-  }
+        if (fogData.routerMode !== 'none') {
+          if (!fogData.host && !isCLI) {
+            throw new Errors.ValidationError(ErrorMessages.HOST_IS_REQUIRED)
+          }
+          await RouterService.createRouterForFog(fogData, fog.uuid, upstreamRouters)
 
-  await ChangeTrackingService.create(fog.uuid, transaction)
+          // Service Distribution Logic
+          const serviceTags = await _extractServiceTags(fogData.tags)
+          if (serviceTags.length > 0) {
+            const services = await _findMatchingServices(serviceTags, transaction)
+            if (services.length > 0) {
+              const routerName = `router-${fog.uuid.toLowerCase()}`
+              const routerMicroservice = await MicroserviceManager.findOne({ name: routerName }, transaction)
+              if (!routerMicroservice) {
+                throw new Errors.NotFoundError(`Router microservice not found: ${routerName}`)
+              }
+              let config = JSON.parse(routerMicroservice.config || '{}')
+              for (const service of services) {
+                const listenerConfig = _buildTcpListenerForFog(service, fog.uuid)
+                config = _mergeTcpListener(config, listenerConfig)
+              }
+              await MicroserviceManager.update(
+                { uuid: routerMicroservice.uuid },
+                { config: JSON.stringify(config) },
+                transaction
+              )
+              await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.microserviceConfig, transaction)
+            }
+          }
+        }
 
-  if (fogData.abstractedHardwareEnabled) {
-    await _createHalMicroserviceForFog(fog, null, transaction)
-  }
-
-  if (fogData.bluetoothEnabled) {
-    await _createBluetoothMicroserviceForFog(fog, null, transaction)
-  }
-
-  await ChangeTrackingService.update(createFogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
+        await ChangeTrackingService.create(fog.uuid, transaction)
+        if (fogData.abstractedHardwareEnabled) {
+          await _createHalMicroserviceForFog(fog, null, transaction)
+        }
+        if (fogData.bluetoothEnabled) {
+          await _createBluetoothMicroserviceForFog(fog, null, transaction)
+        }
+        await ChangeTrackingService.update(createFogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
+        // --- End orchestration logic ---
+        // Set fog node as healthy
+        await FogManager.update({ uuid: fog.uuid }, { warningMessage: 'HEALTHY' }, transaction)
+      } catch (err) {
+        logger.error('Background orchestration failed in createFogEndPoint: ' + err.message)
+        // Set fog node as warning with error message
+        await FogManager.update(
+          { uuid: fog.uuid },
+          {
+            daemonStatus: FogStates.WARNING,
+            warningMessage: `Background orchestration error: ${err.message}`
+          },
+          transaction
+        )
+      }
+    })()
+  })
 
   return res
 }
@@ -158,10 +413,12 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     location: fogData.location,
     latitude: fogData.latitude,
     longitude: fogData.longitude,
-    gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
+    // gpsMode: fogData.latitude || fogData.longitude ? 'manual' : undefined,
     description: fogData.description,
     networkInterface: fogData.networkInterface,
     dockerUrl: fogData.dockerUrl,
+    containerEngine: fogData.containerEngine,
+    deploymentType: fogData.deploymentType,
     diskLimit: fogData.diskLimit,
     diskDirectory: fogData.diskDirectory,
     memoryLimit: fogData.memoryLimit,
@@ -183,6 +440,15 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     availableDiskThreshold: fogData.availableDiskThreshold,
     timeZone: fogData.timeZone
   }
+
+  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+    updateFogData.gpsMode = 'manual'
+  } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
+    updateFogData.gpsMode = fogData.gpsMode
+    updateFogData.gpsDevice = fogData.gpsDevice
+  } else {
+    updateFogData.gpsMode = undefined
+  }
   updateFogData = AppHelper.deleteUndefinedFields(updateFogData)
 
   const oldFog = await FogManager.findOne(queryFogData, transaction)
@@ -203,7 +469,6 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     }
   }
 
-  // Update router
   // Get all router config informations
   const router = await oldFog.getRouter()
   const host = fogData.host || lget(router, 'host')
@@ -213,83 +478,159 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
   const messagingPort = fogData.messagingPort || (router ? router.messagingPort : null)
   const interRouterPort = fogData.interRouterPort || (router ? router.interRouterPort : null)
   const edgeRouterPort = fogData.edgeRouterPort || (router ? router.edgeRouterPort : null)
-  const requireSsl = fogData.requireSsl || (router ? router.requireSsl : null)
-  const sslProfile = fogData.sslProfile || (router ? router.sslProfile : null)
-  const saslMechanisms = fogData.saslMechanisms || (router ? router.saslMechanisms : null)
-  const authenticatePeer = fogData.authenticatePeer || (router ? router.authenticatePeer : null)
-  const caCert = fogData.caCert || (router ? router.caCert : null)
-  const tlsCert = fogData.tlsCert || (router ? router.tlsCert : null)
-  const tlsKey = fogData.tlsKey || (router ? router.tlsKey : null)
   let networkRouter
 
-  // const isSystem = updateFogData.isSystem === undefined ? oldFog.isSystem : updateFogData.isSystem
-  // if (isSystem && routerMode !== 'interior') {
-  //   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, fogData.routerMode))
-  // }
-
-  if (routerMode === 'none') {
-    networkRouter = await RouterService.getNetworkRouter(fogData.networkRouter)
-    if (!networkRouter) {
-      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, !fogData.networkRouter ? Constants.DEFAULT_ROUTER_NAME : fogData.networkRouter))
-    }
-    // Only delete previous router if there is a network router
-    if (router) {
-      // New router mode is none, delete existing router
-      await _deleteFogRouter(fogData, transaction)
-    }
-  } else {
-    const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
-    const upstreamRouters = await RouterService.validateAndReturnUpstreamRouters(upstreamRoutersIofogUuid, oldFog.isSystem, defaultRouter)
-    if (!router) {
-      // Router does not exist yet
-      networkRouter = await RouterService.createRouterForFog(fogData, oldFog.uuid, upstreamRouters)
-    } else {
-      // Update existing router
-      networkRouter = await RouterService.updateRouter(router, {
-        messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host, requireSsl, sslProfile, saslMechanisms, authenticatePeer, caCert, tlsCert, tlsKey
-      }, upstreamRouters)
-      await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
-    }
+  const isSystem = updateFogData.isSystem === undefined ? oldFog.isSystem : updateFogData.isSystem
+  if (isSystem && routerMode !== 'interior') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, fogData.routerMode))
   }
-  updateFogData.routerId = networkRouter.id
 
-  // If router changed, set routerChanged flag
-  if (updateFogData.routerId !== oldFog.routerId || updateFogData.routerMode !== oldFog.routerMode) {
-    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
-    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+  let isRouterModeChanged = false
+  const oldRouterMode = (router ? (router.isEdge ? 'edge' : 'interior') : 'none')
+  if (fogData.routerMode && fogData.routerMode !== oldRouterMode) {
+    if (fogData.routerMode === 'none' || oldRouterMode === 'none') {
+      isRouterModeChanged = true
+    }
   }
 
   await FogManager.update(queryFogData, updateFogData, transaction)
   await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.config, transaction)
 
-  let msChanged = false
+  // Return immediately
+  const res = { uuid: fogData.uuid }
 
-  // Update Microservice extra hosts
-  if (updateFogData.host && updateFogData.host !== oldFog.host) {
-    await _updateMicroserviceExtraHosts(fogData.uuid, updateFogData.host, transaction)
-  }
+  // Start background orchestration
+  setImmediate(() => {
+    (async () => {
+      try {
+        // --- Begin orchestration logic ---
+        const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
+        await _handleRouterCertificates(fogData, fog.uuid, isRouterModeChanged, transaction)
 
-  if (oldFog.abstractedHardwareEnabled === true && fogData.abstractedHardwareEnabled === false) {
-    await _deleteHalMicroserviceByFog(fogData, transaction)
-    msChanged = true
-  }
-  if (oldFog.abstractedHardwareEnabled === false && fogData.abstractedHardwareEnabled === true) {
-    await _createHalMicroserviceForFog(fogData, oldFog, transaction)
-    msChanged = true
-  }
+        if (routerMode === 'none') {
+          networkRouter = await RouterService.getNetworkRouter(fogData.networkRouter)
+          if (!networkRouter) {
+            throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, !fogData.networkRouter ? Constants.DEFAULT_ROUTER_NAME : fogData.networkRouter))
+          }
+          if (router) {
+            await _deleteFogRouter(fogData, transaction)
+          }
+        } else {
+          const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+          const upstreamRouters = await RouterService.validateAndReturnUpstreamRouters(upstreamRoutersIofogUuid, oldFog.isSystem, defaultRouter)
+          if (!router) {
+            networkRouter = await RouterService.createRouterForFog(fogData, oldFog.uuid, upstreamRouters)
+            // --- Service Distribution Logic ---
+            const serviceTags = await _extractServiceTags(fogData.tags)
+            if (serviceTags.length > 0) {
+              const services = await _findMatchingServices(serviceTags, transaction)
+              if (services.length > 0) {
+                const routerName = `router-${fogData.uuid.toLowerCase()}`
+                const routerMicroservice = await MicroserviceManager.findOne({ name: routerName }, transaction)
+                if (!routerMicroservice) {
+                  throw new Errors.NotFoundError(`Router microservice not found: ${routerName}`)
+                }
+                let config = JSON.parse(routerMicroservice.config || '{}')
+                for (const service of services) {
+                  const listenerConfig = _buildTcpListenerForFog(service, fogData.uuid)
+                  config = _mergeTcpListener(config, listenerConfig)
+                }
+                await MicroserviceManager.update(
+                  { uuid: routerMicroservice.uuid },
+                  { config: JSON.stringify(config) },
+                  transaction
+                )
+                await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceConfig, transaction)
+              }
+            }
+          } else {
+            const existingConnectors = await _extractExistingTcpConnectors(fogData.uuid, transaction)
+            networkRouter = await RouterService.updateRouter(router, {
+              messagingPort, interRouterPort, edgeRouterPort, isEdge: routerMode === 'edge', host
+            }, upstreamRouters, fogData.containerEngine)
+            // --- Service Distribution Logic ---
+            const serviceTags = await _extractServiceTags(fogData.tags)
+            const routerName = `router-${fogData.uuid.toLowerCase()}`
+            const routerMicroservice = await MicroserviceManager.findOne({ name: routerName }, transaction)
+            if (!routerMicroservice) {
+              throw new Errors.NotFoundError(`Router microservice not found: ${routerName}`)
+            }
+            let config = JSON.parse(routerMicroservice.config || '{}')
+            if (serviceTags.length > 0) {
+              const services = await _findMatchingServices(serviceTags, transaction)
+              if (services.length > 0) {
+                for (const service of services) {
+                  const listenerConfig = _buildTcpListenerForFog(service, fogData.uuid)
+                  config = _mergeTcpListener(config, listenerConfig)
+                }
+              }
+            }
+            // Merge back existing connectors if any
+            if (existingConnectors && Object.keys(existingConnectors).length > 0) {
+              for (const connectorName in existingConnectors) {
+                const connectorObj = existingConnectors[connectorName]
+                config = _mergeTcpConnector(config, connectorObj)
+              }
+            }
+            await MicroserviceManager.update(
+              { uuid: routerMicroservice.uuid },
+              { config: JSON.stringify(config) },
+              transaction
+            )
+            await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceConfig, transaction)
+            await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
+          }
+        }
+        updateFogData.routerId = networkRouter.id
 
-  if (oldFog.bluetoothEnabled === true && fogData.bluetoothEnabled === false) {
-    await _deleteBluetoothMicroserviceByFog(fogData, transaction)
-    msChanged = true
-  }
-  if (oldFog.bluetoothEnabled === false && fogData.bluetoothEnabled === true) {
-    await _createBluetoothMicroserviceForFog(fogData, oldFog, transaction)
-    msChanged = true
-  }
+        // If router changed, set routerChanged flag
+        if (updateFogData.routerId !== oldFog.routerId || updateFogData.routerMode !== oldFog.routerMode) {
+          await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.routerChanged, transaction)
+          await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+        }
 
-  if (msChanged) {
-    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
-  }
+        let msChanged = false
+        if (updateFogData.host && updateFogData.host !== oldFog.host) {
+          await _updateMicroserviceExtraHosts(fogData.uuid, updateFogData.host, transaction)
+        }
+        if (oldFog.abstractedHardwareEnabled === true && fogData.abstractedHardwareEnabled === false) {
+          await _deleteHalMicroserviceByFog(fogData, transaction)
+          msChanged = true
+        }
+        if (oldFog.abstractedHardwareEnabled === false && fogData.abstractedHardwareEnabled === true) {
+          await _createHalMicroserviceForFog(fogData, oldFog, transaction)
+          msChanged = true
+        }
+        if (oldFog.bluetoothEnabled === true && fogData.bluetoothEnabled === false) {
+          await _deleteBluetoothMicroserviceByFog(fogData, transaction)
+          msChanged = true
+        }
+        if (oldFog.bluetoothEnabled === false && fogData.bluetoothEnabled === true) {
+          await _createBluetoothMicroserviceForFog(fogData, oldFog, transaction)
+          msChanged = true
+        }
+        if (msChanged) {
+          await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceCommon, transaction)
+        }
+        // --- End orchestration logic ---
+        // Set fog node as healthy
+        await FogManager.update({ uuid: fogData.uuid }, { warningMessage: 'HEALTHY' }, transaction)
+      } catch (err) {
+        logger.error('Background orchestration failed in updateFogEndPoint: ' + err.message)
+        await FogManager.update(
+          { uuid: fogData.uuid },
+          {
+            daemonStatus: FogStates.WARNING,
+            warningMessage: `Background orchestration error: ${err.message}`
+          },
+          transaction
+        )
+      }
+    })()
+  })
+
+  // Return immediately
+  return res
 }
 
 async function _updateMicroserviceExtraHosts (fogUuid, host, transaction) {
@@ -342,7 +683,7 @@ async function _deleteFogRouter (fogData, transaction) {
         }
 
         // Update router config
-        await RouterService.updateConfig(router.id, transaction)
+        await RouterService.updateConfig(router.id, fogData.containerEngine, transaction)
         // Set routerChanged flag
         await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.routerChanged, transaction)
       }
@@ -363,7 +704,7 @@ async function _deleteFogRouter (fogData, transaction) {
   // Delete router msvc
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   await MicroserviceManager.delete({ catalogItemId: routerCatalog.id, iofogUuid: fogData.uuid }, transaction)
-  await ApplicationManager.delete({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  // await ApplicationManager.delete({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
 }
 
 async function deleteFogEndPoint (fogData, isCLI, transaction) {
@@ -428,20 +769,67 @@ async function _getFogEdgeResources (fog, transaction) {
   return resources.map(EdgeResourceService.buildGetObject)
 }
 
+async function _getFogVolumeMounts (fog, transaction) {
+  const volumeMountAttributes = [
+    'name',
+    'version',
+    'configMapName',
+    'secretName'
+  ]
+  const volumeMounts = await fog.getVolumeMounts({ attributes: volumeMountAttributes })
+  return volumeMounts.map(vm => {
+    return {
+      name: vm.name,
+      version: vm.version,
+      configMapName: vm.configMapName,
+      secretName: vm.secretName
+    }
+  })
+}
+
 async function _getFogExtraInformation (fog, transaction) {
   const routerConfig = await _getFogRouterConfig(fog, transaction)
   const edgeResources = await _getFogEdgeResources(fog, transaction)
+  const volumeMounts = await _getFogVolumeMounts(fog, transaction)
   // Transform to plain JS object
   if (fog.toJSON && typeof fog.toJSON === 'function') {
     fog = fog.toJSON()
   }
-  return { ...fog, tags: _mapTags(fog), ...routerConfig, edgeResources }
+  return { ...fog, tags: _mapTags(fog), ...routerConfig, edgeResources, volumeMounts }
 }
 
 // Map tags to string array
 // Return plain JS object
 function _mapTags (fog) {
   return fog.tags ? fog.tags.map(t => t.value) : []
+}
+
+/**
+ * Extracts service-related tags from fog node tags
+ * @param {Array<string>} fogTags - Array of tags from fog node
+ * @returns {Array<string>} Array of service tags (e.g., ["all", "foo", "bar"])
+ */
+async function _extractServiceTags (fogTags) {
+  if (!fogTags || !Array.isArray(fogTags)) {
+    return []
+  }
+
+  // Filter tags that start with SERVICE_ANNOTATION_TAG
+  const serviceTags = fogTags
+    .filter(tag => tag.startsWith(SERVICE_ANNOTATION_TAG))
+    .map(tag => {
+      // Extract the value after the colon
+      const parts = tag.split(':')
+      return parts.length > 1 ? parts[1].trim() : ''
+    })
+    .filter(tag => tag !== '') // Remove empty tags
+
+  // If we have "all" tag, return just that
+  if (serviceTags.includes('all')) {
+    return ['all']
+  }
+
+  return serviceTags
 }
 
 async function getFog (fogData, isCLI, transaction) {
@@ -461,7 +849,8 @@ async function getFogEndPoint (fogData, isCLI, transaction) {
   return getFog(fogData, isCLI, transaction)
 }
 
-async function getFogListEndPoint (filters, isCLI, isSystem, transaction) {
+// async function getFogListEndPoint (filters, isCLI, isSystem, transaction) {
+async function getFogListEndPoint (filters, isCLI, transaction) {
   await Validator.validate(filters, Validator.schemas.iofogFilters)
 
   // // If listing system agent through REST API, make sure user is authenticated
@@ -469,7 +858,8 @@ async function getFogListEndPoint (filters, isCLI, isSystem, transaction) {
   //   throw new Errors.AuthenticationError('Unauthorized')
   // }
 
-  const queryFogData = isSystem ? { isSystem } : (isCLI ? {} : { isSystem: false })
+  // const queryFogData = isSystem ? { isSystem } : (isCLI ? {} : { isSystem: false })
+  const queryFogData = {}
 
   let fogs = await FogManager.findAllWithTags(queryFogData, transaction)
   fogs = _filterFogs(fogs, filters)
@@ -489,8 +879,8 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
 
   const newProvision = {
     iofogUuid: fogData.uuid,
-    provisionKey: AppHelper.generateRandomString(8),
-    expirationTime: new Date().getTime() + (20 * 60 * 1000)
+    provisionKey: AppHelper.generateUUID(),
+    expirationTime: new Date().getTime() + (10 * 60 * 1000)
   }
 
   const fog = await FogManager.findOne(queryFogData, transaction)
@@ -500,9 +890,52 @@ async function generateProvisioningKeyEndPoint (fogData, isCLI, transaction) {
 
   const provisioningKeyData = await FogProvisionKeyManager.updateOrCreate({ iofogUuid: fogData.uuid }, newProvision, transaction)
 
+  const devMode = process.env.DEV_MODE || config.get('server.devMode')
+  const sslCert = process.env.SSL_CERT || config.get('server.ssl.path.cert')
+  const intermedKey = process.env.INTERMEDIATE_CERT || config.get('server.ssl.path.intermediateCert')
+  const sslCertBase64 = config.get('server.ssl.base64.cert')
+  const intermedKeyBase64 = config.get('server.ssl.base64.intermediateCert')
+  const hasFileBasedSSL = !devMode && sslCert
+  const hasBase64SSL = !devMode && sslCertBase64
+  let caCert = ''
+
+  if (!devMode) {
+    if (hasFileBasedSSL) {
+      try {
+        if (intermedKey) {
+          // Check if intermediate certificate file exists before trying to read it
+          if (fs.existsSync(intermedKey)) {
+            const certData = fs.readFileSync(intermedKey)
+            caCert = Buffer.from(certData).toString('base64')
+          } else {
+            // Intermediate certificate file doesn't exist, don't provide any CA cert
+            // Let the system's default trust store handle validation
+            logger.info(`Intermediate certificate file not found at path: ${intermedKey}, not providing CA certificate`)
+            caCert = ''
+          }
+        } else {
+          // No intermediate certificate path provided, don't provide any CA cert
+          // Let the system's default trust store handle validation
+          caCert = ''
+        }
+      } catch (error) {
+        throw new Errors.ValidationError('Failed to read SSL certificate file')
+      }
+    }
+    if (hasBase64SSL) {
+      if (intermedKeyBase64) {
+        caCert = intermedKeyBase64
+      } else {
+        // No intermediate certificate base64 provided, don't provide any CA cert
+        // Let the system's default trust store handle validation
+        caCert = ''
+      }
+    }
+  }
   return {
     key: provisioningKeyData.provisionKey,
-    expirationTime: provisioningKeyData.expirationTime
+    expirationTime: provisioningKeyData.expirationTime,
+    caCert: caCert
   }
 }
 
@@ -607,8 +1040,22 @@ async function _processDeleteCommand (fog, transaction) {
   for (const microservice of microservices) {
     await MicroserviceService.deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   }
-
+  await ApplicationManager.delete({ name: `system-${fog.uuid.toLowerCase()}` }, transaction)
   await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.deleteNode, transaction)
+  // Delete router-related secrets if they exist
+  const secretNames = [
+    `${fog.uuid}-site-server`,
+    `${fog.uuid}-local-ca`,
+    `${fog.uuid}-local-server`,
+    `${fog.uuid}-local-agent`
+  ]
+
+  for (const secretName of secretNames) {
+    const secret = await SecretManager.findOne({ name: secretName }, transaction)
+    if (secret) {
+      await SecretManager.delete({ name: secretName }, transaction)
+    }
+  }
   await FogManager.delete({ uuid: fog.uuid }, transaction)
 }
 
@@ -616,20 +1063,33 @@ async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
   const halItem = await CatalogService.getHalCatalogItem(transaction)
 
   const halMicroserviceData = {
-    uuid: AppHelper.generateRandomString(32),
+    uuid: AppHelper.generateUUID(),
     name: `hal-${fogData.uuid.toLowerCase()}`,
     config: '{}',
     catalogItemId: halItem.id,
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 1,
     configLastUpdated: Date.now()
   }
 
-  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${fogData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  }
   halMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(halMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: halMicroserviceData.uuid }, transaction)
+  await MicroserviceExecStatusManager.create({ microserviceUuid: halMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteHalMicroserviceByFog (fogData, transaction) {
@@ -648,20 +1108,33 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction)
   const bluetoothItem = await CatalogService.getBluetoothCatalogItem(transaction)
 
   const bluetoothMicroserviceData = {
-    uuid: AppHelper.generateRandomString(32),
+    uuid: AppHelper.generateUUID(),
     name: `ble-${fogData.uuid.toLowerCase()}`,
     config: '{}',
     catalogItemId: bluetoothItem.id,
     iofogUuid: fogData.uuid,
     rootHostAccess: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 1,
     configLastUpdated: Date.now()
   }
 
-  const application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${fogData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${fogData.uuid.toLowerCase()}` }, transaction)
+  }
   bluetoothMicroserviceData.applicationId = application.id
   await MicroserviceManager.create(bluetoothMicroserviceData, transaction)
   await MicroserviceStatusManager.create({ microserviceUuid: bluetoothMicroserviceData.uuid }, transaction)
+  await MicroserviceExecStatusManager.create({ microserviceUuid: bluetoothMicroserviceData.uuid }, transaction)
 }
 
 async function _deleteBluetoothMicroserviceByFog (fogData, transaction) {
@@ -689,6 +1162,286 @@ async function setFogPruneCommandEndPoint (fogData, isCLI, transaction) {
   await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.prune, transaction)
 }
 
+async function enableNodeExecEndPoint (execData, isCLI, transaction) {
+  await Validator.validate(execData, Validator.schemas.enableNodeExec)
+  const fog = await FogManager.findOne({ uuid: execData.uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, execData.uuid))
+  }
+
+  const debugMicroserviceData = {
+    uuid: AppHelper.generateUUID(),
+    name: `debug-${execData.uuid.toLowerCase()}`,
+    config: '{}',
+    iofogUuid: execData.uuid,
+    ipcMode: 'host',
+    pidMode: 'host',
+    rootHostAccess: true,
+    logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
+    schedule: 0,
+    execEnabled: true,
+    configLastUpdated: Date.now()
+  }
+
+  if (execData.image) {
+    const images = [
+      { fogTypeId: 1, containerImage: execData.image },
+      { fogTypeId: 2, containerImage: execData.image }
+    ]
+    debugMicroserviceData.images = images
+  } else {
+    const debugCatalog = await CatalogService.getDebugCatalogItem(transaction)
+    debugMicroserviceData.catalogItemId = debugCatalog.id
+  }
+
+  let application
+  try {
+    application = await ApplicationManager.findOne({ name: `system-${execData.uuid.toLowerCase()}` }, transaction)
+  } catch (error) {
+    const systemApplicationData = {
+      name: `system-${execData.uuid.toLowerCase()}`,
+      isActivated: true,
+      isSystem: true
+    }
+    await ApplicationManager.create(systemApplicationData, transaction)
+    application = await ApplicationManager.findOne({ name: `system-${execData.uuid.toLowerCase()}` }, transaction)
+  }
+  debugMicroserviceData.applicationId = application.id
+  let microservice
+
+  // Check if microservice already exists
+  const existingMicroservice = await MicroserviceManager.findOneWithCategory({ name: `debug-${execData.uuid.toLowerCase()}` }, transaction)
+
+  if (existingMicroservice) {
+    // Update existing microservice
+    const updateData = {
+      ipcMode: debugMicroserviceData.ipcMode,
+      pidMode: debugMicroserviceData.pidMode,
+      rootHostAccess: debugMicroserviceData.rootHostAccess,
+      logSize: debugMicroserviceData.logSize,
+      schedule: debugMicroserviceData.schedule,
+      configLastUpdated: debugMicroserviceData.configLastUpdated,
+      execEnabled: debugMicroserviceData.execEnabled
+    }
+
+    if (execData.image) {
+      updateData.images = debugMicroserviceData.images
+    } else {
+      updateData.catalogItemId = debugMicroserviceData.images
+    }
+
+    microservice = await MicroserviceManager.updateAndFind(
+      { uuid: existingMicroservice.uuid },
+      updateData,
+      transaction
+    )
+
+    if (execData.image) {
+      const images = [
+        { fogTypeId: 1, containerImage: execData.image },
+        { fogTypeId: 2, containerImage: execData.image }
+      ]
+      await _updateImages(images, existingMicroservice.uuid, transaction)
+    }
+
+    await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+    await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+    return microservice
+  } else {
+    // Create new microservice
+    try {
+      const microservice = await MicroserviceManager.create(debugMicroserviceData, transaction)
+      await MicroserviceStatusManager.create({ microserviceUuid: debugMicroserviceData.uuid }, transaction)
+      await MicroserviceExecStatusManager.create({ microserviceUuid: debugMicroserviceData.uuid }, transaction)
+
+      if (execData.image) {
+        const images = [
+          { fogTypeId: 1, containerImage: execData.image },
+          { fogTypeId: 2, containerImage: execData.image }
+        ]
+        await _createMicroserviceImages(microservice, images, transaction)
+      }
+
+      await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+      await ChangeTrackingService.update(execData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+      return microservice
+    } catch (error) {
+      logger.error(`Error in enableNodeExecEndPoint: ${error.message}`)
+      throw error
+    }
+  }
+}
+
+async function disableNodeExecEndPoint (fogData, isCLI, transaction) {
+  await Validator.validate(fogData, Validator.schemas.disableNodeExec)
+
+  try {
+    const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
+    if (!fog) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
+    }
+
+    const microservice = await MicroserviceManager.findOne({ name: `debug-${fogData.uuid.toLowerCase()}` }, transaction)
+    if (!microservice) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, fogData.uuid))
+    }
+
+    await MicroserviceManager.delete({ uuid: microservice.uuid }, transaction)
+    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceList, transaction)
+    await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+  } catch (error) {
+    logger.error(`Error in disableNodeExecEndPoint: ${error.message}`)
+    throw error
+  }
+}
+
+/**
+ * Finds services that match the fog node's service tags
+ * @param {Array<string>} serviceTags - Array of service tags from fog node
+ * @param {Object} transaction - Database transaction
+ * @returns {Promise<Array<Object>>} Array of matching services
+ */
+async function _findMatchingServices (serviceTags, transaction) {
+  if (!serviceTags || serviceTags.length === 0) {
+    return []
+  }
+
+  // If 'all' tag is present, get all services
+  if (serviceTags.includes('all')) {
+    return ServiceManager.findAllWithTags({}, transaction)
+  }
+
+  // For each service tag, find matching services
+  const servicesPromises = serviceTags.map(async (tag) => {
+    const queryData = {
+      '$tags.value$': `${tag}`
+    }
+    return ServiceManager.findAllWithTags(queryData, transaction)
+  })
+
+  // Wait for all queries to complete
+  const servicesArrays = await Promise.all(servicesPromises)
+
+  // Flatten arrays and remove duplicates based on service name
+  const seen = new Set()
+  const uniqueServices = servicesArrays
+    .flat()
+    .filter(service => {
+      if (seen.has(service.name)) {
+        return false
+      }
+      seen.add(service.name)
+      return true
+    })
+
+  return uniqueServices
+}
+
+/**
+ * Builds TCP listener configuration for a service on a specific fog node
+ * @param {Object} service - Service object containing name and bridgePort
+ * @param {string} fogNodeUuid - UUID of the fog node
+ * @returns {Object} TCP listener configuration
+ */
+function _buildTcpListenerForFog (service, fogNodeUuid) {
+  return {
+    name: `${service.name}-listener`,
+    port: service.bridgePort.toString(),
+    address: service.name,
+    siteId: fogNodeUuid
+  }
+}
+
+/**
+ * Gets the router microservice configuration for a fog node
+ * @param {string} fogNodeUuid - UUID of the fog node
+ * @param {Object} transaction - Database transaction
+ * @returns {Promise<Object>} Router microservice configuration
+ */
+async function _getRouterMicroserviceConfig (fogNodeUuid, transaction) {
+  const routerName = `router-${fogNodeUuid.toLowerCase()}`
+  const routerMicroservice = await MicroserviceManager.findOne({ name: routerName }, transaction)
+  if (!routerMicroservice) {
+    throw new Errors.NotFoundError(`Router microservice not found: ${routerName}`)
+  }
+  const routerConfig = JSON.parse(routerMicroservice.config || '{}')
+  return routerConfig
+}
+
+/**
+ * Extracts existing TCP connectors from router configuration
+ * @param {string} fogNodeUuid - UUID of the fog node
+ * @param {Object} transaction - Database transaction
+ * @returns {Promise<Object>} Object containing TCP connectors
+ */
+async function _extractExistingTcpConnectors (fogNodeUuid, transaction) {
+  const routerConfig = await _getRouterMicroserviceConfig(fogNodeUuid, transaction)
+  // Return empty object if no bridges or tcpConnectors exist
+  if (!routerConfig.bridges || !routerConfig.bridges.tcpConnectors) {
+    return {}
+  }
+
+  return routerConfig.bridges.tcpConnectors
+}
+
+/**
+ * Merges a single TCP connector into router configuration
+ * @param {Object} routerConfig - Base router configuration
+ * @param {Object} connectorObj - TCP connector object (must have 'name' property)
+ * @returns {Object} Updated router configuration
+ */
+function _mergeTcpConnector (routerConfig, connectorObj) {
+  if (!connectorObj || !connectorObj.name) {
+    throw new Error('Connector object must have a name property')
+  }
+  if (!routerConfig.bridges) {
+    routerConfig.bridges = {}
+  }
+  if (!routerConfig.bridges.tcpConnectors) {
+    routerConfig.bridges.tcpConnectors = {}
+  }
+  routerConfig.bridges.tcpConnectors[connectorObj.name] = connectorObj
+  return routerConfig
+}
+
+/**
+ * Merges a single TCP listener into router configuration
+ * @param {Object} routerConfig - Base router configuration
+ * @param {Object} listenerObj - TCP listener object (must have 'name' property)
+ * @returns {Object} Updated router configuration
+ */
+function _mergeTcpListener (routerConfig, listenerObj) {
+  if (!listenerObj || !listenerObj.name) {
+    throw new Error('Listener object must have a name property')
+  }
+  if (!routerConfig.bridges) {
+    routerConfig.bridges = {}
+  }
+  if (!routerConfig.bridges.tcpListeners) {
+    routerConfig.bridges.tcpListeners = {}
+  }
+  routerConfig.bridges.tcpListeners[listenerObj.name] = listenerObj
+  return routerConfig
+}
+
+async function _createMicroserviceImages (microservice, images, transaction) {
+  const newImages = []
+  for (const img of images) {
+    const newImg = Object.assign({}, img)
+    newImg.microserviceUuid = microservice.uuid
+    newImages.push(newImg)
+  }
+  return CatalogItemImageManager.bulkCreate(newImages, transaction)
+}
+
+async function _updateImages (images, microserviceUuid, transaction) {
+  await CatalogItemImageManager.delete({
+    microserviceUuid: microserviceUuid
+  }, transaction)
+  return _createMicroserviceImages({ uuid: microserviceUuid }, images, transaction)
+}
+
 module.exports = {
   createFogEndPoint: TransactionDecorator.generateTransaction(createFogEndPoint),
   updateFogEndPoint: TransactionDecorator.generateTransaction(updateFogEndPoint),
@@ -701,5 +1454,16 @@ module.exports = {
   getHalHardwareInfoEndPoint: TransactionDecorator.generateTransaction(getHalHardwareInfoEndPoint),
   getHalUsbInfoEndPoint: TransactionDecorator.generateTransaction(getHalUsbInfoEndPoint),
   getFog: getFog,
-  setFogPruneCommandEndPoint: TransactionDecorator.generateTransaction(setFogPruneCommandEndPoint)
+  setFogPruneCommandEndPoint: TransactionDecorator.generateTransaction(setFogPruneCommandEndPoint),
+  enableNodeExecEndPoint: TransactionDecorator.generateTransaction(enableNodeExecEndPoint),
+  disableNodeExecEndPoint: TransactionDecorator.generateTransaction(disableNodeExecEndPoint),
+  _extractServiceTags,
+  _findMatchingServices: TransactionDecorator.generateTransaction(_findMatchingServices),
+  _buildTcpListenerForFog,
+  _getRouterMicroserviceConfig: TransactionDecorator.generateTransaction(_getRouterMicroserviceConfig),
+  _extractExistingTcpConnectors: TransactionDecorator.generateTransaction(_extractExistingTcpConnectors),
+  _mergeTcpConnector,
+  _mergeTcpListener,
+  checkKubernetesEnvironment,
+  _handleRouterCertificates: TransactionDecorator.generateTransaction(_handleRouterCertificates)
 }

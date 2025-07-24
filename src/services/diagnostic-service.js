@@ -58,7 +58,7 @@ const getMicroserviceStraceData = async function (uuid, data, isCLI, transaction
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_STRACE, uuid))
   }
 
-  const dir = Config.get('Diagnostics:DiagnosticDir') || 'diagnostics'
+  const dir = Config.get('diagnostics.directory') || 'diagnostics'
   const filePath = dir + '/' + uuid
 
   let result = straceData.buffer
@@ -91,7 +91,7 @@ const postMicroserviceStraceDatatoFtp = async function (uuid, data, isCLI, trans
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_STRACE, uuid))
   }
 
-  const dir = Config.get('Diagnostics:DiagnosticDir')
+  const dir = Config.get('diagnostics.directory')
   const filePath = dir + '/' + uuid
 
   _createDirectoryIfNotExists(dir)

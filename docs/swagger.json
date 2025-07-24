@@ -359,7 +359,7 @@
     "/iofog/{uuid}/prune" : {
       "post" : {
         "tags" : [ "ioFog" ],
-        "summary" : "prune reboot fog agent",
+        "summary" : "prune remote fog agent",
         "operationId" : "setPruneCommand",
         "parameters" : [ {
           "name" : "uuid",

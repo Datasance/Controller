@@ -13,13 +13,25 @@
 
 const BaseManager = require('./base-manager')
 const models = require('../models')
-const MicroservicePublicPort = models.MicroservicePublicPort
+const MicroserviceHealthCheck = models.MicroserviceHealthCheck
 
-class MicroservicePublicPortManager extends BaseManager {
+const microserviceHealthCheckExcludedFields = [
+  'id',
+  'microservice_uuid',
+  'microserviceUuid',
+  'created_at',
+  'updated_at'
+]
+
+class MicroserviceHealthCheckManager extends BaseManager {
   getEntity () {
-    return MicroservicePublicPort
+    return MicroserviceHealthCheck
+  }
+
+  findAllExcludeFields (where, transaction) {
+    return this.findAllWithAttributes(where, { exclude: microserviceHealthCheckExcludedFields }, transaction)
   }
 }
 
-const instance = new MicroservicePublicPortManager()
+const instance = new MicroserviceHealthCheckManager()
 module.exports = instance

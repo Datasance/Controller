@@ -5,7 +5,7 @@ const { convertToInt } = require('../../helpers/app-helper')
 module.exports = (sequelize, DataTypes) => {
   const Microservice = sequelize.define('Microservice', {
     uuid: {
-      type: DataTypes.STRING(32),
+      type: DataTypes.STRING(36),
       primaryKey: true,
       allowNull: false,
       field: 'uuid'
@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
     config: {
       type: DataTypes.TEXT,
       field: 'config',
+      defaultValue: '{}'
+    },
+    annotations: {
+      type: DataTypes.TEXT,
+      field: 'annotations',
       defaultValue: '{}'
     },
     name: {
@@ -39,15 +44,18 @@ module.exports = (sequelize, DataTypes) => {
     },
     runAsUser: {
       type: DataTypes.TEXT,
-      field: 'run_as_user'
+      field: 'run_as_user',
+      defaultValue: ''
     },
     platform: {
       type: DataTypes.TEXT,
-      field: 'platform'
+      field: 'platform',
+      defaultValue: ''
     },
     runtime: {
       type: DataTypes.TEXT,
-      field: 'runtime'
+      field: 'runtime',
+      defaultValue: ''
     },
     logSize: {
       type: DataTypes.BIGINT,
@@ -57,10 +65,39 @@ module.exports = (sequelize, DataTypes) => {
       field: 'log_size',
       defaultValue: 0
     },
+    pidMode: {
+      type: DataTypes.TEXT,
+      field: 'pid_mode',
+      defaultValue: ''
+    },
+    ipcMode: {
+      type: DataTypes.TEXT,
+      field: 'ipc_mode',
+      defaultValue: ''
+    },
+    schedule: {
+      type: DataTypes.INTEGER,
+      field: 'schedule',
+      defaultValue: 50
+    },
+    cpuSetCpus: {
+      type: DataTypes.TEXT,
+      field: 'cpu_set_cpus',
+      defaultValue: ''
+    },
+    memoryLimit: {
+      type: DataTypes.FLOAT,
+      field: 'memory_limit'
+    },
     imageSnapshot: {
       type: DataTypes.TEXT,
       field: 'image_snapshot',
       defaultValue: ''
+    },
+    execEnabled: {
+      type: DataTypes.BOOLEAN,
+      field: 'exec_enabled',
+      defaultValue: false
     },
     delete: {
       type: DataTypes.BOOLEAN,
@@ -145,6 +182,16 @@ module.exports = (sequelize, DataTypes) => {
       as: 'microserviceStatus'
     })
 
+    Microservice.hasOne(models.MicroserviceExecStatus, {
+      foreignKey: 'microservice_uuid',
+      as: 'microserviceExecStatus'
+    })
+
+    Microservice.hasOne(models.MicroserviceHealthCheck, {
+      foreignKey: 'microservice_uuid',
+      as: 'healthCheck'
+    })
+
     Microservice.hasMany(models.MicroserviceEnv, {
       foreignKey: 'microservice_uuid',
       as: 'env'
@@ -158,6 +205,16 @@ module.exports = (sequelize, DataTypes) => {
     Microservice.hasMany(models.MicroserviceCdiDev, {
       foreignKey: 'microservice_uuid',
       as: 'cdiDevices'
+    })
+
+    Microservice.hasMany(models.MicroserviceCapAdd, {
+      foreignKey: 'microservice_uuid',
+      as: 'capAdd'
+    })
+
+    Microservice.hasMany(models.MicroserviceCapDrop, {
+      foreignKey: 'microservice_uuid',
+      as: 'capDrop'
     })
 
     Microservice.hasMany(models.MicroserviceExtraHost, {

@@ -18,3 +18,5 @@ iofogcontroller-*.tgz
 diagnostic/
 iofog-iofogcontroller-*.tgz
 .npmrc
+.env
+src/iofog-controller.pid

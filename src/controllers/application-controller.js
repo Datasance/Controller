@@ -49,6 +49,12 @@ const getApplicationEndPoint = async function (req) {
   return application
 }
 
+const getSystemApplicationEndPoint = async function (req) {
+  const name = req.params.name
+  const application = await ApplicationService.getSystemApplicationEndPoint({ name }, false)
+  return application
+}
+
 const patchApplicationEndPoint = async function (req) {
   const application = req.body
   const name = req.params.name
@@ -115,6 +121,7 @@ module.exports = {
   getApplicationsByUserEndPoint: (getApplicationsByUserEndPoint),
   getApplicationsBySystemEndPoint: (getApplicationsBySystemEndPoint),
   getApplicationEndPoint: (getApplicationEndPoint),
+  getSystemApplicationEndPoint: (getSystemApplicationEndPoint),
   getApplicationByIdEndPoint: (getApplicationByIdEndPoint),
   updateApplicationEndPoint: (updateApplicationEndPoint),
   updateApplicationYAMLEndPoint: (updateApplicationYAMLEndPoint),

@@ -41,9 +41,10 @@ async function getFogEndPoint (req) {
 }
 
 async function getFogListEndPoint (req) {
-  const isSystem = req.query && req.query.system ? req.query.system === 'true' : false
+  // const isSystem = req.query && req.query.system ? req.query.system === 'true' : false
   const query = qs.parse(req.query)
-  return FogService.getFogListEndPoint(query.filters, false, isSystem)
+  // return FogService.getFogListEndPoint(query.filters, false, isSystem)
+  return FogService.getFogListEndPoint(query.filters, false)
 }
 
 async function generateProvisionKeyEndPoint (req) {
@@ -93,6 +94,23 @@ async function setFogPruneCommandEndPoint (req) {
   return FogService.setFogPruneCommandEndPoint(fog, false)
 }
 
+async function enableNodeExecEndPoint (req) {
+  const execData = {
+    uuid: req.params.uuid,
+    image: req.body.image
+  }
+
+  return FogService.enableNodeExecEndPoint(execData, false)
+}
+
+async function disableNodeExecEndPoint (req) {
+  const fogData = {
+    uuid: req.params.uuid
+  }
+
+  return FogService.disableNodeExecEndPoint(fogData, false)
+}
+
 module.exports = {
   createFogEndPoint: (createFogEndPoint),
   updateFogEndPoint: (updateFogEndPoint),
@@ -104,5 +122,7 @@ module.exports = {
   setFogRebootCommandEndPoint: (setFogRebootCommandEndPoint),
   getHalHardwareInfoEndPoint: (getHalHardwareInfoEndPoint),
   getHalUsbInfoEndPoint: (getHalUsbInfoEndPoint),
-  setFogPruneCommandEndPoint: (setFogPruneCommandEndPoint)
+  setFogPruneCommandEndPoint: (setFogPruneCommandEndPoint),
+  enableNodeExecEndPoint: (enableNodeExecEndPoint),
+  disableNodeExecEndPoint: (disableNodeExecEndPoint)
 }

@@ -22,6 +22,8 @@ const iofogCreate = {
     'description': { 'type': 'string' },
     'networkInterface': { 'type': 'string' },
     'dockerUrl': { 'type': 'string' },
+    'containerEngine': { 'type': 'string', 'enum': ['docker', 'podman'] },
+    'deploymentType': { 'type': 'string', 'enum': ['native', 'container'] },
     'diskLimit': { 'type': 'integer', 'minimum': 0 },
     'diskDirectory': { 'type': 'string' },
     'memoryLimit': { 'type': 'integer', 'minimum': 0 },
@@ -44,13 +46,6 @@ const iofogCreate = {
     'messagingPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'interRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'edgeRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
-    'requireSsl': { 'type': 'string' },
-    'sslProfile': { 'type': 'string' },
-    'saslMechanisms': { 'type': 'string' },
-    'authenticatePeer': { 'type': 'string' },
-    'caCert': { 'type': 'string' },
-    'tlsCert': { 'type': 'string' },
-    'tlsKey': { 'type': 'string' },
     'host': { 'type': 'string' },
     'tags': {
       'type': 'array',
@@ -92,6 +87,8 @@ const iofogUpdate = {
     'description': { 'type': 'string' },
     'networkInterface': { 'type': 'string' },
     'dockerUrl': { 'type': 'string' },
+    'containerEngine': { 'type': 'string', 'enum': ['docker', 'podman'] },
+    'deploymentType': { 'type': 'string', 'enum': ['native', 'container'] },
     'diskLimit': { 'type': 'integer', 'minimum': 0 },
     'diskDirectory': { 'type': 'string' },
     'memoryLimit': { 'type': 'integer', 'minimum': 0 },
@@ -114,13 +111,6 @@ const iofogUpdate = {
     'messagingPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'interRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'edgeRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
-    'requireSsl': { 'type': 'string' },
-    'sslProfile': { 'type': 'string' },
-    'saslMechanisms': { 'type': 'string' },
-    'authenticatePeer': { 'type': 'string' },
-    'caCert': { 'type': 'string' },
-    'tlsCert': { 'type': 'string' },
-    'tlsKey': { 'type': 'string' },
     'host': { 'type': 'string' },
     'upstreamRouters': {
       'type': 'array',
@@ -273,9 +263,30 @@ const iofogTag = {
   'type': 'string'
 }
 
+const enableNodeExec = {
+  'id': '/enableNodeExec',
+  'type': 'object',
+  'properties': {
+    'uuid': { 'type': 'string' },
+    'image': { 'type': 'string' }
+  },
+  'required': ['uuid'],
+  'additionalProperties': true
+}
+
+const disableNodeExec = {
+  'id': '/disableNodeExec',
+  'type': 'object',
+  'properties': {
+    'uuid': { 'type': 'string' }
+  },
+  'required': ['uuid'],
+  'additionalProperties': true
+}
+
 module.exports = {
   mainSchemas: [iofogCreate, iofogUpdate, iofogDelete,
     iofogGet, iofogGenerateProvision, iofogSetVersionCommand,
-    iofogReboot, iofogFilters, halGet, iofogPrune, defaultRouterCreate, iofogTag],
+    iofogReboot, iofogFilters, halGet, iofogPrune, defaultRouterCreate, iofogTag, enableNodeExec, disableNodeExec],
   innerSchemas: [filter, iofogTag]
 }

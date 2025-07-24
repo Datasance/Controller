@@ -9,6 +9,7 @@ const microserviceCreate = {
       'pattern': nameRegex
     },
     'config': { 'type': 'string' },
+    'annotations': { 'type': 'string' },
     'catalogItemId': {
       'type': 'integer',
       'minimum': 4
@@ -30,6 +31,11 @@ const microserviceCreate = {
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
     'rootHostAccess': { 'type': 'boolean' },
+    'schedule': {
+      'type': 'integer',
+      'minimum': 0,
+      'maximum': 100
+    },
     'logSize': { 'type': 'integer' },
     'imageSnapshot': { 'type': 'string' },
     'volumeMappings': {
@@ -53,9 +59,17 @@ const microserviceCreate = {
     'cdiDevices': {
       'type': 'array',
       'items': { 'type': 'string' } },
+    'capAdd': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'capDrop': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
     'runtime': { 'type': 'string' },
+    'cpuSetCpus': { 'type': 'string' },
+    'memoryLimit': { 'type': 'integer' },
     'pubTags': {
       'type': 'array',
       'items': { 'type': 'string' }
@@ -63,6 +77,10 @@ const microserviceCreate = {
     'subTags': {
       'type': 'array',
       'items': { 'type': 'string' }
+    },
+    'healthCheck': {
+      'type': 'object',
+      'properties': { '$ref': '/microserviceHealthCheck' }
     }
   },
   'required': ['name'],
@@ -78,11 +96,17 @@ const microserviceUpdate = {
       'pattern': nameRegex
     },
     'config': { 'type': 'string' },
+    'annotations': { 'type': 'string' },
     'rebuild': { 'type': 'boolean' },
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
     'rootHostAccess': { 'type': 'boolean' },
     'logSize': { 'type': 'integer', 'minimum': 0 },
+    'schedule': {
+      'type': 'integer',
+      'minimum': 0,
+      'maximum': 100
+    },
     'volumeMappings': {
       'type': 'array',
       'items': { '$ref': '/volumeMappings' }
@@ -108,9 +132,17 @@ const microserviceUpdate = {
     'cdiDevices': {
       'type': 'array',
       'items': { 'type': 'string' } },
+    'capAdd': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
+    'capDrop': {
+      'type': 'array',
+      'items': { 'type': 'string' } },
     'runAsUser': { 'type': 'string' },
     'platform': { 'type': 'string' },
     'runtime': { 'type': 'string' },
+    'cpuSetCpus': { 'type': 'string' },
+    'memoryLimit': { 'type': 'integer' },
     'pubTags': {
       'type': 'array',
       'items': { 'type': 'string' }
@@ -118,6 +150,10 @@ const microserviceUpdate = {
     'subTags': {
       'type': 'array',
       'items': { 'type': 'string' }
+    },
+    'healthCheck': {
+      'type': 'object',
+      'properties': { '$ref': '/microserviceHealthCheck' }
     }
   },
   'additionalProperties': true
@@ -139,9 +175,22 @@ const env = {
   'type': 'object',
   'properties': {
     'key': { 'type': 'string' },
-    'value': { 'type': 'string' }
+    'value': { 'type': 'string' },
+    'valueFromSecret': { 'type': 'string' },
+    'valueFromConfigMap': { 'type': 'string' }
   },
-  'required': ['key', 'value'],
+  'required': ['key'],
+  'oneOf': [
+    {
+      'required': ['value']
+    },
+    {
+      'required': ['valueFromSecret']
+    },
+    {
+      'required': ['valueFromConfigMap']
+    }
+  ],
   'additionalProperties': true
 }
 
@@ -162,33 +211,10 @@ const ports = {
   'properties': {
     'internal': { 'type': 'integer' },
     'external': { 'type': 'integer' },
-    'protocol': { 'enum': ['tcp', 'udp'] },
-    'public': { '$ref': '/publicPort' }
+    'protocol': { 'enum': ['tcp', 'udp'] }
   },
   'required': ['internal', 'external'],
   'additionalProperties': true
-}
-
-const publicPort = {
-  'id': '/publicPort',
-  type: 'object',
-  properties: {
-    enabled: { type: 'boolean' },
-    schemes: { type: 'array', items: { type: 'string' } },
-    protocol: { 'enum': ['tcp', 'http'] },
-    router: { '$ref': '/publicPortRouter' }
-  },
-  required: ['schemes', 'protocol']
-}
-
-const publicPortRouter = {
-  'id': '/publicPortRouter',
-  type: 'object',
-  properties: {
-    host: { type: 'string' },
-    port: { type: 'number' }
-  },
-  required: []
 }
 
 const portsCreate = {
@@ -197,8 +223,7 @@ const portsCreate = {
   'properties': {
     'internal': { 'type': 'integer' },
     'external': { 'type': 'integer' },
-    'protocol': { 'enum': ['tcp', 'udp'] },
-    'public': { '$ref': '/publicPort' }
+    'protocol': { 'enum': ['tcp', 'udp'] }
   },
   'required': ['internal', 'external'],
   'additionalProperties': true
@@ -217,7 +242,25 @@ const volumeMappings = {
   'additionalProperties': true
 }
 
+const microserviceHealthCheck = {
+
+  'id': '/microserviceHealthCheck',
+  'type': 'object',
+  'properties': {
+    'test': {
+      'type': 'array',
+      'items': { 'type': 'string' }
+    },
+    'interval': { 'type': 'integer' },
+    'timeout': { 'type': 'integer' },
+    'startPeriod': { 'type': 'integer' },
+    'startInterval': { 'type': 'integer' },
+    'retries': { 'type': 'integer' }
+  },
+  'required': ['test']
+}
+
 module.exports = {
-  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, publicPort, publicPortRouter, extraHosts, portsCreate, microserviceDelete, volumeMappings],
-  innerSchemas: [volumeMappings, ports, publicPort, publicPortRouter, env, extraHosts, microserviceCreate]
+  mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, extraHosts, portsCreate, microserviceDelete, volumeMappings, microserviceHealthCheck],
+  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate, microserviceHealthCheck]
 }

@@ -91,6 +91,16 @@ module.exports = (sequelize, DataTypes) => {
       field: 'linked_edge_resources',
       defaultValue: false
     },
+    volumeMounts: {
+      type: DataTypes.BOOLEAN,
+      field: 'volume_mounts',
+      defaultValue: false
+    },
+    execSessions: {
+      type: DataTypes.BOOLEAN,
+      field: 'exec_sessions',
+      defaultValue: false
+    },
     lastUpdated: {
       type: DataTypes.STRING,
       field: 'last_updated',

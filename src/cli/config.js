@@ -142,59 +142,59 @@ const _executeCase = async function (catalogCommand, commandName, f) {
 const _addConfigOption = async function (options) {
   await Validator.validate(options, Validator.schemas.configUpdate)
 
-  await updateConfig(options.port, 'port', 'Server:Port', async (onSuccess) => {
+  await updateConfig(options.port, 'port', 'server.port', async (onSuccess) => {
     const port = options.port
     const status = await AppHelper.checkPortAvailability(port)
     if (status === 'closed') {
-      config.set('Server:Port', port)
+      config.set('server.port', port)
       onSuccess()
     } else {
       logger.error(AppHelper.formatMessage(ErrorMessages.PORT_NOT_AVAILABLE, port))
     }
   })
 
-  await updateConfig(options.sslCert, 'ssl-cert', 'Server:SslCert', (onSuccess) => {
+  await updateConfig(options.sslCert, 'ssl-cert', 'server.ssl.path.cert', (onSuccess) => {
     const sslCert = options.sslCert
     if (!AppHelper.isFileExists(sslCert)) {
       logger.error(ErrorMessages.INVALID_FILE_PATH)
       return
     }
-    config.set('Server:SslCert', sslCert)
+    config.set('server.ssl.path.cert', sslCert)
     onSuccess()
   })
 
-  await updateConfig(options.sslKey, 'ssl-key', 'Server:SslKey', (onSuccess) => {
+  await updateConfig(options.sslKey, 'ssl-key', 'server.ssl.path.key', (onSuccess) => {
     const sslKey = options.sslKey
     if (!AppHelper.isFileExists(sslKey)) {
       logger.error(ErrorMessages.INVALID_FILE_PATH)
       return
     }
-    config.set('Server:SslKey', sslKey)
+    config.set('server.ssl.path.key', sslKey)
     onSuccess()
   })
 
-  await updateConfig(options.intermediateCert, 'intermediate-cert', 'Server:IntermediateCert', (onSuccess) => {
+  await updateConfig(options.intermediateCert, 'intermediate-cert', 'server.ssl.path.intermediateCert', (onSuccess) => {
     const intermediateCert = options.intermediateCert
     if (!AppHelper.isFileExists(intermediateCert)) {
       logger.error(ErrorMessages.INVALID_FILE_PATH)
       return
     }
-    config.set('Server:IntermediateCert', intermediateCert)
+    config.set('server.ssl.path.intermediateCert', intermediateCert)
     onSuccess()
   })
 
-  await updateConfig(options.logDir, 'log-dir', 'Service:LogsDirectory', (onSuccess) => {
-    config.set('Service:LogsDirectory', options.logDir)
+  await updateConfig(options.logDir, 'log-dir', 'log.directory', (onSuccess) => {
+    config.set('log.directory', options.logDir)
     onSuccess()
   })
 
-  await updateConfig(options.logSize, 'log-size', 'Service:LogsFileSize', (onSuccess) => {
-    config.set('Service:LogsFileSize', options.logSize * 1024)
+  await updateConfig(options.logSize, 'log-size', 'log.fileSize', (onSuccess) => {
+    config.set('log.fileSize', options.logSize * 1024)
     onSuccess()
   })
 
-  await updateConfig(options.logSize, 'log-file-counr', 'Service:LogsFileCount', (onSuccess) => {
-    config.set('Service:LogsFileCount', options.logFileCount)
+  await updateConfig(options.logFileCount, 'log-file-count', 'log.fileCount', (onSuccess) => {
+    config.set('log.fileCount', options.logFileCount)
     onSuccess()
   })
 }
@@ -215,14 +215,14 @@ const updateConfig = async function (newConfigValue, cliConfigName, configName, 
 
 const _listConfigOptions = function () {
   const configuration = {
-    'Port': config.get('Server:Port'),
-    'SSL key directory': config.get('Server:SslKey'),
-    'SSL certificate directory': config.get('Server:SslCert'),
-    'Intermediate key directory': config.get('Server:IntermediateCert'),
-    'Log files directory': config.get('Service:LogsDirectory'),
-    'Log files size': config.get('Service:LogsFileSize'),
-    'Log files count': config.get('Service:LogsFileCount'),
-    'Dev mode': config.get('Server:DevMode')
+    'Port': config.get('server.port'),
+    'SSL key directory': config.get('server.ssl.path.key'),
+    'SSL certificate directory': config.get('server.ssl.path.cert'),
+    'Intermediate key directory': config.get('server.ssl.path.intermediateCert'),
+    'Log files directory': config.get('log.directory'),
+    'Log files size': config.get('log.fileSize'),
+    'Log files count': config.get('log.fileCount'),
+    'Dev mode': config.get('server.devMode')
   }
 
   const result = Object.keys(configuration)
@@ -234,7 +234,7 @@ const _listConfigOptions = function () {
 
 const _changeDevModeState = async function (options) {
   const enableDevMode = AppHelper.validateBooleanCliOptions(options.on, options.off)
-  config.set('Server:DevMode', enableDevMode)
+  config.set('server.devMode', enableDevMode)
   logger.cliRes('Dev mode state updated successfully.')
 }
 

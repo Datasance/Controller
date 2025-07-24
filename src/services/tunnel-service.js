@@ -30,13 +30,13 @@ const openTunnel = async function (tunnelData, isCli, transaction) {
   if (isCli) {
     tunnel.rport = await AppHelper.findAvailablePort(tunnelData.host)
   } else {
-    const host = Config.get('Tunnel:Host')
+    const host = Config.get('tunnel.host')
     tunnel = {
-      username: Config.get('Tunnel:Username'),
-      password: Config.get('Tunnel:Password'),
+      username: Config.get('tunnel.username'),
+      password: Config.get('tunnel.password'),
       host: host,
-      rsakey: Config.get('Tunnel:RsaKey'),
-      lport: Config.get('Tunnel:Lport'),
+      rsakey: Config.get('tunnel.rsaKey'),
+      lport: Config.get('tunnel.lport'),
       iofogUuid: iofog.uuid,
       closed: false,
       rport: await AppHelper.findAvailablePort(host)

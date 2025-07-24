@@ -14,12 +14,17 @@
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const MicroserviceArgManager = require('../data/managers/microservice-arg-manager')
 const MicroserviceCdiDevManager = require('../data/managers/microservice-cdi-device-manager')
+const MicroserviceCapAddManager = require('../data/managers/microservice-cap-add-manager')
+const MicroserviceCapDropManager = require('../data/managers/microservice-cap-drop-manager')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
-const MicroservicePortService = require('../services/microservice-ports/default')
+const MicroservicePortService = require('../services/microservice-ports/microservice-port')
+const MicroserviceHealthCheckManager = require('../data/managers/microservice-healthcheck-manager')
 const CatalogItemImageManager = require('../data/managers/catalog-item-image-manager')
 const RegistryManager = require('../data/managers/registry-manager')
+// const RouterManager = require('../data/managers/router-manager')
 const MicroserviceStates = require('../enums/microservice-state')
 const VolumeMappingManager = require('../data/managers/volume-mapping-manager')
 const ChangeTrackingService = require('./change-tracking-service')
@@ -31,6 +36,11 @@ const ApplicationManager = require('../data/managers/application-manager')
 const CatalogService = require('../services/catalog-service')
 const RoutingManager = require('../data/managers/routing-manager')
 const RoutingService = require('../services/routing-service')
+const ServiceManager = require('../data/managers/service-manager')
+const ServiceServices = require('./services-service')
+const ConfigMapManager = require('../data/managers/config-map-manager')
+const SecretManager = require('../data/managers/secret-manager')
+
 const Op = require('sequelize').Op
 const FogManager = require('../data/managers/iofog-manager')
 const MicroserviceExtraHostManager = require('../data/managers/microservice-extra-host-manager')
@@ -38,6 +48,7 @@ const { VOLUME_MAPPING_DEFAULT } = require('../helpers/constants')
 const constants = require('../helpers/constants')
 const isEqual = require('lodash/isEqual')
 const TagsManager = require('../data/managers/tags-manager')
+const logger = require('../logger')
 
 async function _setPubTags (microserviceModel, tagsArray, transaction) {
   if (tagsArray) {
@@ -90,6 +101,26 @@ async function listMicroservicesEndPoint (opt, isCLI, transaction) {
   }
 }
 
+async function listSystemMicroservicesEndPoint (opt, isCLI, transaction) {
+  const { applicationName, flowId } = opt
+  let application = await _validateSystemApplication(applicationName, isCLI, transaction)
+
+  if (flowId) {
+    // _validateApplication wil try by ID if it fails finding by name
+    application = await _validateSystemApplication(flowId, isCLI, transaction)
+  }
+  const where = application ? { applicationId: application.id, delete: false } : { delete: false, applicationId: { [Op.ne]: null } }
+
+  const microservices = await MicroserviceManager.findAllSystemExcludeFields(where, transaction)
+  const res = await Promise.all(microservices.map(async (microservice) => {
+    return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
+  }))
+
+  return {
+    microservices: res
+  }
+}
+
 async function getMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
   if (!isCLI) {
     await _validateMicroserviceOnGet(microserviceUuid, transaction)
@@ -100,6 +131,27 @@ async function getMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
   }, transaction)
 
   if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+
+  return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
+}
+
+async function getSystemMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
+  if (!isCLI) {
+    await _validateSystemMicroserviceOnGet(microserviceUuid, transaction)
+  }
+
+  const microservice = await MicroserviceManager.findOneExcludeFields({
+    uuid: microserviceUuid, delete: false
+  }, transaction)
+
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+
+  const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  if (!app.isSystem) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
   }
 
@@ -127,7 +179,7 @@ function _validateImagesAgainstCatalog (catalogItem, images) {
   }
 }
 
-async function _validateLocalAppHostTemplate (extraHost, templateArgs, msvc, transaction) {
+async function _validateLocalAppHostTemplate (extraHost, templateArgs, msvc, fogUuid, transaction) {
   if (templateArgs.length !== 4) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
   }
@@ -135,13 +187,17 @@ async function _validateLocalAppHostTemplate (extraHost, templateArgs, msvc, tra
   if (!fog) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_HOST_TEMPLATE, templateArgs[2]))
   }
+  if (fogUuid !== fog.uuid) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.NOT_FOUND_APPS_TEMPLATE, msvc.name))
+  }
+
   extraHost.targetFogUuid = fog.uuid
-  extraHost.value = fog.host || fog.ipAddress
+  extraHost.value = `iofog_${msvc.uuid}`
 
   return extraHost
 }
 
-async function _validateAppHostTemplate (extraHost, templateArgs, transaction) {
+async function _validateAppHostTemplate (extraHost, templateArgs, fogUuid, transaction) {
   if (templateArgs.length < 4) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
   }
@@ -155,11 +211,8 @@ async function _validateAppHostTemplate (extraHost, templateArgs, transaction) {
   }
   extraHost.templateType = 'Apps'
   extraHost.targetMicroserviceUuid = msvc.uuid
-  if (templateArgs[3] === 'public') {
-    return MicroservicePortService.validatePublicPortAppHostTemplate(extraHost, templateArgs, msvc, transaction)
-  }
   if (templateArgs[3] === 'local') {
-    return _validateLocalAppHostTemplate(extraHost, templateArgs, msvc, transaction)
+    return _validateLocalAppHostTemplate(extraHost, templateArgs, msvc, fogUuid, transaction)
   }
   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, templateArgs.join('.')))
 }
@@ -180,7 +233,10 @@ async function _validateAgentHostTemplate (extraHost, templateArgs, transaction)
   return extraHost
 }
 
-async function _validateExtraHost (extraHostData, transaction) {
+async function _validateExtraHost (extraHostData, fogUuid, transaction) {
+  if (extraHostData.name === 'service.local') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, 'Extra Host name cannot be service.local'))
+  }
   const extraHost = {
     templateType: 'Litteral',
     name: extraHostData.name,
@@ -194,20 +250,20 @@ async function _validateExtraHost (extraHostData, transaction) {
   const templateArgs = template.split('.')
   extraHost.templateType = templateArgs[0]
   if (templateArgs[0] === 'Apps') {
-    return _validateAppHostTemplate(extraHost, templateArgs, transaction)
+    return _validateAppHostTemplate(extraHost, templateArgs, fogUuid, transaction)
   } else if (templateArgs[0] === 'Agents') {
     return _validateAgentHostTemplate(extraHost, templateArgs, transaction)
   }
   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_HOST_TEMPLATE, template))
 }
 
-async function _validateExtraHosts (microserviceData, transaction) {
+async function _validateExtraHosts (microserviceData, fogUuid, transaction) {
   if (!microserviceData.extraHosts || microserviceData.extraHosts.length === 0) {
     return []
   }
   const extraHosts = []
   for (const extraHost of microserviceData.extraHosts) {
-    extraHosts.push(await _validateExtraHost(extraHost, transaction))
+    extraHosts.push(await _validateExtraHost(extraHost, fogUuid, transaction))
   }
   return extraHosts
 }
@@ -267,7 +323,7 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
   }
 
   // validate extraHosts
-  const extraHosts = await _validateExtraHosts(microserviceData, transaction)
+  const extraHosts = await _validateExtraHosts(microserviceData, fog.uuid, transaction)
 
   await MicroservicePortService.validatePortMappings(microserviceData, transaction)
 
@@ -279,26 +335,27 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
     await _createMicroserviceImages(microservice, microserviceData.images, transaction)
   }
 
-  const publicPorts = []
-  const proxyPorts = []
+  // const publicPorts = []
+  // const proxyPorts = []
   if (microserviceData.ports) {
     for (const mapping of microserviceData.ports) {
-      const res = await MicroservicePortService.createPortMapping(microservice, mapping, transaction)
-      if (res) {
-        if (res.publicLinks) {
-          publicPorts.push({
-            internal: mapping.internal,
-            external: mapping.external,
-            publicLinks: res.publicLinks
-          })
-        } else if (res.proxy) {
-          proxyPorts.push({
-            internal: mapping.internal,
-            external: mapping.external,
-            proxy: res.proxy
-          })
-        }
-      }
+      // const res = await MicroservicePortService.createPortMapping(microservice, mapping, transaction)
+      await MicroservicePortService.createPortMapping(microservice, mapping, transaction)
+      // if (res) {
+      //   if (res.publicLinks) {
+      //     publicPorts.push({
+      //       internal: mapping.internal,
+      //       external: mapping.external,
+      //       publicLinks: res.publicLinks
+      //     })
+      //   } else if (res.proxy) {
+      //     proxyPorts.push({
+      //       internal: mapping.internal,
+      //       external: mapping.external,
+      //       proxy: res.proxy
+      //     })
+      //   }
+      // }
     }
   }
 
@@ -319,6 +376,23 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
   if (microserviceData.cdiDevices) {
     for (const cdiDevices of microserviceData.cdiDevices) {
       await _createCdiDevices(microservice, cdiDevices, transaction)
+    }
+  }
+  if (microserviceData.healthCheck) {
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceData.healthCheck)
+    }
+    await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+  }
+  if (microserviceData.capAdd) {
+    for (const capAdd of microserviceData.capAdd) {
+      await _createCapAdd(microservice, capAdd, transaction)
+    }
+  }
+  if (microserviceData.capDrop) {
+    for (const capDrop of microserviceData.capDrop) {
+      await _createCapDrop(microservice, capDrop, transaction)
     }
   }
   if (microserviceData.volumeMappings) {
@@ -344,14 +418,14 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
           response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
         }
       } catch (error) {
-        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
       }
     }
     for (const fog of fogsNeedUpdate) {
       try {
         await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
       } catch (error) {
-        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
       }
     }
   }
@@ -361,17 +435,18 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
   }
 
   await _createMicroserviceStatus(microservice, transaction)
+  await _createMicroserviceExecStatus(microservice, transaction)
 
   const res = {
     uuid: microservice.uuid,
     name: microservice.name
   }
-  if (publicPorts.length) {
-    res.publicPorts = publicPorts
-  }
-  if (proxyPorts.length) {
-    res.proxies = proxyPorts
-  }
+  // if (publicPorts.length) {
+  //   res.publicPorts = publicPorts
+  // }
+  // if (proxyPorts.length) {
+  //   res.proxies = proxyPorts
+  // }
 
   return res
 }
@@ -403,11 +478,15 @@ async function _updateRelatedExtraHostTargetFog (extraHost, newFogUuid, transact
 async function _updateRelatedExtraHosts (updatedMicroservice, transaction) {
   const extraHosts = await MicroserviceExtraHostManager.findAll({ targetMicroserviceUuid: updatedMicroservice.uuid }, transaction)
   for (const extraHost of extraHosts) {
-    if (!extraHost.publicPort) {
-      // Local port, update target fog and host if microservice moved
-      if (extraHost.targetFogUuid !== updatedMicroservice.iofogUuid) {
-        await _updateRelatedExtraHostTargetFog(extraHost, updatedMicroservice.iofogUuid, transaction)
-      }
+    // if (!extraHost.publicPort) {
+    //   // Local port, update target fog and host if microservice moved
+    //   if (extraHost.targetFogUuid !== updatedMicroservice.iofogUuid) {
+    //     await _updateRelatedExtraHostTargetFog(extraHost, updatedMicroservice.iofogUuid, transaction)
+    //   }
+    // }
+    // Local port, update target fog and host if microservice moved
+    if (extraHost.targetFogUuid !== updatedMicroservice.iofogUuid) {
+      await _updateRelatedExtraHostTargetFog(extraHost, updatedMicroservice.iofogUuid, transaction)
     }
   }
 }
@@ -423,21 +502,32 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
       uuid: microserviceUuid
     }
 
+  const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
   // validate extraHosts
-  const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, transaction) : null
+  const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, newFog.uuid, transaction) : null
 
   const config = _validateMicroserviceConfig(microserviceData.config)
 
-  const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
+  const annotations = _validateMicroserviceAnnotations(microserviceData.annotations)
+
+  // const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
   const microserviceToUpdate = {
     name: microserviceData.name,
     config: config,
+    annotations: annotations,
     images: microserviceData.images,
     catalogItemId: microserviceData.catalogItemId,
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
+    schedule: microserviceData.schedule,
+    pidMode: microserviceData.pidMode,
+    ipcMode: microserviceData.ipcMode,
     cdiDevices: microserviceData.cdiDevices,
+    capAdd: microserviceData.capAdd,
+    capDrop: microserviceData.capDrop,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
@@ -446,7 +536,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     volumeMappings: microserviceData.volumeMappings,
     env: microserviceData.env,
     cmd: microserviceData.cmd,
-    ports: microserviceData.ports
+    ports: microserviceData.ports,
+    healthCheck: microserviceData.healthCheck
   }
 
   const microserviceDataUpdate = AppHelper.deleteUndefinedFields(microserviceToUpdate)
@@ -550,14 +641,22 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
   // Set rebuild flag if needed
   microserviceDataUpdate.rebuild = microserviceDataUpdate.rebuild || !!(
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
+    microserviceDataUpdate.pidMode ||
+    microserviceDataUpdate.ipcMode ||
+    microserviceDataUpdate.cpuSetCpus ||
+    microserviceDataUpdate.memoryLimit ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
     microserviceDataUpdate.cdiDevices ||
+    microserviceDataUpdate.annotations ||
+    microserviceDataUpdate.capAdd ||
+    microserviceDataUpdate.capDrop ||
     microserviceDataUpdate.runAsUser ||
     microserviceDataUpdate.platform ||
     microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
+    microserviceDataUpdate.schedule ||
     extraHosts
   )
   const updatedMicroservice = await MicroserviceManager.updateAndFind(query, microserviceDataUpdate, transaction)
@@ -585,8 +684,25 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     await _updateCdiDevices(microserviceDataUpdate.cdiDevices, microserviceUuid, transaction)
   }
 
-  if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid) {
-    await MicroservicePortService.movePublicPortsToNewFog(updatedMicroservice, transaction)
+  if (microserviceDataUpdate.capAdd) {
+    await _updateCapAdd(microserviceDataUpdate.capAdd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.healthCheck) {
+    await MicroserviceHealthCheckManager.delete({
+      microserviceUuid: microservice.uuid
+    }, transaction)
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceDataUpdate.healthCheck)
+    }
+    if (healthCheckData.test && healthCheckData.test.length > 0) {
+      await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+    }
+  }
+
+  if (microserviceDataUpdate.capDrop) {
+    await _updateCapDrop(microserviceDataUpdate.capDrop, microserviceUuid, transaction)
   }
 
   if (needStatusReset) {
@@ -629,21 +745,32 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
       uuid: microserviceUuid
     }
 
+  const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
   // validate extraHosts
-  const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, transaction) : null
+  const extraHosts = microserviceData.extraHosts ? await _validateExtraHosts(microserviceData, newFog.uuid, transaction) : null
 
   const config = _validateMicroserviceConfig(microserviceData.config)
 
-  const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
+  const annotations = _validateMicroserviceAnnotations(microserviceData.annotations)
+
+  // const newFog = await _findFog(microserviceData, isCLI, transaction) || {}
   const microserviceToUpdate = {
     name: microserviceData.name,
     config: config,
+    annotations: annotations,
     images: microserviceData.images,
     catalogItemId: microserviceData.catalogItemId,
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
+    schedule: microserviceData.schedule,
+    pidMode: microserviceData.pidMode,
+    ipcMode: microserviceData.ipcMode,
     cdiDevices: microserviceData.cdiDevices,
+    capAdd: microserviceData.capAdd,
+    capDrop: microserviceData.capDrop,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
@@ -652,7 +779,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     volumeMappings: microserviceData.volumeMappings,
     env: microserviceData.env,
     cmd: microserviceData.cmd,
-    ports: microserviceData.ports
+    ports: microserviceData.ports,
+    healthCheck: microserviceData.healthCheck
   }
 
   const microserviceDataUpdate = AppHelper.deleteUndefinedFields(microserviceToUpdate)
@@ -760,14 +888,22 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   // Set rebuild flag if needed
   microserviceDataUpdate.rebuild = microserviceDataUpdate.rebuild || !!(
     (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
+    microserviceDataUpdate.pidMode ||
+    microserviceDataUpdate.ipcMode ||
+    microserviceDataUpdate.cpuSetCpus ||
+    microserviceDataUpdate.memoryLimit ||
     microserviceDataUpdate.env ||
     microserviceDataUpdate.cmd ||
     microserviceDataUpdate.cdiDevices ||
+    microserviceDataUpdate.capAdd ||
+    microserviceDataUpdate.capDrop ||
+    microserviceDataUpdate.annotations ||
     microserviceDataUpdate.runAsUser ||
     microserviceDataUpdate.platform ||
     microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
+    microserviceDataUpdate.schedule ||
     extraHosts
   )
   const updatedMicroservice = await MicroserviceManager.updateAndFind(query, microserviceDataUpdate, transaction)
@@ -795,8 +931,30 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     await _updateCdiDevices(microserviceDataUpdate.cdiDevices, microserviceUuid, transaction)
   }
 
-  if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid) {
-    await MicroservicePortService.movePublicPortsToNewFog(updatedMicroservice, transaction)
+  if (microserviceDataUpdate.capAdd) {
+    await _updateCapAdd(microserviceDataUpdate.capAdd, microserviceUuid, transaction)
+  }
+
+  if (microserviceDataUpdate.healthCheck) {
+    await MicroserviceHealthCheckManager.delete({
+      microserviceUuid: microservice.uuid
+    }, transaction)
+    const healthCheckData = {
+      microserviceUuid: microservice.uuid,
+      ..._processHealthCheckForDB(microserviceDataUpdate.healthCheck)
+    }
+    if (healthCheckData.test && healthCheckData.test.length > 0) {
+      await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+    }
+  }
+
+  if (microserviceDataUpdate.capDrop) {
+    await _updateCapDrop(microserviceDataUpdate.capDrop, microserviceUuid, transaction)
+  }
+  // TODO: Implement moveServiceToNewFog
+  const existingService = await ServiceManager.findOne({ type: `microservice`, resource: microservice.uuid }, transaction)
+  if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid && existingService) {
+    await ServiceServices.moveMicroserviceTcpBridgeToNewFog(existingService, microserviceDataUpdate.iofogUuid, microservice.iofogUuid, transaction)
   }
 
   // Update tags
@@ -819,14 +977,14 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
           response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
         }
       } catch (error) {
-        console.error(`[ERROR] Checking fog nodes list for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
       }
     }
     for (const fog of fogsNeedUpdate) {
       try {
         await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
       } catch (error) {
-        console.error(`[ERROR] Updating change tracking for fog "${fog.value}":`, error.message)
+        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
       }
     }
   }
@@ -857,6 +1015,55 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
       microserviceIofogUuid: microservice.iofogUuid,
       updatedMicroserviceIofogUuid: updatedMicroservice.iofogUuid
     }
+  }
+}
+
+async function rebuildMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+
+  const check = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (check.catalogItem && check.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+
+  const microservice = await MicroserviceManager.updateAndFind(query, { rebuild: true }, transaction)
+
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
+  return {
+    uuid: microserviceUuid,
+    rebuild: true
+  }
+}
+
+async function rebuildSystemMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+
+  const microservice = await MicroserviceManager.updateAndFind(query, { rebuild: true }, transaction)
+
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
+  return {
+    uuid: microserviceUuid,
+    rebuild: true
   }
 }
 
@@ -896,6 +1103,11 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
   await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
 
+  const existingService = await ServiceManager.findOne({ type: `microservice`, resource: microservice.uuid }, transaction)
+  if (existingService) {
+    logger.info(`Deleting service ${existingService.name}`)
+    await ServiceServices.deleteServiceEndpoint(existingService.name, transaction)
+  }
   await _updateChangeTracking(false, microservice.iofogUuid, transaction)
 }
 
@@ -1005,8 +1217,51 @@ async function _createEnv (microservice, envData, transaction) {
     microserviceUuid: microservice.uuid
   }
 
+  // Handle valueFromSecret
+  if (envData.valueFromSecret) {
+    const [secretName, dataKey] = envData.valueFromSecret.split('/')
+    if (!secretName || !dataKey) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_SECRET_REFERENCE, envData.valueFromSecret))
+    }
+    const secret = await SecretManager.getSecret(secretName, transaction)
+    if (!secret) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, secretName))
+    }
+    if (!secret.data[dataKey]) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SECRET_KEY_NOT_FOUND, dataKey, secretName))
+    }
+    // If it's a TLS secret, decode the base64 value
+    if (secret.type === 'tls') {
+      try {
+        msEnvData.value = Buffer.from(secret.data[dataKey], 'base64').toString('utf-8')
+      } catch (error) {
+        throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_BASE64_VALUE, dataKey, secretName))
+      }
+    } else {
+      msEnvData.value = secret.data[dataKey]
+    }
+    msEnvData.valueFromSecret = envData.valueFromSecret
+  }
+
+  // Handle valueFromConfigMap
+  if (envData.valueFromConfigMap) {
+    const [configMapName, dataKey] = envData.valueFromConfigMap.split('/')
+    if (!configMapName || !dataKey) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_CONFIGMAP_REFERENCE, envData.valueFromConfigMap))
+    }
+    const configMap = await ConfigMapManager.getConfigMap(configMapName, transaction)
+    if (!configMap) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_NOT_FOUND, configMapName))
+    }
+    if (!configMap.data[dataKey]) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_KEY_NOT_FOUND, dataKey, configMapName))
+    }
+    msEnvData.value = configMap.data[dataKey]
+    msEnvData.valueFromConfigMap = envData.valueFromConfigMap
+  }
+
   await MicroserviceEnvManager.create(msEnvData, transaction)
-  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, transaction)
 }
 
 async function _createArg (microservice, arg, transaction) {
@@ -1020,7 +1275,7 @@ async function _createArg (microservice, arg, transaction) {
   }
 
   await MicroserviceArgManager.create(msArgData, transaction)
-  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, transaction)
 }
 
 async function _createCdiDevices (microservice, cdiDevices, transaction) {
@@ -1028,13 +1283,41 @@ async function _createCdiDevices (microservice, cdiDevices, transaction) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.REQUIRED_FOG_NODE))
   }
 
-  const mscdiDevicesData = {
+  const msCdiDevicesData = {
     cdiDevices: cdiDevices,
     microserviceUuid: microservice.uuid
   }
 
-  await MicroserviceCdiDevManager.create(mscdiDevicesData, transaction)
-  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, false, transaction)
+  await MicroserviceCdiDevManager.create(msCdiDevicesData, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, transaction)
+}
+
+async function _createCapAdd (microservice, capAdd, transaction) {
+  if (!microservice.iofogUuid) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.REQUIRED_FOG_NODE))
+  }
+
+  const msCapAddData = {
+    capAdd: capAdd,
+    microserviceUuid: microservice.uuid
+  }
+
+  await MicroserviceCapAddManager.create(msCapAddData, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, transaction)
+}
+
+async function _createCapDrop (microservice, capDrop, transaction) {
+  if (!microservice.iofogUuid) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.REQUIRED_FOG_NODE))
+  }
+
+  const msCapDropData = {
+    capDrop: capDrop,
+    microserviceUuid: microservice.uuid
+  }
+
+  await MicroserviceCapDropManager.create(msCapDropData, transaction)
+  await MicroservicePortService.switchOnUpdateFlagsForMicroservicesForPortMapping(microservice, transaction)
 }
 
 async function deletePortMappingEndPoint (microserviceUuid, internalPort, isCLI, transaction) {
@@ -1076,7 +1359,7 @@ async function getReceiverMicroservices (microservice, transaction) {
           ]
         }
       } catch (error) {
-        console.error(`[ERROR] Checking microservices for pubTag "${tag.value}":`, error.message)
+        logger.error(`Checking microservices for pubTag "${tag.value}":`, error.message)
       }
     }
   }
@@ -1105,8 +1388,18 @@ async function isMicroserviceConsumer (microservice, transaction) {
           return true
         }
       } catch (error) {
-        console.error(`[ERROR] Checking microservices for subTag "${tag.value}":`, error.message)
+        logger.error(`Checking microservices for subTag "${tag.value}":`, error.message)
       }
+    }
+  }
+  return false
+}
+
+async function isMicroserviceRouter (microservice, transaction) {
+  if (microservice.name === `router-${microservice.iofogUuid.toLowerCase()}`) {
+    const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+    if (app.isSystem === true) {
+      return true
     }
   }
   return false
@@ -1253,21 +1546,60 @@ function _validateMicroserviceConfig (config) {
   return result
 }
 
+function _validateMicroserviceAnnotations (annotations) {
+  let result
+  if (annotations) {
+    result = annotations.split('\\"').join('"').split('"').join('\"') // eslint-disable-line no-useless-escape
+  }
+  return result
+}
+
+function _validateMicroserviceHealthCheck (healthCheck) {
+  let result
+  if (healthCheck) {
+    // Convert the health check object to a JSON string for database storage
+    result = JSON.stringify(healthCheck)
+  }
+  return result
+}
+
+function _processHealthCheckForDB (healthCheckData) {
+  if (!healthCheckData) return null
+
+  return {
+    test: _validateMicroserviceHealthCheck(healthCheckData.test),
+    interval: healthCheckData.interval,
+    timeout: healthCheckData.timeout,
+    startPeriod: healthCheckData.startPeriod,
+    startInterval: healthCheckData.startInterval,
+    retries: healthCheckData.retries
+  }
+}
+
 async function _createMicroservice (microserviceData, isCLI, transaction) {
   const config = _validateMicroserviceConfig(microserviceData.config)
+  const annotations = _validateMicroserviceAnnotations(microserviceData.annotations)
 
   let newMicroservice = {
-    uuid: AppHelper.generateRandomString(32),
+    uuid: AppHelper.generateUUID(),
     name: microserviceData.name,
     config: config,
+    annotations: annotations,
     catalogItemId: microserviceData.catalogItemId,
     iofogUuid: microserviceData.iofogUuid,
     rootHostAccess: microserviceData.rootHostAccess,
+    cpuSetCpus: microserviceData.cpuSetCpus,
+    memoryLimit: microserviceData.memoryLimit,
+    pidMode: microserviceData.pidMode,
+    ipcMode: microserviceData.ipcMode,
     cdiDevices: microserviceData.cdiDevices,
+    capAdd: microserviceData.capAdd,
+    capDrop: microserviceData.capDrop,
     runAsUser: microserviceData.runAsUser,
     platform: microserviceData.platform,
     runtime: microserviceData.runtime,
     registryId: microserviceData.registryId || 1,
+    schedule: microserviceData.schedule || 50,
     logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1
   }
 
@@ -1309,22 +1641,64 @@ async function _validateApplication (name, isCLI, transaction) {
 
   const application = await ApplicationManager.findOne(where, transaction)
   if (!application) {
-    // Try with id
-    const where = isCLI
-      ? { id: name, isSystem: false }
-      : { id: name, isSystem: false }
+    // Try with id - but only if name is actually a valid integer
+    if (Number.isInteger(Number(name)) && !isNaN(name)) {
+      const where = isCLI
+        ? { id: parseInt(name), isSystem: false }
+        : { id: parseInt(name), isSystem: false }
 
-    const application = await ApplicationManager.findOne(where, transaction)
-    if (!application) {
+      const application = await ApplicationManager.findOne(where, transaction)
+      if (!application) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
+      }
+      return application
+    } else {
+      // If name is not a valid integer, it's not a valid ID either
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
     }
-    return application
+  }
+  return application
+}
+
+async function _validateSystemApplication (name, isCLI, transaction) {
+  if (!name) {
+    return null
+  }
+
+  // Force name conversion to string for PG
+  const where = isCLI
+    ? { name: name.toString(), isSystem: true }
+    : { name: name.toString(), isSystem: true }
+
+  const application = await ApplicationManager.findOne(where, transaction)
+  if (!application) {
+    // Try with id - but only if name is actually a valid integer
+    if (Number.isInteger(Number(name)) && !isNaN(name)) {
+      const where = isCLI
+        ? { id: parseInt(name), isSystem: true }
+        : { id: parseInt(name), isSystem: true }
+
+      const application = await ApplicationManager.findOne(where, transaction)
+      if (!application) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
+      }
+      return application
+    } else {
+      // If name is not a valid integer, it's not a valid ID either
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
+    }
   }
   return application
 }
 
 async function _createMicroserviceStatus (microservice, transaction) {
   return MicroserviceStatusManager.create({
+    microserviceUuid: microservice.uuid
+  }, transaction)
+}
+
+async function _createMicroserviceExecStatus (microservice, transaction) {
+  return MicroserviceExecStatusManager.create({
     microserviceUuid: microservice.uuid
   }, transaction)
 }
@@ -1404,6 +1778,49 @@ async function _updateEnv (env, microserviceUuid, transaction) {
       value: envData.value
     }
 
+    // Handle valueFromSecret
+    if (envData.valueFromSecret) {
+      const [secretName, dataKey] = envData.valueFromSecret.split('/')
+      if (!secretName || !dataKey) {
+        throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_SECRET_REFERENCE, envData.valueFromSecret))
+      }
+      const secret = await SecretManager.getSecret(secretName, transaction)
+      if (!secret) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, secretName))
+      }
+      if (!secret.data[dataKey]) {
+        throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SECRET_KEY_NOT_FOUND, dataKey, secretName))
+      }
+      // If it's a TLS secret, decode the base64 value
+      if (secret.type === 'tls') {
+        try {
+          envObj.value = Buffer.from(secret.data[dataKey], 'base64').toString('utf-8')
+        } catch (error) {
+          throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_BASE64_VALUE, dataKey, secretName))
+        }
+      } else {
+        envObj.value = secret.data[dataKey]
+      }
+      envObj.valueFromSecret = envData.valueFromSecret
+    }
+
+    // Handle valueFromConfigMap
+    if (envData.valueFromConfigMap) {
+      const [configMapName, dataKey] = envData.valueFromConfigMap.split('/')
+      if (!configMapName || !dataKey) {
+        throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_CONFIGMAP_REFERENCE, envData.valueFromConfigMap))
+      }
+      const configMap = await ConfigMapManager.getConfigMap(configMapName, transaction)
+      if (!configMap) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_NOT_FOUND, configMapName))
+      }
+      if (!configMap.data[dataKey]) {
+        throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_KEY_NOT_FOUND, dataKey, configMapName))
+      }
+      envObj.value = configMap.data[dataKey]
+      envObj.valueFromConfigMap = envData.valueFromConfigMap
+    }
+
     await MicroserviceEnvManager.create(envObj, transaction)
   }
 }
@@ -1433,6 +1850,34 @@ async function _updateCdiDevices (cdiDevices, microserviceUuid, transaction) {
     }
 
     await MicroserviceCdiDevManager.create(envObj, transaction)
+  }
+}
+
+async function _updateCapAdd (capAdd, microserviceUuid, transaction) {
+  await MicroserviceCapAddManager.delete({
+    microserviceUuid: microserviceUuid
+  }, transaction)
+  for (const capAddData of capAdd) {
+    const envObj = {
+      microserviceUuid: microserviceUuid,
+      capAdd: capAddData
+    }
+
+    await MicroserviceCapAddManager.create(envObj, transaction)
+  }
+}
+
+async function _updateCapDrop (capDrop, microserviceUuid, transaction) {
+  await MicroserviceCapDropManager.delete({
+    microserviceUuid: microserviceUuid
+  }, transaction)
+  for (const capDropData of capDrop) {
+    const envObj = {
+      microserviceUuid: microserviceUuid,
+      capDrop: capDropData
+    }
+
+    await MicroserviceCapDropManager.create(envObj, transaction)
   }
 }
 
@@ -1490,6 +1935,16 @@ async function _validateMicroserviceOnGet (microserviceUuid, transaction) {
   }
 }
 
+async function _validateSystemMicroserviceOnGet (microserviceUuid, transaction) {
+  const where = {
+    uuid: microserviceUuid
+  }
+  const microservice = await MicroserviceManager.findSystemMicroserviceOnGet(where, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_MICROSERVICE_USER)
+  }
+}
+
 async function _getLogicalRoutesByMicroservice (microserviceUuid, transaction) {
   const res = []
   const query = {
@@ -1540,15 +1995,21 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const arg = cmd.map((it) => it.cmd)
   const cdiDevices = await MicroserviceCdiDevManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const cdiDevs = cdiDevices.map((it) => it.cdiDevices)
+  const capAdd = await MicroserviceCapAddManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const capAdds = capAdd.map((it) => it.capAdd)
+  const capDrop = await MicroserviceCapDropManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const capDrops = capDrop.map((it) => it.capDrop)
   const pubTags = microservice.pubTags ? microservice.pubTags.map(t => t.value) : []
   const subTags = microservice.subTags ? microservice.subTags.map(t => t.value) : []
   const status = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const execStatus = await MicroserviceExecStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+  const healthCheck = await MicroserviceHealthCheckManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   // build microservice response
   const res = Object.assign({}, microservice)
   res.ports = []
   for (const pm of portMappings) {
     const mapping = { internal: pm.portInternal, external: pm.portExternal, protocol: pm.isUdp ? 'udp' : 'tcp' }
-    await MicroservicePortService.buildPublicPortMapping(pm, mapping, transaction)
+    // await MicroservicePortService.buildPublicPortMapping(pm, mapping, transaction)
     res.ports.push(mapping)
   }
   res.volumeMappings = volumeMappings.map((vm) => vm.dataValues)
@@ -1556,10 +2017,62 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   res.env = env
   res.cmd = arg
   res.cdiDevices = cdiDevs
+  res.capAdd = capAdds
+  res.capDrop = capDrops
   res.extraHosts = extraHosts.map(eH => ({ name: eH.name, address: eH.template, value: eH.value }))
   res.images = images.map(i => ({ containerImage: i.containerImage, fogTypeId: i.fogTypeId }))
   if (status && status.length) {
     res.status = status[0]
+  }
+  if (execStatus && execStatus.length) {
+    res.execStatus = execStatus[0]
+  }
+  if (healthCheck && healthCheck.length) {
+    const healthCheckData = healthCheck[0]
+    // Create a copy of the health check data to avoid modifying the Sequelize object
+    const healthCheckResponse = {
+      test: healthCheckData.test
+    }
+
+    // Only add fields if they are not null
+    if (healthCheckData.interval !== null) {
+      healthCheckResponse.interval = healthCheckData.interval
+    }
+    if (healthCheckData.timeout !== null) {
+      healthCheckResponse.timeout = healthCheckData.timeout
+    }
+    if (healthCheckData.startPeriod !== null) {
+      healthCheckResponse.startPeriod = healthCheckData.startPeriod
+    }
+    if (healthCheckData.startInterval !== null) {
+      healthCheckResponse.startInterval = healthCheckData.startInterval
+    }
+    if (healthCheckData.retries !== null) {
+      healthCheckResponse.retries = healthCheckData.retries
+    }
+
+    // Handle the test field - ensure it's always an array
+    if (healthCheckResponse.test) {
+      if (typeof healthCheckResponse.test === 'string') {
+        // It's a JSON string, try to parse it
+        try {
+          healthCheckResponse.test = JSON.parse(healthCheckResponse.test)
+        } catch (e) {
+          // If not valid JSON, treat as a single string command
+          healthCheckResponse.test = [healthCheckResponse.test]
+        }
+      } else if (!Array.isArray(healthCheckResponse.test)) {
+        // If it's not an array, convert to array
+        healthCheckResponse.test = [healthCheckResponse.test]
+      }
+      // If it's already an array, leave as is
+    }
+
+    if (healthCheckResponse.test && healthCheckResponse.test.length > 0) {
+      res.healthCheck = healthCheckResponse
+    } else {
+      res.healthCheck = {}
+    }
   }
   res.pubTags = pubTags
   res.subTags = subTags
@@ -1572,10 +2085,6 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   res.flowId = res.applicationId
 
   return res
-}
-
-function listAllPublicPortsEndPoint (transaction) {
-  return MicroservicePortService.listAllPublicPorts(transaction)
 }
 
 async function listMicroserviceByPubTagEndPoint (pubTag, transaction) {
@@ -1612,6 +2121,85 @@ async function listMicroserviceBySubTagEndPoint (subTag, transaction) {
   }
 }
 
+async function createExecEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  if (!microservice) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_MICROSERVICE_USER)
+  }
+
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { execEnabled: true }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+  const updatedMicroservice = await MicroserviceManager.findOneWithCategory({ uuid: microservice.uuid }, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    execEnabled: updatedMicroservice.execEnabled
+  }
+}
+
+async function deleteExecEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  if (!microservice) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_MICROSERVICE_USER)
+  }
+
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { execEnabled: false }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+  const updatedMicroservice = await MicroserviceManager.findOneWithCategory({ uuid: microservice.uuid }, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    execEnabled: updatedMicroservice.execEnabled
+  }
+}
+
+async function createSystemExecEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  // if (microservice.catalogItem && microservice.catalogItem.category !== 'SYSTEM') {
+  //   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  // }
+  if (!microservice) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_MICROSERVICE_USER)
+  }
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { execEnabled: true }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+  const updatedMicroservice = await MicroserviceManager.findOneWithCategory({ uuid: microservice.uuid }, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    execEnabled: updatedMicroservice.execEnabled
+  }
+}
+
+async function deleteSystemExecEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  // if (microservice.catalogItem && microservice.catalogItem.category !== 'SYSTEM') {
+  //   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  // }
+  if (!microservice) {
+    throw new Errors.NotFoundError(ErrorMessages.INVALID_MICROSERVICE_USER)
+  }
+
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { execEnabled: false }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceExecSessions, transaction)
+
+  const updatedMicroservice = await MicroserviceManager.findOneWithCategory({ uuid: microservice.uuid }, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    execEnabled: updatedMicroservice.execEnabled
+  }
+}
+
 module.exports = {
   createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint),
   createPortMappingEndPoint: TransactionDecorator.generateTransaction(createPortMappingEndPoint),
@@ -1628,16 +2216,24 @@ module.exports = {
   deleteVolumeMappingEndPoint: TransactionDecorator.generateTransaction(deleteVolumeMappingEndPoint),
   deleteSystemVolumeMappingEndPoint: TransactionDecorator.generateTransaction(deleteSystemVolumeMappingEndPoint),
   getMicroserviceEndPoint: TransactionDecorator.generateTransaction(getMicroserviceEndPoint),
+  getSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(getSystemMicroserviceEndPoint),
   getReceiverMicroservices,
   isMicroserviceConsumer,
-  listAllPublicPortsEndPoint: TransactionDecorator.generateTransaction(listAllPublicPortsEndPoint),
+  isMicroserviceRouter,
   listMicroservicePortMappingsEndPoint: TransactionDecorator.generateTransaction(listPortMappingsEndPoint),
   listMicroservicesEndPoint: TransactionDecorator.generateTransaction(listMicroservicesEndPoint),
+  listSystemMicroservicesEndPoint: TransactionDecorator.generateTransaction(listSystemMicroservicesEndPoint),
   listVolumeMappingsEndPoint: TransactionDecorator.generateTransaction(listVolumeMappingsEndPoint),
   updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint),
+  rebuildMicroserviceEndPoint: TransactionDecorator.generateTransaction(rebuildMicroserviceEndPoint),
+  rebuildSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(rebuildSystemMicroserviceEndPoint),
   buildGetMicroserviceResponse: _buildGetMicroserviceResponse,
   updateChangeTracking: _updateChangeTracking,
   listMicroserviceByPubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceByPubTagEndPoint),
-  listMicroserviceBySubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceBySubTagEndPoint)
+  listMicroserviceBySubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceBySubTagEndPoint),
+  createExecEndPoint: TransactionDecorator.generateTransaction(createExecEndPoint),
+  deleteExecEndPoint: TransactionDecorator.generateTransaction(deleteExecEndPoint),
+  createSystemExecEndPoint: TransactionDecorator.generateTransaction(createSystemExecEndPoint),
+  deleteSystemExecEndPoint: TransactionDecorator.generateTransaction(deleteSystemExecEndPoint)
 }

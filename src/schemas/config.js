@@ -18,7 +18,7 @@ const configUpdate = {
     port: { type: 'integer', minimum: 0, maximum: 65535 },
     sslCert: { type: 'string' },
     sslKey: { type: 'string' },
-    intermediateCert: { type: 'string' },
+    intermediateCert: { type: 'string', optional: true },
     logDir: { type: 'string' },
     logSize: { type: 'integer' }
   }

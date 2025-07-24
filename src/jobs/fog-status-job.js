@@ -16,12 +16,13 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogManager = require('../data/managers/iofog-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
 const MicroserviceService = require('../services/microservices-service')
-const MicroserviceStates = require('../enums/microservice-state')
+const { microserviceState, microserviceExecState } = require('../enums/microservice-state')
 const FogStates = require('../enums/fog-state')
 const Config = require('../config')
 
-const scheduleTime = Config.get('Settings:FogStatusUpdateIntervalSeconds') * 1000
+const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 
 async function run () {
   try {
@@ -41,8 +42,11 @@ async function updateFogsConnectionStatus (transaction) {
 }
 
 async function _updateFogStatus (transaction) {
-  const statusUpdateTolerance = Config.get('Settings:FogStatusUpdateTolerance')
-  const fogs = await FogManager.findAll({ daemonStatus: FogStates.RUNNING }, transaction)
+  const statusUpdateTolerance = Config.get('settings.fogStatusUpdateTolerance')
+  const fogs = [
+    ...await FogManager.findAll({ daemonStatus: FogStates.RUNNING }, transaction),
+    ...await FogManager.findAll({ daemonStatus: FogStates.WARNING }, transaction)
+  ]
   const unknownFogUuids = fogs
     .filter((fog) => {
       const statusUpdateToleranceMs = fog.statusFrequency * 1000 * statusUpdateTolerance
@@ -61,7 +65,11 @@ async function _updateMicroserviceStatus (unknownFogUuids, transaction) {
   const microserviceStatusIds = microservices
     .filter((microservice) => microservice.microserviceStatus)
     .map((microservice) => microservice.microserviceStatus.id)
-  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: MicroserviceStates.UNKNOWN }, transaction)
+  const microserviceExecStatusIds = microservices
+    .filter((microservice) => microservice.microserviceExecStatus)
+    .map((microservice) => microservice.microserviceExecStatus.id)
+  await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: microserviceState.UNKNOWN }, transaction)
+  await MicroserviceExecStatusManager.update({ id: microserviceExecStatusIds }, { execSesssionId: '', status: microserviceExecState.INACTIVE }, transaction)
   return microservices
 }
 

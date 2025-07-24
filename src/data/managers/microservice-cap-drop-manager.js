@@ -1,5 +1,5 @@
 /*
- *  *******************************************************************************
+ * *******************************************************************************
  *  * Copyright (c) 2023 Datasance Teknoloji A.S.
  *  *
  *  * This program and the accompanying materials are made available under the
@@ -13,24 +13,23 @@
 
 const BaseManager = require('./base-manager')
 const models = require('../models')
-const FogAccessToken = models.FogAccessToken
+const MicroserviceCapDrop = models.MicroserviceCapDrop
 
-class FogAccessTokenManager extends BaseManager {
+const MicroserviceCapDropExcludedFields = [
+  'id',
+  'microservice_uuid',
+  'microserviceUuid'
+]
+
+class MicroserviceCapDropManager extends BaseManager {
   getEntity () {
-    return FogAccessToken
+    return MicroserviceCapDrop
   }
 
-  // no transaction required here, used by auth decorator
-  updateExpirationTime (id, newTime) {
-    return FogAccessToken.update({
-      expirationTime: newTime
-    }, {
-      where: {
-        id: id
-      }
-    })
+  findAllExcludeFields (where, transaction) {
+    return this.findAllWithAttributes(where, { exclude: MicroserviceCapDropExcludedFields }, transaction)
   }
 }
 
-const instance = new FogAccessTokenManager()
+const instance = new MicroserviceCapDropManager()
 module.exports = instance

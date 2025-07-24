@@ -24,6 +24,7 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
   {
     name: 'string',
     config: 'string',
+    annotations: 'string',
     catalogItemId: 0,
     images: [
       {
@@ -66,6 +67,12 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
     cdiDevices: [
       'string'
     ],
+    capAdd: [
+      'string'
+    ],
+    capDrop: [
+      'string'
+    ],
     runAsUser: 'string',
     platform: 'string',
     runtime: 'string'
@@ -76,6 +83,7 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
   {
     name: 'string',
     config: 'string',
+    annotations: 'string',
     rebuild: true,
     iofogUuid: 'string',
     rootHostAccess: true,
@@ -106,6 +114,12 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
       'string'
     ],
     cdiDevices: [
+      'string'
+    ],
+    capAdd: [
+      'string'
+    ],
+    capDrop: [
       'string'
     ],
     runAsUser: 'string',
@@ -195,6 +209,13 @@ class Microservice extends BaseCLIHandler {
         alias: 'g',
         type: String,
         description: 'Microservice config',
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'annotations',
+        alias: 'A',
+        type: String,
+        description: 'Microservice annotations',
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
       {
@@ -305,6 +326,22 @@ class Microservice extends BaseCLIHandler {
         alias: 'D',
         type: String,
         description: 'Map CDI devices to microservice container',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'capAdd',
+        alias: 'cA',
+        type: String,
+        description: 'A list of kernel capabilities to add to the container.',
+        multiple: true,
+        group: [constants.CMD_UPDATE, constants.CMD_ADD]
+      },
+      {
+        name: 'capDrop',
+        alias: 'cD',
+        type: String,
+        description: 'A list of kernel capabilities to drop to the container.',
         multiple: true,
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
@@ -624,12 +661,15 @@ const _updateMicroserviceObject = function (obj) {
   const microserviceObj = {
     name: obj.name,
     config: obj.config,
+    annotations: obj.annotations,
     iofogUuid: obj.iofogUuid,
     rootHostAccess: AppHelper.validateBooleanCliOptions(obj.rootEnable, obj.rootDisable),
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     rebuild: obj.rebuild,
     cmd: obj.cmd,
     cdiDevices: obj.cdiDevices,
+    capAdd: obj.capAdd,
+    capDrop: obj.capDrop,
     runAsUser: obj.runAsUser,
     platform: obj.platform,
     runtime: obj.runtime,
@@ -686,6 +726,7 @@ const _createMicroserviceObject = function (obj) {
   const microserviceObj = {
     name: obj.name,
     config: obj.config,
+    annotations: obj.annotations,
     catalogItemId: parseInt(obj.catalogId) || undefined,
     application: obj.applicationName,
     registryId: parseInt(obj.registryId) || undefined,
@@ -695,6 +736,8 @@ const _createMicroserviceObject = function (obj) {
     routes: obj.routes,
     cmd: obj.cmd,
     cdiDevices: obj.cdiDevices,
+    capAdd: obj.capAdd,
+    capDrop: obj.capDrop,
     runAsUser: obj.runAsUser,
     platform: obj.platform,
     runtime: obj.runtime,
