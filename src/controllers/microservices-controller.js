@@ -85,6 +85,38 @@ const updateSystemMicroserviceYAMLEndPoint = async function (req) {
   return MicroservicesService.updateSystemMicroserviceEndPoint(microserviceUuid, microservice, false)
 }
 
+const updateMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  const config = req.body
+  return MicroservicesService.updateMicroserviceConfigEndPoint(microserviceUuid, config, false)
+}
+
+const getMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.getMicroserviceConfigEndPoint(microserviceUuid, false)
+}
+
+const deleteMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.deleteMicroserviceConfigEndPoint(microserviceUuid, false)
+}
+
+const updateSystemMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  const config = req.body
+  return MicroservicesService.updateSystemMicroserviceConfigEndPoint(microserviceUuid, config, false)
+}
+
+const getSystemMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.getSystemMicroserviceConfigEndPoint(microserviceUuid, false)
+}
+
+const deleteSystemMicroserviceConfigEndPoint = async function (req) {
+  const microserviceUuid = req.params.uuid
+  return MicroservicesService.deleteSystemMicroserviceConfigEndPoint(microserviceUuid, false)
+}
+
 const deleteMicroserviceEndPoint = async function (req) {
   const microserviceUuid = req.params.uuid
   const microserviceData = req.body || {}
@@ -237,6 +269,12 @@ module.exports = {
   createMicroserviceYAMLEndPoint: (createMicroserviceYAMLEndPoint),
   updateMicroserviceYAMLEndPoint: (updateMicroserviceYAMLEndPoint),
   updateSystemMicroserviceYAMLEndPoint: (updateSystemMicroserviceYAMLEndPoint),
+  updateMicroserviceConfigEndPoint: (updateMicroserviceConfigEndPoint),
+  getMicroserviceConfigEndPoint: (getMicroserviceConfigEndPoint),
+  updateSystemMicroserviceConfigEndPoint: (updateSystemMicroserviceConfigEndPoint),
+  getSystemMicroserviceConfigEndPoint: (getSystemMicroserviceConfigEndPoint),
+  deleteMicroserviceConfigEndPoint: (deleteMicroserviceConfigEndPoint),
+  deleteSystemMicroserviceConfigEndPoint: (deleteSystemMicroserviceConfigEndPoint),
   createMicroserviceExecEndPoint: (createMicroserviceExecEndPoint),
   deleteMicroserviceExecEndPoint: (deleteMicroserviceExecEndPoint),
   createSystemMicroserviceExecEndPoint: (createSystemMicroserviceExecEndPoint),
