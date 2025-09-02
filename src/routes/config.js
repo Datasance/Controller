@@ -96,7 +96,7 @@ module.exports = [
       ]
 
       // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await keycloak.protect(['SRE'])(req, res, async () => {
         const upsertConfigElementEndpoint = ResponseDecorator.handleErrors(ConfigController.upsertConfigElementEndpoint, successCode, errorCodes)
         const responseObject = await upsertConfigElementEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
