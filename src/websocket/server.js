@@ -463,17 +463,44 @@ class WebSocketServer {
     }
   }
 
+  async getPendingAgentExecIdsFromDB (microserviceUuid, transaction) {
+    try {
+      const pendingExecStatus = await MicroserviceExecStatusManager.findAllExcludeFields(
+        {
+          microserviceUuid: microserviceUuid,
+          status: microserviceExecState.PENDING
+        },
+        transaction
+      )
+
+      const execIds = pendingExecStatus.map(status => status.execSessionId)
+      logger.debug('Database query for pending agents:' + JSON.stringify({
+        microserviceUuid,
+        foundExecIds: execIds,
+        count: execIds.length
+      }))
+
+      return execIds
+    } catch (error) {
+      logger.error('Failed to query database for pending agents:' + JSON.stringify({
+        error: error.message,
+        microserviceUuid
+      }))
+      return []
+    }
+  }
+
   async handleUserConnection (ws, req, token, microserviceUuid, transaction) {
     try {
-      const { execSessionId } = await this.validateUserConnection(token, microserviceUuid, transaction)
-      logger.info('User connection: available execSessionId:' + execSessionId)
+      await this.validateUserConnection(token, microserviceUuid, transaction)
+      logger.info('User connection validated successfully for microservice:' + microserviceUuid)
 
       // Check if there's already an active session for this microservice
       const existingSession = Array.from(this.sessionManager.sessions.values())
         .find(session => session.microserviceUuid === microserviceUuid && session.user && session.user.readyState === WebSocket.OPEN)
 
       if (existingSession) {
-        logger.error('Microservice has already active exec session:' + JSON.stringify({
+        logger.debug('Microservice has already active exec session:' + JSON.stringify({
           microserviceUuid,
           existingExecId: existingSession.execId
         }))
@@ -481,61 +508,210 @@ class WebSocketServer {
         return
       }
 
-      // Get all active execIds
-      const activeExecIds = Array.from(this.sessionManager.sessions.keys())
-      logger.info('Currently active execIds:' + JSON.stringify(activeExecIds))
+      // Get pending agent execIds from database (multi-replica compatible)
+      const pendingAgentExecIds = await this.getPendingAgentExecIdsFromDB(microserviceUuid, transaction)
+      logger.info('Pending agent execIds from database:' + JSON.stringify(pendingAgentExecIds))
 
-      // Get pending agent execIds
-      const pendingAgentExecIds = this.sessionManager.getPendingAgentExecIds(microserviceUuid)
-      logger.info('Pending agent execIds:' + JSON.stringify(pendingAgentExecIds))
+      // Simplified logic: find any available pending agent
+      const hasPendingAgents = pendingAgentExecIds.length > 0
 
-      // Find an available execId that is both not active AND has a pending agent
-      const availableExecId = execSessionId && !activeExecIds.includes(execSessionId) && pendingAgentExecIds.includes(execSessionId)
-        ? execSessionId
-        : null
+      if (hasPendingAgents) {
+        // Find any available pending agent
+        const availableExecId = pendingAgentExecIds[0]
+        const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
 
-      if (!availableExecId) {
-        logger.error('No available exec session for user')
-        ws.close(1008, 'No available exec session for this microservice.')
-        return
-      }
-      logger.info('User assigned execId:' + availableExecId)
-
-      // Check if there's a pending agent with this execId
-      const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
-      if (pendingAgent) {
-        logger.info('Found pending agent for execId:' + JSON.stringify({
-          execId: availableExecId,
-          microserviceUuid,
-          agentState: pendingAgent.readyState
-        }))
-        // Try to activate session with the selected execId
-        const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
-        if (session) {
-          logger.info('Session activated for user:', {
-            execId: availableExecId,
-            microserviceUuid,
-            userState: ws.readyState,
-            agentState: pendingAgent.readyState
-          })
-          this.setupMessageForwarding(availableExecId, transaction)
-        } else {
-          logger.info('Failed to activate session with pending agent:' + JSON.stringify({
-            execId: availableExecId,
-            microserviceUuid,
-            userState: ws.readyState,
-            agentState: pendingAgent.readyState
-          }))
-          this.sessionManager.addPendingUser(microserviceUuid, ws)
+        if (pendingAgent) {
+          // Activate session using agent's execId
+          const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
+          if (session) {
+            logger.info('Session activated for user:', {
+              execId: availableExecId,
+              microserviceUuid,
+              userState: ws.readyState,
+              agentState: pendingAgent.readyState
+            })
+            this.setupMessageForwarding(availableExecId, transaction)
+            return
+          }
         }
-      } else {
-        logger.info('No pending agent found for user, waiting:' + JSON.stringify({
-          execId: availableExecId,
-          microserviceUuid,
-          userState: ws.readyState
-        }))
-        this.sessionManager.addPendingUser(microserviceUuid, ws)
       }
+
+      // If we reach here, either no pending agent or activation failed
+      // Add user to pending list to wait for agent
+      logger.info('No immediate agent available, adding user to pending list:' + JSON.stringify({
+        microserviceUuid,
+        hasPendingAgents,
+        pendingAgentCount: pendingAgentExecIds.length
+      }))
+      this.sessionManager.addPendingUser(microserviceUuid, ws)
+
+      // IMMEDIATE RE-CHECK: Look for any newly available agents after adding user (database query)
+      const retryPendingAgents = await this.getPendingAgentExecIdsFromDB(microserviceUuid, transaction)
+      if (retryPendingAgents.length > 0) {
+        logger.info('Found available agent after adding user, attempting immediate activation:' + JSON.stringify({
+          microserviceUuid,
+          availableExecIds: retryPendingAgents
+        }))
+
+        // Try to activate session with first available agent
+        const availableExecId = retryPendingAgents[0]
+        const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
+
+        if (pendingAgent) {
+          const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
+          if (session) {
+            logger.info('Session activated immediately after re-check:' + JSON.stringify({
+              execId: availableExecId,
+              microserviceUuid,
+              userState: ws.readyState,
+              agentState: pendingAgent.readyState
+            }))
+
+            this.setupMessageForwarding(availableExecId, transaction)
+            return // Exit early, session activated successfully
+          }
+        }
+      }
+
+      // Only proceed with timeout mechanism if we still couldn't activate
+      logger.info('No immediate agent available after re-check, proceeding with timeout mechanism')
+
+      // Send status message to user when added to pending using STDERR
+      try {
+        const statusMsg = {
+          type: MESSAGE_TYPES.STDERR,
+          data: Buffer.from('Waiting for agent connection. Please ensure the microservice agent is running.\n'),
+          microserviceUuid: microserviceUuid,
+          execId: 'pending', // Since we don't have execSessionId anymore
+          timestamp: Date.now()
+        }
+        const encoded = this.encodeMessage(statusMsg)
+        ws.send(encoded, {
+          binary: true,
+          compress: false,
+          mask: false,
+          fin: true
+        })
+        logger.info('Sent waiting status message to user:' + JSON.stringify({
+          microserviceUuid,
+          messageType: 'STDERR',
+          encodedLength: encoded.length
+        }))
+      } catch (error) {
+        logger.warn('Failed to send status message to user:' + JSON.stringify({
+          error: error.message,
+          microserviceUuid
+        }))
+      }
+
+      // Start periodic retry timer for pending users (every 10 seconds)
+      const RETRY_INTERVAL = 10000
+      const startTime = Date.now()
+      const retryTimer = setInterval(async () => {
+        if (this.sessionManager.isUserStillPending(microserviceUuid, ws)) {
+          logger.debug('Periodic retry: checking for available agents:' + JSON.stringify({
+            microserviceUuid,
+            retryCount: Math.floor((Date.now() - startTime) / RETRY_INTERVAL)
+          }))
+
+          try {
+            const periodicRetryExecIds = await this.getPendingAgentExecIdsFromDB(microserviceUuid, transaction)
+            if (periodicRetryExecIds.length > 0) {
+              logger.info('Periodic retry found available agent:' + JSON.stringify({
+                microserviceUuid,
+                availableExecIds: periodicRetryExecIds
+              }))
+
+              // Attempt session activation with first available agent
+              const availableExecId = periodicRetryExecIds[0]
+              const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
+
+              if (pendingAgent) {
+                const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
+                if (session) {
+                  logger.info('Session activated via periodic retry:' + JSON.stringify({
+                    execId: availableExecId,
+                    microserviceUuid,
+                    userState: ws.readyState,
+                    agentState: pendingAgent.readyState
+                  }))
+
+                  this.setupMessageForwarding(availableExecId, transaction)
+                  clearInterval(retryTimer) // Stop retry timer
+                  return // Exit early, session activated successfully
+                }
+              }
+            }
+          } catch (retryError) {
+            logger.warn('Periodic retry failed:' + JSON.stringify({
+              error: retryError.message,
+              microserviceUuid
+            }))
+          }
+        } else {
+          // User no longer pending, clear retry timer
+          clearInterval(retryTimer)
+        }
+      }, RETRY_INTERVAL)
+
+      // Store timer reference for cleanup
+      this.sessionManager.setUserRetryTimer(microserviceUuid, ws, retryTimer)
+
+      // Add timeout mechanism for pending users (60 seconds)
+      const PENDING_USER_TIMEOUT = 60000
+      setTimeout(() => {
+        if (this.sessionManager.isUserStillPending(microserviceUuid, ws)) {
+          logger.warn('Pending user timeout, closing connection:' + JSON.stringify({
+            microserviceUuid,
+            timeout: PENDING_USER_TIMEOUT
+          }))
+
+          // Send timeout message before closing
+          try {
+            const timeoutMsg = {
+              type: MESSAGE_TYPES.STDERR,
+              data: Buffer.from('Timeout waiting for agent connection. Please try again.\n'),
+              microserviceUuid: microserviceUuid,
+              execId: 'pending', // Since we don't have execSessionId anymore
+              timestamp: Date.now()
+            }
+            const encoded = this.encodeMessage(timeoutMsg)
+            ws.send(encoded, {
+              binary: true,
+              compress: false,
+              mask: false,
+              fin: true
+            })
+            logger.info('Sent timeout message to user:' + JSON.stringify({
+              microserviceUuid,
+              messageType: 'STDERR',
+              encodedLength: encoded.length
+            }))
+          } catch (timeoutError) {
+            logger.warn('Failed to send timeout message to user:' + JSON.stringify({
+              error: timeoutError.message,
+              microserviceUuid
+            }))
+          }
+
+          try {
+            ws.close(1008, 'Timeout waiting for agent connection')
+          } catch (closeError) {
+            logger.error('Error closing timed out user connection:' + JSON.stringify({
+              error: closeError.message,
+              microserviceUuid
+            }))
+          }
+          // Clear retry timer before removing user
+          const retryTimer = this.sessionManager.getUserRetryTimer(microserviceUuid, ws)
+          if (retryTimer) {
+            clearInterval(retryTimer)
+            this.sessionManager.clearUserRetryTimer(microserviceUuid, ws)
+          }
+
+          this.sessionManager.removePendingUser(microserviceUuid, ws)
+        }
+      }, PENDING_USER_TIMEOUT)
 
       ws.on('close', () => {
         for (const [execId, session] of this.sessionManager.sessions) {
@@ -543,6 +719,14 @@ class WebSocketServer {
             this.cleanupSession(execId, transaction)
           }
         }
+
+        // Clear retry timer before removing user
+        const retryTimer = this.sessionManager.getUserRetryTimer(microserviceUuid, ws)
+        if (retryTimer) {
+          clearInterval(retryTimer)
+          this.sessionManager.clearUserRetryTimer(microserviceUuid, ws)
+        }
+
         this.sessionManager.removePendingUser(microserviceUuid, ws)
         logger.info('User WebSocket disconnected:' + JSON.stringify({
           microserviceUuid,
@@ -923,6 +1107,11 @@ class WebSocketServer {
       }
       // For non-system, SRE or Developer is already checked above
 
+      // Check if microservice exec is enabled
+      if (!microservice.execEnabled) {
+        throw new Errors.ValidationError('Microservice exec is not enabled')
+      }
+
       const execStatusArr = await MicroserviceExecStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
       if (!execStatusArr || execStatusArr.length === 0) {
         throw new Errors.NotFoundError('Microservice exec status not found')
@@ -937,7 +1126,7 @@ class WebSocketServer {
         throw new Errors.ValidationError('Microservice already has an active session')
       }
 
-      return { execSessionId: execStatus.execSessionId }
+      return { success: true } // Just indicate validation passed
     } catch (error) {
       logger.error('User connection validation failed:' + JSON.stringify({ error: error.message, stack: error.stack }))
       throw error

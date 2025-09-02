@@ -15,6 +15,7 @@ class SessionManager {
     this.sessions = new Map()
     this.pendingUsers = new Map() // Map<microserviceUuid, Set<WebSocket>>
     this.pendingAgents = new Map() // Map<microserviceUuid, Map<execId, {ws: WebSocket, execId: string}>>
+    this.userRetryTimers = new Map() // Map<microserviceUuid, Map<userWs, timer>>
     this.config = config
     this.cleanupInterval = null
     logger.info('SessionManager initialized with config:' + JSON.stringify({
@@ -66,12 +67,14 @@ class SessionManager {
 
   addPendingUser (microserviceUuid, userWs) {
     if (!this.pendingUsers.has(microserviceUuid)) {
-      this.pendingUsers.set(microserviceUuid, new Set())
+      this.pendingUsers.set(microserviceUuid, new Map())
     }
-    this.pendingUsers.get(microserviceUuid).add(userWs)
+    const users = this.pendingUsers.get(microserviceUuid)
+    users.set(userWs, { timestamp: Date.now() })
+
     logger.info('Added pending user:' + JSON.stringify({
       microserviceUuid,
-      pendingUserCount: this.pendingUsers.get(microserviceUuid).size
+      pendingUserCount: users.size
     }))
   }
 
@@ -119,6 +122,10 @@ class SessionManager {
       if (users.size === 0) {
         this.pendingUsers.delete(microserviceUuid)
       }
+
+      // Clear retry timer when removing user
+      this.clearUserRetryTimer(microserviceUuid, userWs)
+
       logger.info('Removed pending user:' + JSON.stringify({
         microserviceUuid,
         remainingUsers: users.size
@@ -151,9 +158,8 @@ class SessionManager {
   findPendingUserForExecId (microserviceUuid, execId) {
     if (this.pendingUsers.has(microserviceUuid)) {
       const users = this.pendingUsers.get(microserviceUuid)
-      // Return the first available user since we don't store execId with users
-      // The execId will be assigned when creating the session
-      for (const userWs of users) {
+      // Find any available user (no execId matching needed)
+      for (const [userWs] of users.entries()) {
         if (userWs.readyState === WebSocket.OPEN) {
           return userWs
         }
@@ -193,6 +199,11 @@ class SessionManager {
             userState: pendingUser.readyState,
             agentState: newConnection.readyState
           }))
+          await MicroserviceExecStatusManager.update(
+            { microserviceUuid: microserviceUuid },
+            { execSessionId: execId, status: microserviceExecState.ACTIVE },
+            transaction
+          )
         } else {
           await this.addPendingAgent(microserviceUuid, execId, newConnection, transaction)
           logger.info('No pending user found for agent, added to pending list:' + JSON.stringify({
@@ -265,7 +276,11 @@ class SessionManager {
     for (const [microserviceUuid, users] of this.pendingUsers) {
       logger.info(JSON.stringify({
         microserviceUuid,
-        count: users.size
+        count: users.size,
+        users: Array.from(users.entries()).map(([ws, info]) => ({
+          timestamp: new Date(info.timestamp).toISOString(),
+          readyState: ws.readyState
+        }))
       }))
     }
     logger.info('Pending agents:')
@@ -489,6 +504,40 @@ class SessionManager {
       return Array.from(agents.keys())
     }
     return []
+  }
+
+  isUserStillPending (microserviceUuid, userWs) {
+    if (this.pendingUsers.has(microserviceUuid)) {
+      const users = this.pendingUsers.get(microserviceUuid)
+      return users.has(userWs)
+    }
+    return false
+  }
+
+  setUserRetryTimer (microserviceUuid, userWs, timer) {
+    if (!this.userRetryTimers.has(microserviceUuid)) {
+      this.userRetryTimers.set(microserviceUuid, new Map())
+    }
+    const timers = this.userRetryTimers.get(microserviceUuid)
+    timers.set(userWs, timer)
+  }
+
+  getUserRetryTimer (microserviceUuid, userWs) {
+    if (this.userRetryTimers.has(microserviceUuid)) {
+      const timers = this.userRetryTimers.get(microserviceUuid)
+      return timers.get(userWs)
+    }
+    return null
+  }
+
+  clearUserRetryTimer (microserviceUuid, userWs) {
+    if (this.userRetryTimers.has(microserviceUuid)) {
+      const timers = this.userRetryTimers.get(microserviceUuid)
+      timers.delete(userWs)
+      if (timers.size === 0) {
+        this.userRetryTimers.delete(microserviceUuid)
+      }
+    }
   }
 }
 

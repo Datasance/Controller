@@ -1018,6 +1018,145 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   }
 }
 
+async function updateMicroserviceConfigEndPoint (microserviceUuid, config, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = _validateMicroserviceConfig(JSON.stringify(config))
+  await MicroserviceManager.update(query, { config: microserviceConfig }, transaction)
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
+  return {
+    uuid: microserviceUuid
+  }
+}
+
+async function getMicroserviceConfigEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = JSON.parse(microservice.config)
+  return {
+    config: microserviceConfig
+  }
+}
+
+async function deleteMicroserviceConfigEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = {}
+  await MicroserviceManager.update(query, { config: JSON.stringify(microserviceConfig) }, transaction)
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
+  return {
+    uuid: microserviceUuid
+  }
+}
+
+async function getSystemMicroserviceConfigEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (!microservice.catalogItem || microservice.catalogItem.category !== 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = JSON.parse(microservice.config)
+  return {
+    config: microserviceConfig
+  }
+}
+
+async function updateSystemMicroserviceConfigEndPoint (microserviceUuid, config, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (!microservice.catalogItem || microservice.catalogItem.category !== 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = _validateMicroserviceConfig(JSON.stringify(config))
+  await MicroserviceManager.update(query, { config: microserviceConfig }, transaction)
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
+  return {
+    uuid: microserviceUuid
+  }
+}
+
+async function deleteSystemMicroserviceConfigEndPoint (microserviceUuid, isCLI, transaction) {
+  const query = isCLI
+    ? {
+      uuid: microserviceUuid
+    }
+    : {
+      uuid: microserviceUuid
+    }
+  const microservice = await MicroserviceManager.findOneWithCategory(query, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (!microservice.catalogItem || microservice.catalogItem.category !== 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+  const microserviceConfig = {}
+  await MicroserviceManager.update(query, { config: JSON.stringify(microserviceConfig) }, transaction)
+  const iofogUuid = microservice.iofogUuid
+  await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
+  return {
+    uuid: microserviceUuid
+  }
+}
+
 async function rebuildMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
   const query = isCLI
     ? {
@@ -2226,6 +2365,12 @@ module.exports = {
   listVolumeMappingsEndPoint: TransactionDecorator.generateTransaction(listVolumeMappingsEndPoint),
   updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint),
+  updateMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceConfigEndPoint),
+  getMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getMicroserviceConfigEndPoint),
+  getSystemMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getSystemMicroserviceConfigEndPoint),
+  deleteMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(deleteMicroserviceConfigEndPoint),
+  updateSystemMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceConfigEndPoint),
+  deleteSystemMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(deleteSystemMicroserviceConfigEndPoint),
   rebuildMicroserviceEndPoint: TransactionDecorator.generateTransaction(rebuildMicroserviceEndPoint),
   rebuildSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(rebuildSystemMicroserviceEndPoint),
   buildGetMicroserviceResponse: _buildGetMicroserviceResponse,
