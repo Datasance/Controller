@@ -267,9 +267,23 @@ class WebSocketServer {
     // Wrap the entire connection handling in a transaction
     TransactionDecorator.generateTransaction(async (transaction) => {
       try {
-        const token = req.headers.authorization
+        // Check for token in Authorization header first (for agent and CLI connections)
+        let token = req.headers.authorization
+
+        // If no token in header, check query parameters (for React UI connections)
         if (!token) {
-          logger.error('WebSocket connection failed: Missing authentication token')
+          logger.debug('Missing authentication token in header, checking query parameters')
+          const url = new URL(req.url, `http://${req.headers.host}`)
+          token = url.searchParams.get('token')
+
+          // If token is found in query params, format it as Bearer token
+          if (token) {
+            token = `Bearer ${token}`
+          }
+        }
+
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token neither in header nor query parameters')
           try {
             ws.close(1008, 'Missing authentication token')
           } catch (error) {
@@ -580,7 +594,7 @@ class WebSocketServer {
       try {
         const statusMsg = {
           type: MESSAGE_TYPES.STDERR,
-          data: Buffer.from('Waiting for agent connection. Please ensure the microservice agent is running.\n'),
+          data: Buffer.from('Waiting for agent connection. Please ensure the microservice/agent is running.\n'),
           microserviceUuid: microserviceUuid,
           execId: 'pending', // Since we don't have execSessionId anymore
           timestamp: Date.now()
@@ -876,6 +890,33 @@ class WebSocketServer {
             const currentTransaction = session.transaction
             this.cleanupSession(execId, currentTransaction)
             return
+          }
+
+          if (msg.type === MESSAGE_TYPES.CONTROL) {
+            // Handle keep-alive messages from user
+            const controlData = msg.data.toString()
+            if (controlData === 'keepalive') {
+              // Send keep-alive response back to user
+              const keepAliveResponse = {
+                type: MESSAGE_TYPES.CONTROL,
+                data: Buffer.from('keepalive'),
+                microserviceUuid: session.microserviceUuid,
+                execId: execId,
+                timestamp: Date.now()
+              }
+              const encoded = this.encodeMessage(keepAliveResponse)
+              user.send(encoded, {
+                binary: true,
+                compress: false,
+                mask: false,
+                fin: true
+              })
+              logger.debug('[RELAY] Sent keep-alive response to user:' + JSON.stringify({
+                execId,
+                microserviceUuid: session.microserviceUuid
+              }))
+              return // Don't forward keep-alive to agent
+            }
           }
 
           await this.sendMessageToAgent(agent, msg, execId, session.microserviceUuid)
