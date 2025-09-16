@@ -95,6 +95,10 @@ const agentProvision = async function (provisionData, transaction) {
     provisionKey: provisionData.key
   }, transaction)
 
+  await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.volumeMounts, transaction)
+  await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)
+  await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.microserviceFull, transaction)
+
   return {
     uuid: fog.uuid,
     privateKey: keyPair.privateKey
