@@ -108,6 +108,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       field: 'delete_with_cleanup',
       defaultValue: false
+    },
+    isActivated: {
+      type: DataTypes.BOOLEAN,
+      field: 'is_activated',
+      defaultValue: true
     }
   }, {
     tableName: 'Microservices',

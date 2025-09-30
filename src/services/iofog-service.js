@@ -267,6 +267,7 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     abstractedHardwareEnabled: fogData.abstractedHardwareEnabled,
     fogTypeId: fogData.fogType,
     logLevel: fogData.logLevel,
+    edgeGuardFrequency: fogData.edgeGuardFrequency,
     dockerPruningFrequency: fogData.dockerPruningFrequency,
     availableDiskThreshold: fogData.availableDiskThreshold,
     isSystem: fogData.isSystem,
@@ -275,11 +276,15 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     timeZone: fogData.timeZone
   }
 
-  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+  if ((fogData.latitude || fogData.longitude) && (fogData.gpsMode !== 'dynamic' && fogData.gpsMode !== 'off')) {
     createFogData.gpsMode = 'manual'
   } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
     createFogData.gpsMode = fogData.gpsMode
     createFogData.gpsDevice = fogData.gpsDevice
+  } else if (!(fogData.latitude || fogData.longitude) && fogData.gpsMode === 'auto') {
+    createFogData.gpsMode = 'auto'
+  } else if (fogData.gpsMode === 'off') {
+    createFogData.gpsMode = 'off'
   } else {
     createFogData.gpsMode = undefined
   }
@@ -293,6 +298,7 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, fogData.routerMode))
   }
 
+  // TODO: handle multiple system fogs a.k.a multi-remote-controller and multi interior routers
   if (fogData.isSystem && !!(await FogManager.findOne({ isSystem: true }, transaction))) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_SYSTEM_FOG))
   }
@@ -436,16 +442,21 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     fogTypeId: fogData.fogType,
     logLevel: fogData.logLevel,
     dockerPruningFrequency: fogData.dockerPruningFrequency,
+    edgeGuardFrequency: fogData.edgeGuardFrequency,
     host: fogData.host,
     availableDiskThreshold: fogData.availableDiskThreshold,
     timeZone: fogData.timeZone
   }
 
-  if ((fogData.latitude || fogData.longitude) && fogData.gpsMode !== 'dynamic') {
+  if ((fogData.latitude || fogData.longitude) && (fogData.gpsMode !== 'dynamic' && fogData.gpsMode !== 'off')) {
     updateFogData.gpsMode = 'manual'
   } else if (fogData.gpsMode === 'dynamic' && fogData.gpsDevice) {
     updateFogData.gpsMode = fogData.gpsMode
     updateFogData.gpsDevice = fogData.gpsDevice
+  } else if (!(fogData.latitude || fogData.longitude) && fogData.gpsMode === 'auto') {
+    updateFogData.gpsMode = 'auto'
+  } else if (fogData.gpsMode === 'off') {
+    updateFogData.gpsMode = 'off'
   } else {
     updateFogData.gpsMode = undefined
   }

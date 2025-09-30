@@ -36,6 +36,12 @@ const updateAgentConfigEndPoint = async function (req, fog) {
   return AgentService.updateAgentConfig(updateData, fog)
 }
 
+const updateAgentGpsEndPoint = async function (req, fog) {
+  const updateData = req.body
+
+  return AgentService.updateAgentGpsEndPoint(updateData, fog)
+}
+
 const getAgentConfigChangesEndPoint = async function (req, fog) {
   return AgentService.getAgentConfigChanges(fog)
 }
@@ -123,6 +129,7 @@ module.exports = {
   agentDeprovisionEndPoint: AuthDecorator.checkFogToken(agentDeprovisionEndPoint),
   getAgentConfigEndPoint: AuthDecorator.checkFogToken(getAgentConfigEndPoint),
   updateAgentConfigEndPoint: AuthDecorator.checkFogToken(updateAgentConfigEndPoint),
+  updateAgentGpsEndPoint: AuthDecorator.checkFogToken(updateAgentGpsEndPoint),
   getAgentConfigChangesEndPoint: AuthDecorator.checkFogToken(getAgentConfigChangesEndPoint),
   updateAgentStatusEndPoint: AuthDecorator.checkFogToken(updateAgentStatusEndPoint),
   getAgentMicroservicesEndPoint: AuthDecorator.checkFogToken(getAgentMicroservicesEndPoint),

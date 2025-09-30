@@ -241,6 +241,16 @@ const deleteSystemMicroserviceExecEndPoint = async function (req) {
   return MicroservicesService.deleteSystemExecEndPoint(uuid, false)
 }
 
+const startMicroserviceEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.startMicroserviceEndPoint(uuid, false)
+}
+
+const stopMicroserviceEndPoint = async function (req) {
+  const uuid = req.params.uuid
+  return MicroservicesService.stopMicroserviceEndPoint(uuid, false)
+}
+
 module.exports = {
   createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
   getMicroserviceEndPoint: (getMicroserviceEndPoint),
@@ -278,5 +288,7 @@ module.exports = {
   createMicroserviceExecEndPoint: (createMicroserviceExecEndPoint),
   deleteMicroserviceExecEndPoint: (deleteMicroserviceExecEndPoint),
   createSystemMicroserviceExecEndPoint: (createSystemMicroserviceExecEndPoint),
-  deleteSystemMicroserviceExecEndPoint: (deleteSystemMicroserviceExecEndPoint)
+  deleteSystemMicroserviceExecEndPoint: (deleteSystemMicroserviceExecEndPoint),
+  startMicroserviceEndPoint: (startMicroserviceEndPoint),
+  stopMicroserviceEndPoint: (stopMicroserviceEndPoint)
 }

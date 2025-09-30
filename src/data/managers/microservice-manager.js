@@ -31,6 +31,7 @@ const Application = models.Application
 const Routing = models.Routing
 const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
+const MicroserviceExecStatus = models.MicroserviceExecStatus
 const MicroserviceHealthCheck = models.MicroserviceHealthCheck
 const Op = require('sequelize').Op
 
@@ -272,7 +273,10 @@ class MicroserviceManager extends BaseManager {
         [Op.or]:
           [
             {
-              '$application.is_activated$': true
+              [Op.and]: [
+                { '$application.is_activated$': true },
+                { isActivated: true }
+              ]
             },
             {
               '$catalogItem.category$': { [Op.eq]: 'SYSTEM' },
@@ -417,6 +421,11 @@ class MicroserviceManager extends BaseManager {
         {
           model: MicroserviceStatus,
           as: 'microserviceStatus',
+          required: false
+        },
+        {
+          model: MicroserviceExecStatus,
+          as: 'microserviceExecStatus',
           required: false
         }
       ],

@@ -66,6 +66,16 @@ const updateAgentConfig = {
   'additionalProperties': true
 }
 
+const updateAgentGps = {
+  'id': '/updateAgentGps',
+  'type': 'object',
+  'properties': {
+    'latitude': { 'type': 'number', 'minimum': -90, 'maximum': 90 },
+    'longitude': { 'type': 'number', 'minimum': -180, 'maximum': 180 }
+  },
+  'additionalProperties': true
+}
+
 const updateAgentStatus = {
   'id': '/updateAgentStatus',
   'type': 'object',
@@ -174,7 +184,7 @@ const updateUsbInfo = {
 }
 
 module.exports = {
-  mainSchemas: [agentProvision, agentDeprovision, updateAgentConfig, updateAgentStatus, updateAgentStrace,
+  mainSchemas: [agentProvision, agentDeprovision, updateAgentConfig, updateAgentGps, updateAgentStatus, updateAgentStrace,
     updateHardwareInfo, updateUsbInfo],
   innerSchemas: [straceData, microserviceStatus]
 }

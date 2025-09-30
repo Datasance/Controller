@@ -139,37 +139,40 @@ const getAgentConfig = async function (fog, transaction) {
   // Get local agent certificate from secrets
   const localAgentSecret = await SecretManager.getSecret(`${fog.uuid}-local-agent`, transaction)
 
-  // fog is the result of FogManager.FindOne() in the checkFogToken middleware
-  return {
-    networkInterface: fog.networkInterface,
-    dockerUrl: fog.dockerUrl,
-    diskLimit: fog.diskLimit,
-    diskDirectory: fog.diskDirectory,
-    memoryLimit: fog.memoryLimit,
-    cpuLimit: fog.cpuLimit,
-    logLimit: fog.logLimit,
-    logDirectory: fog.logDirectory,
-    logFileCount: fog.logFileCount,
-    gpsMode: fog.gpsMode,
-    gpsDevice: fog.gpsDevice,
-    gpsScanFrequency: fog.gpsScanFrequency,
-    edgeGuardFrequency: fog.edgeGuardFrequency,
-    statusFrequency: fog.statusFrequency,
-    changeFrequency: fog.changeFrequency,
-    deviceScanFrequency: fog.deviceScanFrequency,
-    watchdogEnabled: fog.watchdogEnabled,
-    latitude: fog.latitude,
-    longitude: fog.longitude,
-    logLevel: fog.logLevel,
-    availableDiskThreshold: fog.availableDiskThreshold,
-    dockerPruningFrequency: fog.dockerPruningFrequency,
-    routerHost: router.host === fog.host ? 'localhost' : router.host,
+  const fogData = await FogManager.findOne({
+    uuid: fog.uuid
+  }, transaction)
+  const resp = {
+    networkInterface: fogData.networkInterface,
+    dockerUrl: fogData.dockerUrl,
+    diskLimit: fogData.diskLimit,
+    diskDirectory: fogData.diskDirectory,
+    memoryLimit: fogData.memoryLimit,
+    cpuLimit: fogData.cpuLimit,
+    logLimit: fogData.logLimit,
+    logDirectory: fogData.logDirectory,
+    logFileCount: fogData.logFileCount,
+    gpsMode: fogData.gpsMode,
+    gpsDevice: fogData.gpsDevice,
+    gpsScanFrequency: fogData.gpsScanFrequency,
+    edgeGuardFrequency: fogData.edgeGuardFrequency,
+    statusFrequency: fogData.statusFrequency,
+    changeFrequency: fogData.changeFrequency,
+    deviceScanFrequency: fogData.deviceScanFrequency,
+    watchdogEnabled: fogData.watchdogEnabled,
+    latitude: fogData.latitude,
+    longitude: fogData.longitude,
+    logLevel: fogData.logLevel,
+    availableDiskThreshold: fogData.availableDiskThreshold,
+    dockerPruningFrequency: fogData.dockerPruningFrequency,
+    routerHost: router.host === fogData.host ? 'localhost' : router.host,
     routerPort: router.messagingPort,
-    timeZone: fog.timeZone,
+    timeZone: fogData.timeZone,
     caCert: localAgentSecret ? localAgentSecret.data['ca.crt'] : null,
     tlsCert: localAgentSecret ? localAgentSecret.data['tls.crt'] : null,
     tlsKey: localAgentSecret ? localAgentSecret.data['tls.key'] : null
   }
+  return resp
 }
 
 const updateAgentConfig = async function (updateData, fog, transaction) {
@@ -199,6 +202,20 @@ const updateAgentConfig = async function (updateData, fog, transaction) {
     availableDiskThreshold: updateData.availableDiskThreshold,
     logLevel: updateData.logLevel,
     timeZone: updateData.timeZone
+  }
+  update = AppHelper.deleteUndefinedFields(update)
+
+  await FogManager.update({
+    uuid: fog.uuid
+  }, update, transaction)
+}
+
+const updateAgentGpsEndPoint = async function (updateData, fog, transaction) {
+  await Validator.validate(updateData, Validator.schemas.updateAgentGps)
+
+  let update = {
+    latitude: updateData.latitude,
+    longitude: updateData.longitude
   }
   update = AppHelper.deleteUndefinedFields(update)
 
@@ -782,6 +799,7 @@ module.exports = {
   agentDeprovision: TransactionDecorator.generateTransaction(agentDeprovision),
   getAgentConfig: TransactionDecorator.generateTransaction(getAgentConfig),
   updateAgentConfig: TransactionDecorator.generateTransaction(updateAgentConfig),
+  updateAgentGpsEndPoint: TransactionDecorator.generateTransaction(updateAgentGpsEndPoint),
   getAgentConfigChanges: TransactionDecorator.generateTransaction(getAgentConfigChanges),
   resetAgentConfigChanges: TransactionDecorator.generateTransaction(resetAgentConfigChanges),
   updateAgentStatus: TransactionDecorator.generateTransaction(updateAgentStatus),

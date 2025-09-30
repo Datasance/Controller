@@ -796,3 +796,5 @@ CREATE TABLE IF NOT EXISTS MicroserviceHealthChecks (
 CREATE INDEX idx_microservice_health_check_microservice_uuid ON MicroserviceHealthChecks (microservice_uuid);
 
 ALTER TABLE MicroserviceStatuses ADD COLUMN health_status TEXT;
+
+ALTER TABLE Microservices ADD COLUMN is_activated BOOLEAN DEFAULT true;
