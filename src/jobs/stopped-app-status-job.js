@@ -26,7 +26,12 @@ const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 async function run () {
   try {
     const _updateStoppedApplicationMicroserviceStatus = TransactionDecorator.generateTransaction(updateStoppedApplicationMicroserviceStatus)
+    const _updateStoppedMicroserviceStatus = TransactionDecorator.generateTransaction(updateStoppedMicroserviceStatus)
+
+    // Handle microservices from deactivated applications
     await _updateStoppedApplicationMicroserviceStatus()
+    // Handle individually deactivated microservices
+    await _updateStoppedMicroserviceStatus()
   } catch (error) {
     console.error(error)
   } finally {
@@ -35,18 +40,51 @@ async function run () {
 }
 
 async function updateStoppedApplicationMicroserviceStatus (transaction) {
-  const stoppedMicroservices = await ApplicationManager.findApplicationMicroservices({ isActivated: false }, transaction)
+  // Get all deactivated applications
+  const stoppedApplications = await ApplicationManager.findAllWithAttributes({ isActivated: false }, ['id'], transaction)
+
+  if (stoppedApplications.length === 0) {
+    return
+  }
+
+  // Get all microservices from these applications
+  const applicationIds = stoppedApplications.map(app => app.id)
+  const { Op } = require('sequelize')
+  const stoppedMicroservices = await MicroserviceManager.findAllWithStatuses({ applicationId: { [Op.in]: applicationIds } }, transaction)
+
+  await _updateMicroserviceStatusStopped(stoppedMicroservices, transaction)
+}
+
+async function updateStoppedMicroserviceStatus (transaction) {
+  // Get all individually deactivated microservices (where microservice isActivated = false but parent application is still active)
+  const { Op } = require('sequelize')
+
+  // First get all active applications
+  const activeApplications = await ApplicationManager.findAllWithAttributes({ isActivated: true }, ['id'], transaction)
+  if (activeApplications.length === 0) {
+    return
+  }
+
+  // Then get microservices that are individually deactivated but belong to active applications
+  const activeApplicationIds = activeApplications.map(app => app.id)
+  const stoppedMicroservices = await MicroserviceManager.findAllWithStatuses({
+    isActivated: false,
+    applicationId: { [Op.in]: activeApplicationIds }
+  }, transaction)
+
+  if (stoppedMicroservices.length === 0) {
+    return
+  }
+
   await _updateMicroserviceStatusStopped(stoppedMicroservices, transaction)
 }
 
 async function _updateMicroserviceStatusStopped (stoppedMicroservices, transaction) {
-  const microserviceUuids = stoppedMicroservices.map((microservice) => microservice.uuid)
-  const microservices = await MicroserviceManager.findAllWithStatuses({ uuid: microserviceUuids }, transaction)
-  const microserviceStatusIds = microservices
+  const microserviceStatusIds = stoppedMicroservices
     .filter((microservice) => microservice.microserviceStatus && (microservice.microserviceStatus.status === microserviceState.DELETED ||
        microservice.microserviceStatus.status === microserviceState.DELETING))
     .map((microservice) => microservice.microserviceStatus.id)
-  const microserviceExecStatusIds = microservices
+  const microserviceExecStatusIds = stoppedMicroservices
     .filter((microservice) =>
       microservice.microserviceStatus &&
       (microservice.microserviceStatus.status === microserviceState.DELETED ||
@@ -56,7 +94,7 @@ async function _updateMicroserviceStatusStopped (stoppedMicroservices, transacti
     .map((microservice) => microservice.microserviceExecStatus.id)
   await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: microserviceState.STOPPED }, transaction)
   await MicroserviceExecStatusManager.update({ id: microserviceExecStatusIds }, { execSesssionId: '', status: microserviceExecState.INACTIVE }, transaction)
-  return microservices
+  return stoppedMicroservices
 }
 
 module.exports = {

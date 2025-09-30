@@ -951,7 +951,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   if (microserviceDataUpdate.capDrop) {
     await _updateCapDrop(microserviceDataUpdate.capDrop, microserviceUuid, transaction)
   }
-  // TODO: Implement moveServiceToNewFog
+
   const existingService = await ServiceManager.findOne({ type: `microservice`, resource: microservice.uuid }, transaction)
   if (microserviceDataUpdate.iofogUuid && microserviceDataUpdate.iofogUuid !== microservice.iofogUuid && existingService) {
     await ServiceServices.moveMicroserviceTcpBridgeToNewFog(existingService, microserviceDataUpdate.iofogUuid, microservice.iofogUuid, transaction)
@@ -2339,6 +2339,48 @@ async function deleteSystemExecEndPoint (microserviceUuid, isCLI, transaction) {
   }
 }
 
+async function startMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+
+  // Check if the parent application is activated
+  const application = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  if (!application || !application.isActivated) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.APPLICATION_NOT_ACTIVATED, application ? application.name : 'Unknown'))
+  }
+
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { isActivated: true }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    isActivated: true
+  }
+}
+
+async function stopMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
+  const microservice = await MicroserviceManager.findOneWithCategory({ uuid: microserviceUuid }, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
+  }
+
+  await MicroserviceManager.update({ uuid: microservice.uuid }, { isActivated: false }, transaction)
+  await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceList, transaction)
+
+  return {
+    uuid: microservice.uuid,
+    isActivated: false
+  }
+}
+
 module.exports = {
   createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint),
   createPortMappingEndPoint: TransactionDecorator.generateTransaction(createPortMappingEndPoint),
@@ -2380,5 +2422,7 @@ module.exports = {
   createExecEndPoint: TransactionDecorator.generateTransaction(createExecEndPoint),
   deleteExecEndPoint: TransactionDecorator.generateTransaction(deleteExecEndPoint),
   createSystemExecEndPoint: TransactionDecorator.generateTransaction(createSystemExecEndPoint),
-  deleteSystemExecEndPoint: TransactionDecorator.generateTransaction(deleteSystemExecEndPoint)
+  deleteSystemExecEndPoint: TransactionDecorator.generateTransaction(deleteSystemExecEndPoint),
+  startMicroserviceEndPoint: TransactionDecorator.generateTransaction(startMicroserviceEndPoint),
+  stopMicroserviceEndPoint: TransactionDecorator.generateTransaction(stopMicroserviceEndPoint)
 }

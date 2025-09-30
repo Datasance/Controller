@@ -57,6 +57,7 @@ module.exports = {
   'List of invalid microservices:\n',
   INVALID_MICROSERVICE_CONFIG: 'Can\'t create network microservice without appropriate configuration.',
   INVALID_MICROSERVICE_USER: 'Invalid microservice user or UUID',
+  APPLICATION_NOT_ACTIVATED: 'Application {} is not activated',
   ROUTE_NOT_FOUND: 'Route not found',
   IMAGE_SNAPSHOT_WITHOUT_FOG: 'Can not run image snapshot for microservice without ioFog.',
   IMAGE_SNAPSHOT_NOT_AVAILABLE: 'Image snapshot is not available for this microservice.',

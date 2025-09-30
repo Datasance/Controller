@@ -1291,6 +1291,76 @@ module.exports = [
     }
   },
   {
+    method: 'patch',
+    path: '/api/v3/microservices/:uuid/start',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const startMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.startMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await startMicroserviceEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
+    method: 'patch',
+    path: '/api/v3/microservices/:uuid/stop',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+
+      const successCode = constants.HTTP_CODE_NO_CONTENT
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_BAD_REQUEST,
+          errors: [Errors.ValidationError]
+        },
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        },
+        {
+          code: constants.HTTP_CODE_NOT_FOUND,
+          errors: [Errors.NotFoundError]
+        }
+      ]
+
+      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+        const stopMicroserviceEndPoint = ResponseDecorator.handleErrors(MicroservicesController.stopMicroserviceEndPoint,
+          successCode, errorCodes)
+        const responseObject = await stopMicroserviceEndPoint(req)
+        const user = req.kauth.grant.access_token.content.preferred_username
+        res
+          .status(responseObject.code)
+          .send(responseObject.body)
+
+        logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
+      })
+    }
+  },
+  {
     method: 'ws',
     path: '/api/v3/microservices/exec/:microserviceUuid',
     middleware: async (ws, req) => {
