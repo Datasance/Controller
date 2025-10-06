@@ -121,7 +121,7 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
 }
 
 const _updateChangeTracking = async function (transaction) {
-  const fogs = await FogManager.findAll(transaction)
+  const fogs = await FogManager.findAll({}, transaction)
   for (const fog of fogs) {
     await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)
   }
