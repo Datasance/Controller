@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS Registries (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     url VARCHAR(255),
     is_public BOOLEAN,
-    secure BOOLEAN,
-    certificate TEXT,
-    requires_cert BOOLEAN,
     user_name TEXT,
     password TEXT,
     user_email TEXT

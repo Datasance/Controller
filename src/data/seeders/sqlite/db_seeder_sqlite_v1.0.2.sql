@@ -1,7 +1,7 @@
-INSERT INTO `Registries` (url, is_public, secure, certificate, requires_cert, user_name, password, user_email)
+INSERT INTO `Registries` (url, is_public, user_name, password, user_email)
 VALUES 
-    ('registry.hub.docker.com', true, true, '', false, '', '', ''),
-    ('from_cache', true, true, '', false, '', '', '');
+    ('registry.hub.docker.com', true, '', '', ''),
+    ('from_cache', true, '', '', '');
 
 INSERT INTO `CatalogItems` (name, description, category, publisher, disk_required, ram_required, picture, config_example, is_public, registry_id)
 VALUES 

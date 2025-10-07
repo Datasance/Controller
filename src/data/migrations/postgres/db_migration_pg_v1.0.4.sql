@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS "Registries" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     url VARCHAR(255),
     is_public BOOLEAN,
-    secure BOOLEAN,
-    certificate TEXT,
-    requires_cert BOOLEAN,
     user_name TEXT,
     password TEXT,
     user_email TEXT

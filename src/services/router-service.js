@@ -295,7 +295,7 @@ function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
 
 async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
-
+  // const hostNetworkMode = isEdge ? false : true
   const routerApplicationData = {
     name: `system-${uuid.toLowerCase()}`,
     isActivated: true,

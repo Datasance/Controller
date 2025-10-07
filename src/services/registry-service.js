@@ -18,24 +18,19 @@ const ErrorMessages = require('../helpers/error-messages')
 const ChangeTrackingService = require('./change-tracking-service')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogManager = require('../data/managers/iofog-manager')
-const Sequelize = require('sequelize')
-const Op = Sequelize.Op
+// const Sequelize = require('sequelize')
+// const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
 
 const createRegistry = async function (registry, transaction) {
   await Validator.validate(registry, Validator.schemas.registryCreate)
-  if (registry.requiresCert && registry.certificate === undefined) {
-    throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
-  }
 
   let registryCreate = {
     url: registry.url,
     username: registry.username,
     password: registry.password,
     isPublic: registry.isPublic,
-    userEmail: registry.email,
-    requiresCert: registry.requiresCert,
-    certificate: registry.certificate
+    userEmail: registry.email
   }
 
   registryCreate = AppHelper.deleteUndefinedFields(registryCreate)
@@ -52,14 +47,7 @@ const createRegistry = async function (registry, transaction) {
 const findRegistries = async function (isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
-    : {
-      [Op.or]:
-        [
-          {
-            isPublic: true
-          }
-        ]
-    }
+    : {}
 
   const registries = await RegistryManager.findAllWithAttributes(queryRegistry, { exclude: ['password'] }, transaction)
   return {
@@ -83,10 +71,6 @@ const deleteRegistry = async function (registryData, isCLI, transaction) {
 const updateRegistry = async function (registry, registryId, isCLI, transaction) {
   await Validator.validate(registry, Validator.schemas.registryUpdate)
 
-  if (registry.requiresCert && registry.certificate === undefined) {
-    throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
-  }
-
   const existingRegistry = await RegistryManager.findOne({
     id: registryId
   }, transaction)
@@ -100,9 +84,7 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
     username: registry.username,
     password: registry.password,
     isPublic: registry.isPublic,
-    userEmail: registry.email,
-    requiresCert: registry.requiresCert,
-    certificate: registry.certificate
+    userEmail: registry.email
   }
 
   registryUpdate = AppHelper.deleteUndefinedFields(registryUpdate)

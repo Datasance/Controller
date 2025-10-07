@@ -21,6 +21,7 @@ const MicroserviceService = require('../services/microservices-service')
 const { microserviceState, microserviceExecState } = require('../enums/microservice-state')
 const FogStates = require('../enums/fog-state')
 const Config = require('../config')
+const logger = require('../logger')
 
 const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 
@@ -29,7 +30,7 @@ async function run () {
     const _updateFogsConnectionStatus = TransactionDecorator.generateTransaction(updateFogsConnectionStatus)
     await _updateFogsConnectionStatus()
   } catch (error) {
-    console.error(error)
+    logger.error('Error during fog status update:', error)
   } finally {
     setTimeout(run, scheduleTime)
   }
@@ -62,12 +63,36 @@ async function _updateFogStatus (transaction) {
 
 async function _updateMicroserviceStatus (unknownFogUuids, transaction) {
   const microservices = await MicroserviceManager.findAllWithStatuses({ iofogUuid: unknownFogUuids }, transaction)
+
+  // Filter out inactive microservices that are already STOPPED - they should not be updated to UNKNOWN
   const microserviceStatusIds = microservices
-    .filter((microservice) => microservice.microserviceStatus)
+    .filter((microservice) => {
+      // Skip if no microservice status
+      if (!microservice.microserviceStatus) {
+        return false
+      }
+      // Skip if microservice is inactive and already STOPPED
+      if (!microservice.isActivated && microservice.microserviceStatus.status === microserviceState.STOPPED) {
+        return false
+      }
+      return true
+    })
     .map((microservice) => microservice.microserviceStatus.id)
+
   const microserviceExecStatusIds = microservices
-    .filter((microservice) => microservice.microserviceExecStatus)
+    .filter((microservice) => {
+      // Skip if no exec status
+      if (!microservice.microserviceExecStatus) {
+        return false
+      }
+      // Skip if microservice is inactive and already STOPPED
+      if (!microservice.isActivated && microservice.microserviceStatus && microservice.microserviceStatus.status === microserviceState.STOPPED) {
+        return false
+      }
+      return true
+    })
     .map((microservice) => microservice.microserviceExecStatus.id)
+
   await MicroserviceStatusManager.update({ id: microserviceStatusIds }, { status: microserviceState.UNKNOWN }, transaction)
   await MicroserviceExecStatusManager.update({ id: microserviceExecStatusIds }, { execSesssionId: '', status: microserviceExecState.INACTIVE }, transaction)
   return microservices

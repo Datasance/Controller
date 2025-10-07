@@ -6204,12 +6204,6 @@ components:
           type: string
         isPublic:
           type: boolean
-        isSecure:
-          type: boolean
-        certificate:
-          type: string
-        requiresCert:
-          type: boolean
         username:
           type: string
         password:
@@ -6228,10 +6222,6 @@ components:
         password:
           type: string
         email:
-          type: string
-        requiresCert:
-          type: boolean
-        certificate:
           type: string
     ActionBody:
       type: object

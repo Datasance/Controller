@@ -20,6 +20,7 @@ const { microserviceState, microserviceExecState } = require('../enums/microserv
 
 const Config = require('../config')
 const ApplicationManager = require('../data/managers/application-manager')
+const logger = require('../logger')
 
 const scheduleTime = Config.get('settings.fogStatusUpdateInterval') * 1000
 
@@ -33,7 +34,7 @@ async function run () {
     // Handle individually deactivated microservices
     await _updateStoppedMicroserviceStatus()
   } catch (error) {
-    console.error(error)
+    logger.error('Error during stopped application status update:', error)
   } finally {
     setTimeout(run, scheduleTime)
   }

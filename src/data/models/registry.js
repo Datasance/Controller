@@ -16,18 +16,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       field: 'is_public'
     },
-    isSecure: {
-      type: DataTypes.BOOLEAN,
-      field: 'secure'
-    },
-    certificate: {
-      type: DataTypes.TEXT,
-      field: 'certificate'
-    },
-    requiresCert: {
-      type: DataTypes.BOOLEAN,
-      field: 'requires_cert'
-    },
     username: {
       type: DataTypes.TEXT,
       field: 'user_name'

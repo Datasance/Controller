@@ -245,13 +245,6 @@ const defaultRouterCreate = {
     'messagingPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'interRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'edgeRouterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
-    'requireSsl': { 'type': 'string' },
-    'sslProfile': { 'type': 'string' },
-    'saslMechanisms': { 'type': 'string' },
-    'authenticatePeer': { 'type': 'string' },
-    'caCert': { 'type': 'string' },
-    'tlsCert': { 'type': 'string' },
-    'tlsKey': { 'type': 'string' },
     'host': { 'type': 'string' }
   },
   'required': ['host'],
