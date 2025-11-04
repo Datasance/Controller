@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS "Registries" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     url VARCHAR(255),
     is_public BOOLEAN,
-    secure BOOLEAN,
-    certificate TEXT,
-    requires_cert BOOLEAN,
     user_name TEXT,
     password TEXT,
     user_email TEXT
@@ -811,3 +808,7 @@ CREATE INDEX idx_microservice_health_check_microservice_uuid ON "MicroserviceHea
 ALTER TABLE "MicroserviceStatuses" ADD COLUMN health_status TEXT;
 
 ALTER TABLE "Microservices" ADD COLUMN is_activated BOOLEAN DEFAULT true;
+
+ALTER TABLE "Microservices" ADD COLUMN host_network_mode BOOLEAN DEFAULT false;
+ALTER TABLE "Microservices" ADD COLUMN is_privileged BOOLEAN DEFAULT false;
+ALTER TABLE "Microservices" DROP COLUMN root_host_access;

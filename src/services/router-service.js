@@ -31,6 +31,7 @@ const ldifferenceWith = require('lodash/differenceWith')
 const constants = require('../helpers/constants')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
 const SecretManager = require('../data/managers/secret-manager')
+const FogManager = require('../data/managers/iofog-manager')
 
 const SITE_CONFIG_VERSION = 'pot'
 const SITE_CONFIG_NAMESPACE = 'datasance'
@@ -42,7 +43,29 @@ async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog,
       if (isSystemFog) { return [] }
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, Constants.DEFAULT_ROUTER_NAME))
     }
-    return [defaultRouter]
+
+    // Get all system fogs
+    const allSystemFogs = await FogManager.findAll({ isSystem: true }, transaction)
+
+    // Get routers for each system fog
+    const systemFogRouters = []
+    for (const systemFog of allSystemFogs) {
+      const systemFogRouter = await RouterManager.findOne({ iofogUuid: systemFog.uuid }, transaction)
+      if (systemFogRouter) {
+        systemFogRouters.push(systemFogRouter)
+      }
+    }
+
+    // Combine default router with system fog routers, removing duplicates
+    const combinedRouters = [defaultRouter]
+    for (const systemFogRouter of systemFogRouters) {
+      // Check if this system fog router is not the same as the default router
+      if (systemFogRouter.id !== defaultRouter.id) {
+        combinedRouters.push(systemFogRouter)
+      }
+    }
+
+    return combinedRouters
   }
 
   const upstreamRouters = []
@@ -295,7 +318,7 @@ function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
 
 async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
-
+  const hostNetworkMode = !isEdge
   const routerApplicationData = {
     name: `system-${uuid.toLowerCase()}`,
     isActivated: true,
@@ -307,7 +330,8 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
     config: JSON.stringify(microserviceConfig),
     catalogItemId: routerCatalog.id,
     iofogUuid: uuid,
-    rootHostAccess: false,
+    hostNetworkMode: hostNetworkMode,
+    isPrivileged: false,
     logSize: constants.MICROSERVICE_DEFAULT_LOG_SIZE,
     schedule: 0,
     configLastUpdated: Date.now(),

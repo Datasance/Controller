@@ -18,24 +18,20 @@ const ErrorMessages = require('../helpers/error-messages')
 const ChangeTrackingService = require('./change-tracking-service')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogManager = require('../data/managers/iofog-manager')
-const Sequelize = require('sequelize')
-const Op = Sequelize.Op
+const MicroserviceManager = require('../data/managers/microservice-manager')
+// const Sequelize = require('sequelize')
+// const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
 
 const createRegistry = async function (registry, transaction) {
   await Validator.validate(registry, Validator.schemas.registryCreate)
-  if (registry.requiresCert && registry.certificate === undefined) {
-    throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
-  }
 
   let registryCreate = {
     url: registry.url,
     username: registry.username,
     password: registry.password,
     isPublic: registry.isPublic,
-    userEmail: registry.email,
-    requiresCert: registry.requiresCert,
-    certificate: registry.certificate
+    userEmail: registry.email
   }
 
   registryCreate = AppHelper.deleteUndefinedFields(registryCreate)
@@ -52,14 +48,7 @@ const createRegistry = async function (registry, transaction) {
 const findRegistries = async function (isCLI, transaction) {
   const queryRegistry = isCLI
     ? {}
-    : {
-      [Op.or]:
-        [
-          {
-            isPublic: true
-          }
-        ]
-    }
+    : {}
 
   const registries = await RegistryManager.findAllWithAttributes(queryRegistry, { exclude: ['password'] }, transaction)
   return {
@@ -72,21 +61,31 @@ const deleteRegistry = async function (registryData, isCLI, transaction) {
   const queryData = isCLI
     ? { id: registryData.id }
     : { id: registryData.id }
+  // Convert registryId to number to handle string IDs from URL parameters
+  const id = parseInt(registryData.id, 10)
+  if (id === 1 || id === 2) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_SYSTEM)
+  }
   const registry = await RegistryManager.findOne(queryData, transaction)
   if (!registry) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryData.id))
   }
-  await RegistryManager.delete(queryData, transaction)
-  await _updateChangeTracking(transaction)
+  const microservices = await MicroserviceManager.findAllWithStatuses({ registryId: registryData.id }, transaction)
+  if (microservices.length > 0) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_IN_USE)
+  } else {
+    await RegistryManager.delete(queryData, transaction)
+    await _updateChangeTracking(transaction)
+  }
 }
 
 const updateRegistry = async function (registry, registryId, isCLI, transaction) {
   await Validator.validate(registry, Validator.schemas.registryUpdate)
-
-  if (registry.requiresCert && registry.certificate === undefined) {
-    throw new Errors.ValidationError(ErrorMessages.CERT_PROPERTY_REQUIRED)
+  // Convert registryId to number to handle string IDs from URL parameters
+  const id = parseInt(registryId, 10)
+  if (id === 1 || id === 2) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_SYSTEM)
   }
-
   const existingRegistry = await RegistryManager.findOne({
     id: registryId
   }, transaction)
@@ -100,9 +99,7 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
     username: registry.username,
     password: registry.password,
     isPublic: registry.isPublic,
-    userEmail: registry.email,
-    requiresCert: registry.requiresCert,
-    certificate: registry.certificate
+    userEmail: registry.email
   }
 
   registryUpdate = AppHelper.deleteUndefinedFields(registryUpdate)
@@ -116,12 +113,19 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
     }
 
   await RegistryManager.update(where, registryUpdate, transaction)
+  const microservices = await MicroserviceManager.findAllWithStatuses({ registryId: registryId }, transaction)
+  if (microservices.length > 0) {
+    for (const ms of microservices) {
+      await MicroserviceManager.updateAndFind({ uuid: ms.uuid }, { rebuild: true }, transaction)
+      await ChangeTrackingService.update(ms.iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
+    }
+  }
 
   await _updateChangeTracking(transaction)
 }
 
 const _updateChangeTracking = async function (transaction) {
-  const fogs = await FogManager.findAll(transaction)
+  const fogs = await FogManager.findAll({}, transaction)
   for (const fog of fogs) {
     await ChangeTrackingService.update(fog.uuid, ChangeTrackingService.events.registries, transaction)
   }

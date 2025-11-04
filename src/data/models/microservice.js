@@ -37,9 +37,14 @@ module.exports = (sequelize, DataTypes) => {
       field: 'rebuild',
       defaultValue: false
     },
-    rootHostAccess: {
+    hostNetworkMode: {
       type: DataTypes.BOOLEAN,
-      field: 'root_host_access',
+      field: 'host_network_mode',
+      defaultValue: false
+    },
+    isPrivileged: {
+      type: DataTypes.BOOLEAN,
+      field: 'is_privileged',
       defaultValue: false
     },
     runAsUser: {

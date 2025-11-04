@@ -13,6 +13,9 @@
 
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const ConfigMapManager = require('../data/managers/config-map-manager')
+const MicroserviceManager = require('../data/managers/microservice-manager')
+const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
+const ChangeTrackingService = require('./change-tracking-service')
 const AppHelper = require('../helpers/app-helper')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
@@ -58,6 +61,7 @@ async function updateConfigMapEndpoint (configMapName, configMapData, transactio
 
   const configMap = await ConfigMapManager.updateConfigMap(configMapName, configMapData.immutable, configMapData.data, transaction)
   await _updateChangeTrackingForFogs(configMapName, transaction)
+  await _updateMicroservicesUsingConfigMap(configMapName, transaction)
   return {
     id: configMap.id,
     name: configMap.name,
@@ -102,7 +106,17 @@ async function deleteConfigMapEndpoint (configMapName, transaction) {
   }
 
   await ConfigMapManager.deleteConfigMap(configMapName, transaction)
+  await _deleteVolumeMountsUsingConfigMap(configMapName, transaction)
   return {}
+}
+
+async function _deleteVolumeMountsUsingConfigMap (configMapName, transaction) {
+  const volumeMounts = await VolumeMountingManager.findAll({ configMapName: configMapName }, transaction)
+  if (volumeMounts.length > 0) {
+    for (const volumeMount of volumeMounts) {
+      await VolumeMountService.deleteVolumeMountEndpoint(volumeMount.name, transaction)
+    }
+  }
 }
 
 async function _updateChangeTrackingForFogs (configMapName, transaction) {
@@ -115,6 +129,57 @@ async function _updateChangeTrackingForFogs (configMapName, transaction) {
       }
       await VolumeMountService.updateVolumeMountEndpoint(configMapVolumeMount.name, volumeMountObj, transaction)
     }
+  }
+}
+
+async function _updateMicroservicesUsingConfigMap (configMapName, transaction) {
+  // Find all microservice environment variables that use this config map
+  const envVars = await MicroserviceEnvManager.findAll({
+    valueFromConfigMap: { [require('sequelize').Op.like]: `${configMapName}/%` }
+  }, transaction)
+
+  if (envVars.length === 0) {
+    return
+  }
+
+  // Get the updated config map data
+  const configMap = await ConfigMapManager.getConfigMap(configMapName, transaction)
+  if (!configMap) {
+    return
+  }
+
+  // Group environment variables by microservice UUID
+  const microserviceEnvMap = new Map()
+  for (const envVar of envVars) {
+    if (!microserviceEnvMap.has(envVar.microserviceUuid)) {
+      microserviceEnvMap.set(envVar.microserviceUuid, [])
+    }
+    microserviceEnvMap.get(envVar.microserviceUuid).push(envVar)
+  }
+
+  // Update each microservice's environment variables and change tracking
+  for (const [microserviceUuid, envVars] of microserviceEnvMap) {
+    // Get the microservice to access its iofogUuid
+    const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+    if (!microservice) {
+      continue
+    }
+
+    // Update each environment variable with the new config map data
+    for (const envVar of envVars) {
+      const [configMapNameFromRef, dataKey] = envVar.valueFromConfigMap.split('/')
+      if (configMapNameFromRef === configMapName && configMap.data[dataKey]) {
+        // Update the environment variable value with the new config map data
+        await MicroserviceEnvManager.update(
+          { id: envVar.id },
+          { value: configMap.data[dataKey] },
+          transaction
+        )
+      }
+    }
+
+    // Update change tracking for the microservice's fog node
+    await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
   }
 }
 

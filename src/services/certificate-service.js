@@ -215,7 +215,7 @@ async function deleteCAEndpoint (name, transaction) {
 
   // Delete certificate record and the secret
   await CertificateManager.deleteCertificate(name, transaction)
-  await SecretService.deleteSecretEndpoint(name)
+  await SecretService.deleteSecretEndpoint(name, transaction)
 
   return {}
 }
@@ -420,15 +420,12 @@ async function deleteCertificateEndpoint (name, transaction) {
 
   // Check if this is a CA with signed certificates
   if (certRecord.isCA) {
-    const signedCerts = await CertificateManager.findCertificatesByCA(certRecord.id, transaction)
-    if (signedCerts.length > 0) {
-      throw new Errors.ValidationError(`Cannot delete CA that has signed certificates. Please delete the following certificates first: ${signedCerts.map(cert => cert.name).join(', ')}`)
-    }
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.CERTIFICATE_NOT_FOUND, name))
   }
 
   // Delete certificate record and the secret
   await CertificateManager.deleteCertificate(name, transaction)
-  await SecretService.deleteSecretEndpoint(name)
+  await SecretService.deleteSecretEndpoint(name, transaction)
 
   return {}
 }

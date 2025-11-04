@@ -38,6 +38,7 @@ module.exports = {
   // Settings Configuration
   'FOG_STATUS_UPDATE_INTERVAL': 'settings.fogStatusUpdateInterval',
   'FOG_STATUS_UPDATE_TOLERANCE': 'settings.fogStatusUpdateTolerance',
+  'FOG_EXPIRED_TOKEN_CLEANUP_INTERVAL': 'settings.fogExpiredTokenCleanupInterval',
 
   // Database Configuration
   'DB_PROVIDER': 'database.provider',

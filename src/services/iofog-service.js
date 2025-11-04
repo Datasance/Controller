@@ -62,17 +62,19 @@ async function getLocalCertificateHosts (isKubernetes, namespace) {
   return '127.0.0.1,localhost,host.docker.internal,host.containers.internal'
 }
 
-async function getSiteCertificateHosts (fogData, transaction) {
+async function getSiteCertificateHosts (fogData, fogUuid, transaction) {
   const hosts = new Set()
-  // Add existing hosts if isSystem
-  if (fogData.isSystem) {
+  const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+  const isFogDefaultRouter = fogUuid === defaultRouter.iofogUuid
+  // Add existing hosts if isSystem and fog is default-router
+  if (fogData.isSystem && isFogDefaultRouter) {
     if (fogData.host) hosts.add(fogData.host)
     if (fogData.ipAddress) hosts.add(fogData.ipAddress)
     if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
   }
-  // Add default router host if not system
-  if (!fogData.isSystem) {
-    const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+  // Add default router host if not system or fog isSystem but not default-router
+  if (!fogData.isSystem || (fogData.isSystem && !isFogDefaultRouter)) {
+    // const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
     if (defaultRouter.host) hosts.add(defaultRouter.host)
   }
   // Add upstream router hosts
@@ -197,7 +199,7 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
     // For other router modes, ensure all other certificates
     // Always ensure site-server cert exists
     logger.debug('Ensuring site-server certificate exists')
-    const siteHosts = await getSiteCertificateHosts(fogData, transaction)
+    const siteHosts = await getSiteCertificateHosts(fogData, uuid, transaction)
     await ensureCert(
       `${uuid}-site-server`,
       `${uuid}-site-server`,
@@ -298,10 +300,10 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, fogData.routerMode))
   }
 
-  // TODO: handle multiple system fogs a.k.a multi-remote-controller and multi interior routers
-  if (fogData.isSystem && !!(await FogManager.findOne({ isSystem: true }, transaction))) {
-    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_SYSTEM_FOG))
-  }
+  // // TODO: handle multiple system fogs a.k.a multi-remote-controller and multi interior routers
+  // if (fogData.isSystem && !!(await FogManager.findOne({ isSystem: true }, transaction))) {
+  //   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_SYSTEM_FOG))
+  // }
 
   const existingFog = await FogManager.findOne({ name: createFogData.name }, transaction)
   if (existingFog) {
@@ -1079,7 +1081,8 @@ async function _createHalMicroserviceForFog (fogData, oldFog, transaction) {
     config: '{}',
     catalogItemId: halItem.id,
     iofogUuid: fogData.uuid,
-    rootHostAccess: true,
+    hostNetworkMode: true,
+    isPrivileged: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
     schedule: 1,
     configLastUpdated: Date.now()
@@ -1124,7 +1127,8 @@ async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction)
     config: '{}',
     catalogItemId: bluetoothItem.id,
     iofogUuid: fogData.uuid,
-    rootHostAccess: true,
+    hostNetworkMode: true,
+    isPrivileged: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
     schedule: 1,
     configLastUpdated: Date.now()
@@ -1187,7 +1191,8 @@ async function enableNodeExecEndPoint (execData, isCLI, transaction) {
     iofogUuid: execData.uuid,
     ipcMode: 'host',
     pidMode: 'host',
-    rootHostAccess: true,
+    hostNetworkMode: true,
+    isPrivileged: true,
     logSize: Constants.MICROSERVICE_DEFAULT_LOG_SIZE,
     schedule: 0,
     execEnabled: true,
@@ -1228,7 +1233,8 @@ async function enableNodeExecEndPoint (execData, isCLI, transaction) {
     const updateData = {
       ipcMode: debugMicroserviceData.ipcMode,
       pidMode: debugMicroserviceData.pidMode,
-      rootHostAccess: debugMicroserviceData.rootHostAccess,
+      hostNetworkMode: debugMicroserviceData.hostNetworkMode,
+      isPrivileged: debugMicroserviceData.isPrivileged,
       logSize: debugMicroserviceData.logSize,
       schedule: debugMicroserviceData.schedule,
       configLastUpdated: debugMicroserviceData.configLastUpdated,

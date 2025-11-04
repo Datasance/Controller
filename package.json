@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.5.6",
+  "version": "3.5.7",
   "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "1.2.1",
+    "@datasance/ecn-viewer": "1.2.2",
     "@kubernetes/client-node": "^0.22.3",
     "@msgpack/msgpack": "^3.1.2",
     "@opentelemetry/api": "^1.9.0",
@@ -100,12 +100,12 @@
     "os": "0.1.2",
     "path": "0.12.7",
     "pg": "8.12.0",
-    "pino": "9.1.0",
+    "pino": "9.13.1",
     "pino-std-serializers": "7.0.0",
     "portscanner": "2.2.0",
     "qs": "6.12.1",
     "retry-as-promised": "7.0.4",
-    "sequelize": "6.37.3",
+    "sequelize": "6.37.7",
     "sqlite3": "^5.1.7",
     "string-format": "2.0.0",
     "umzug": "^3.7.0",
@@ -150,8 +150,11 @@
     },
     "sqlite3": {
       "prebuild-install": {
-        "tar-fs": "^2.1.3"
+        "tar-fs": "^2.1.4"
       }
+    },
+    "sequelize": {
+      "validator": "^13.15.20"
     }
   }
 }

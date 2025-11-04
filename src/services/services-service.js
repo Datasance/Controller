@@ -257,7 +257,7 @@ async function _determineConnectorHost (serviceConfig, transaction) {
   switch (serviceConfig.type.toLowerCase()) {
     case 'microservice':
       const microservice = await MicroserviceManager.findOne({ uuid: serviceConfig.resource }, transaction)
-      if (microservice.rootHostAccess) {
+      if (microservice.hostNetworkMode) {
         return 'iofog'
       } else {
         return `iofog_${serviceConfig.resource}`
@@ -462,14 +462,20 @@ async function _addTcpListener (serviceConfig, transaction) {
 
   // If not in K8s environment, always include default router
   if (!isK8s) {
-    const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
-    if (!defaultRouter) {
-      logger.error('Default router not found')
-      throw new Errors.NotFoundError('Default router not found')
-    }
-    // Add default router if not already in the list
-    if (!fogNodeUuids.includes(defaultRouter.iofogUuid)) {
-      fogNodeUuids.push(defaultRouter.iofogUuid)
+    if (serviceConfig.defaultBridge === 'default-router') {
+      const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+      if (!defaultRouter) {
+        logger.error('Default router not found')
+        throw new Errors.NotFoundError('Default router not found')
+      }
+      // Add default router if not already in the list
+      if (!fogNodeUuids.includes(defaultRouter.iofogUuid)) {
+        fogNodeUuids.push(defaultRouter.iofogUuid)
+      }
+    } else {
+      if (!fogNodeUuids.includes(serviceConfig.defaultBridge)) {
+        fogNodeUuids.push(serviceConfig.defaultBridge)
+      }
     }
   }
   // else if (!fogNodeUuids || fogNodeUuids.length === 0) {
@@ -950,6 +956,23 @@ async function createServiceEndpoint (serviceData, transaction) {
   // Set provisioning fields
   serviceData.provisioningStatus = 'pending'
   serviceData.provisioningError = null
+  if (!isK8s) {
+    if (serviceData.defaultBridge === 'default-router') {
+      const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+      if (!defaultRouter) {
+        throw new Errors.NotFoundError('Default router not found')
+      }
+      serviceData.serviceEndpoint = defaultRouter.host
+      serviceData.servicePort = serviceData.bridgePort
+    } else {
+      const router = await RouterManager.findOne({ iofogUuid: serviceData.defaultBridge }, transaction)
+      if (!router) {
+        throw new Errors.NotFoundError('Router not found')
+      }
+      serviceData.serviceEndpoint = router.host
+      serviceData.servicePort = serviceData.bridgePort
+    }
+  }
 
   // 7. Create service in database first
   logger.debug('Creating service in database')
@@ -1008,6 +1031,10 @@ async function updateServiceEndpoint (serviceName, serviceData, transaction) {
     throw new Errors.ValidationError('Changing service type is not allowed. Please delete the service and create a new one with the desired type.')
   }
 
+  if (serviceData.defaultBridge && serviceData.defaultBridge !== existingService.defaultBridge) {
+    throw new Errors.ValidationError('Changing default bridge is not allowed. Please delete the service and create a new one with the desired default bridge.')
+  }
+
   // 4. Check K8s environment if type is k8s
   const isK8s = await checkKubernetesEnvironment()
   if (existingService.type === 'k8s' && !isK8s) {
@@ -1039,6 +1066,24 @@ async function updateServiceEndpoint (serviceName, serviceData, transaction) {
   // Set provisioning fields
   serviceData.provisioningStatus = 'pending'
   serviceData.provisioningError = null
+
+  if (!isK8s) {
+    if (serviceData.defaultBridge === 'default-router') {
+      const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+      if (!defaultRouter) {
+        throw new Errors.NotFoundError('Default router not found')
+      }
+      serviceData.serviceEndpoint = defaultRouter.host
+      serviceData.servicePort = serviceData.bridgePort
+    } else {
+      const router = await RouterManager.findOne({ iofogUuid: serviceData.defaultBridge }, transaction)
+      if (!router) {
+        throw new Errors.NotFoundError('Router not found')
+      }
+      serviceData.serviceEndpoint = router.host
+      serviceData.servicePort = serviceData.bridgePort
+    }
+  }
 
   // 8. Update service in database
   const updatedService = await ServiceManager.update(

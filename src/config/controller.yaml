@@ -50,6 +50,7 @@ settings:
   # defaultJobInterval: 120                 # Default job interval in seconds
   fogStatusUpdateInterval: 30             # Fog status update interval in seconds
   fogStatusUpdateTolerance: 3             # Fog status update tolerance
+  fogExpiredTokenCleanupInterval: 300     # Fog expired token cleanup interval in seconds
 
 # Database Configuration
 database:

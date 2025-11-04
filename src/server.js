@@ -17,7 +17,6 @@ initialize().then(() => {
   const config = require('./config')
   const logger = require('./logger')
   const db = require('./data/models')
-  const CleanupService = require('./services/cleanup-service')
   const WebSocketServer = require('./websocket/server')
 
   const bodyParser = require('body-parser')
@@ -268,9 +267,6 @@ initialize().then(() => {
     `
     fs.writeFileSync(ecnViewerControllerConfigFilePath, ecnViewerConfigScript)
   }
-
-  // Initialize cleanup service
-  CleanupService.start()
 
   initState()
     .then(() => {

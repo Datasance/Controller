@@ -15,9 +15,9 @@ const config = require('../config')
 const path = require('path')
 const fs = require('fs')
 const formidable = require('formidable')
-const Sequelize = require('sequelize')
+// const Sequelize = require('sequelize')
 const moment = require('moment')
-const Op = Sequelize.Op
+// const Op = Sequelize.Op
 const logger = require('../logger')
 
 const TransactionDecorator = require('../decorators/transaction-decorator')
@@ -411,7 +411,8 @@ const getAgentMicroservices = async function (fog, transaction) {
       config: microservice.config,
       annotations: microservice.annotations,
       rebuild: microservice.rebuild,
-      rootHostAccess: microservice.rootHostAccess,
+      hostNetworkMode: microservice.hostNetworkMode,
+      isPrivileged: microservice.isPrivileged,
       cpuSetCpus: microservice.cpuSetCpus,
       memoryLimit: microservice.memoryLimit,
       healthCheck: healthCheck,
@@ -493,14 +494,7 @@ const getAgentMicroservice = async function (microserviceUuid, fog, transaction)
 }
 
 const getAgentRegistries = async function (fog, transaction) {
-  const registries = await RegistryManager.findAll({
-    [Op.or]:
-      [
-        {
-          isPublic: true
-        }
-      ]
-  }, transaction)
+  const registries = await RegistryManager.findAll({}, transaction)
   return {
     registries: registries
   }

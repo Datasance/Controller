@@ -79,6 +79,8 @@ module.exports = {
   REGISTRY_NOT_FOUND: 'Registry not found',
   USER_ALREADY_ACTIVATED: 'User is already activated.',
   USER_NOT_ACTIVATED_YET: 'User is not activated yet.',
+  REGISTRY_IS_SYSTEM: 'Registry is system and can\'t be updated or deleted',
+  REGISTRY_IS_IN_USE: 'Registry is in use by microservices and can\'t be deleted',
   CLI: {
     INVALID_PORT_MAPPING: 'Port mapping parsing error. Please provide valid port mapping.',
     INVALID_VOLUME_MAPPING: 'Volume mapping parsing error. Please provide valid volume mapping.',

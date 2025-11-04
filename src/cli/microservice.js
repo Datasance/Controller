@@ -35,7 +35,8 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
     registryId: 1,
     application: 'string',
     iofogUuid: 'string',
-    rootHostAccess: true,
+    hostNetworkMode: true,
+    isPrivileged: true,
     logSize: 0,
     volumeMappings: [
       {
@@ -86,7 +87,8 @@ const JSON_SCHEMA_UPDATE = AppHelper.stringifyCliJsonSchema(
     annotations: 'string',
     rebuild: true,
     iofogUuid: 'string',
-    rootHostAccess: true,
+    hostNetworkMode: true,
+    isPrivileged: true,
     logSize: 0,
     catalogItemId: 0,
     images: [
@@ -234,17 +236,17 @@ class Microservice extends BaseCLIHandler {
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
       {
-        name: 'root-enable',
-        alias: 'r',
+        name: 'host-network-mode',
+        alias: 'hN',
         type: Boolean,
-        description: 'Enable root access',
+        description: 'Enable host network mode',
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
       {
-        name: 'root-disable',
-        alias: 'R',
+        name: 'is-privileged',
+        alias: 'iP',
         type: Boolean,
-        description: 'Disable root access',
+        description: 'Enable privileged mode',
         group: [constants.CMD_UPDATE, constants.CMD_ADD]
       },
       {
@@ -663,7 +665,8 @@ const _updateMicroserviceObject = function (obj) {
     config: obj.config,
     annotations: obj.annotations,
     iofogUuid: obj.iofogUuid,
-    rootHostAccess: AppHelper.validateBooleanCliOptions(obj.rootEnable, obj.rootDisable),
+    hostNetworkMode: obj.hostNetworkMode,
+    isPrivileged: obj.isPrivileged,
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     rebuild: obj.rebuild,
     cmd: obj.cmd,
@@ -731,7 +734,8 @@ const _createMicroserviceObject = function (obj) {
     application: obj.applicationName,
     registryId: parseInt(obj.registryId) || undefined,
     iofogUuid: obj.iofogUuid,
-    rootHostAccess: AppHelper.validateBooleanCliOptions(obj.rootEnable, obj.rootDisable),
+    hostNetworkMode: obj.hostNetworkMode,
+    isPrivileged: obj.isPrivileged,
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
     routes: obj.routes,
     cmd: obj.cmd,

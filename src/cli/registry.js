@@ -65,20 +65,6 @@ class Registry extends BaseCLIHandler {
         group: [constants.CMD_ADD, constants.CMD_UPDATE]
       },
       {
-        name: 'requires-certificate',
-        alias: 'c',
-        type: Boolean,
-        description: 'Requires certificate',
-        group: [constants.CMD_ADD, constants.CMD_UPDATE]
-      },
-      {
-        name: 'certificate',
-        alias: 'C',
-        type: String,
-        description: 'Certificate',
-        group: [constants.CMD_ADD, constants.CMD_UPDATE]
-      },
-      {
         name: 'email',
         alias: 'e',
         type: String,
@@ -183,9 +169,7 @@ function _createRegistryObject (cliData) {
     username: cliData.username,
     password: cliData.password,
     isPublic: AppHelper.validateBooleanCliOptions(cliData.public, cliData.private),
-    email: cliData.email,
-    requiresCert: cliData.requiresCertificate,
-    certificate: cliData.certificate
+    email: cliData.email
   }
 }
 
