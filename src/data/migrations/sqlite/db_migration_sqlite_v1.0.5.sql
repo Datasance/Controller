@@ -795,3 +795,6 @@ CREATE INDEX idx_microservice_health_check_microservice_uuid ON MicroserviceHeal
 ALTER TABLE MicroserviceStatuses ADD COLUMN health_status TEXT;
 
 ALTER TABLE Microservices ADD COLUMN is_activated BOOLEAN DEFAULT true;
+
+ALTER TABLE Microservices ADD COLUMN host_network_mode BOOLEAN DEFAULT false;
+ALTER TABLE Microservices ADD COLUMN is_privileged BOOLEAN DEFAULT false;

@@ -13,12 +13,16 @@
 
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const SecretManager = require('../data/managers/secret-manager')
+const MicroserviceManager = require('../data/managers/microservice-manager')
+const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
+const ChangeTrackingService = require('./change-tracking-service')
 const AppHelper = require('../helpers/app-helper')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
 const Validator = require('../schemas/index')
 const VolumeMountService = require('./volume-mount-service')
 const VolumeMountingManager = require('../data/managers/volume-mounting-manager')
+const CertificateManager = require('../data/managers/certificate-manager')
 
 function validateBase64 (value) {
   try {
@@ -82,6 +86,7 @@ async function updateSecretEndpoint (secretName, secretData, transaction) {
 
   const secret = await SecretManager.updateSecret(secretName, secretData.data, transaction)
   await _updateChangeTrackingForFogs(secretName, transaction)
+  await _updateMicroservicesUsingSecret(secretName, transaction)
   return {
     id: secret.id,
     name: secret.name,
@@ -126,8 +131,36 @@ async function deleteSecretEndpoint (secretName, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, secretName))
   }
 
-  await SecretManager.deleteSecret(secretName, transaction)
+  if (existingSecret.type === 'tls') {
+    const certificate = await CertificateManager.findCertificateByName(secretName, transaction)
+    if (certificate) {
+      if (certificate.isCA) {
+        // Check if this CA has signed certificates
+        const signedCerts = await CertificateManager.findCertificatesByCA(certificate.id, transaction)
+        if (signedCerts.length > 0) {
+          throw new Errors.ValidationError(`Cannot delete CA that has signed certificates. Please delete the following certificates first: ${signedCerts.map(cert => cert.name).join(', ')}`)
+        }
+        await CertificateManager.deleteCertificate(certificate.name, transaction)
+        await _deleteVolumeMountsUsingSecret(secretName, transaction)
+      } else {
+        await CertificateManager.deleteCertificate(certificate.name, transaction)
+        await _deleteVolumeMountsUsingSecret(secretName, transaction)
+      }
+    }
+  } else {
+    await SecretManager.deleteSecret(secretName, transaction)
+    await _deleteVolumeMountsUsingSecret(secretName, transaction)
+  }
   return {}
+}
+
+async function _deleteVolumeMountsUsingSecret (secretName, transaction) {
+  const volumeMounts = await VolumeMountingManager.findAll({ secretName: secretName }, transaction)
+  if (volumeMounts.length > 0) {
+    for (const volumeMount of volumeMounts) {
+      await VolumeMountService.deleteVolumeMountEndpoint(volumeMount.name, transaction)
+    }
+  }
 }
 
 async function _updateChangeTrackingForFogs (secretName, transaction) {
@@ -140,6 +173,69 @@ async function _updateChangeTrackingForFogs (secretName, transaction) {
       }
       await VolumeMountService.updateVolumeMountEndpoint(secretVolumeMount.name, volumeMountObj, transaction)
     }
+  }
+}
+
+async function _updateMicroservicesUsingSecret (secretName, transaction) {
+  // Find all microservice environment variables that use this secret
+  const envVars = await MicroserviceEnvManager.findAll({
+    valueFromSecret: { [require('sequelize').Op.like]: `${secretName}/%` }
+  }, transaction)
+
+  if (envVars.length === 0) {
+    return
+  }
+
+  // Get the updated secret data
+  const secret = await SecretManager.getSecret(secretName, transaction)
+  if (!secret) {
+    return
+  }
+
+  // Group environment variables by microservice UUID
+  const microserviceEnvMap = new Map()
+  for (const envVar of envVars) {
+    if (!microserviceEnvMap.has(envVar.microserviceUuid)) {
+      microserviceEnvMap.set(envVar.microserviceUuid, [])
+    }
+    microserviceEnvMap.get(envVar.microserviceUuid).push(envVar)
+  }
+
+  // Update each microservice's environment variables and change tracking
+  for (const [microserviceUuid, envVars] of microserviceEnvMap) {
+    // Get the microservice to access its iofogUuid
+    const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+    if (!microservice) {
+      continue
+    }
+
+    // Update each environment variable with the new secret data
+    for (const envVar of envVars) {
+      const [secretNameFromRef, dataKey] = envVar.valueFromSecret.split('/')
+      if (secretNameFromRef === secretName && secret.data[dataKey]) {
+        let newValue = secret.data[dataKey]
+
+        // If it's a TLS secret, decode the base64 value
+        if (secret.type === 'tls') {
+          try {
+            newValue = Buffer.from(secret.data[dataKey], 'base64').toString('utf-8')
+          } catch (error) {
+            // Skip this environment variable if base64 decoding fails
+            continue
+          }
+        }
+
+        // Update the environment variable value with the new secret data
+        await MicroserviceEnvManager.update(
+          { id: envVar.id },
+          { value: newValue },
+          transaction
+        )
+      }
+    }
+
+    // Update change tracking for the microservice's fog node
+    await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
   }
 }
 

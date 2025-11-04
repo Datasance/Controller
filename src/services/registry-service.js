@@ -18,6 +18,7 @@ const ErrorMessages = require('../helpers/error-messages')
 const ChangeTrackingService = require('./change-tracking-service')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const FogManager = require('../data/managers/iofog-manager')
+const MicroserviceManager = require('../data/managers/microservice-manager')
 // const Sequelize = require('sequelize')
 // const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
@@ -60,17 +61,31 @@ const deleteRegistry = async function (registryData, isCLI, transaction) {
   const queryData = isCLI
     ? { id: registryData.id }
     : { id: registryData.id }
+  // Convert registryId to number to handle string IDs from URL parameters
+  const id = parseInt(registryData.id, 10)
+  if (id === 1 || id === 2) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_SYSTEM)
+  }
   const registry = await RegistryManager.findOne(queryData, transaction)
   if (!registry) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryData.id))
   }
-  await RegistryManager.delete(queryData, transaction)
-  await _updateChangeTracking(transaction)
+  const microservices = await MicroserviceManager.findAllWithStatuses({ registryId: registryData.id }, transaction)
+  if (microservices.length > 0) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_IN_USE)
+  } else {
+    await RegistryManager.delete(queryData, transaction)
+    await _updateChangeTracking(transaction)
+  }
 }
 
 const updateRegistry = async function (registry, registryId, isCLI, transaction) {
   await Validator.validate(registry, Validator.schemas.registryUpdate)
-
+  // Convert registryId to number to handle string IDs from URL parameters
+  const id = parseInt(registryId, 10)
+  if (id === 1 || id === 2) {
+    throw new Errors.ValidationError(ErrorMessages.REGISTRY_IS_SYSTEM)
+  }
   const existingRegistry = await RegistryManager.findOne({
     id: registryId
   }, transaction)
@@ -98,6 +113,13 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
     }
 
   await RegistryManager.update(where, registryUpdate, transaction)
+  const microservices = await MicroserviceManager.findAllWithStatuses({ registryId: registryId }, transaction)
+  if (microservices.length > 0) {
+    for (const ms of microservices) {
+      await MicroserviceManager.updateAndFind({ uuid: ms.uuid }, { rebuild: true }, transaction)
+      await ChangeTrackingService.update(ms.iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
+    }
+  }
 
   await _updateChangeTracking(transaction)
 }

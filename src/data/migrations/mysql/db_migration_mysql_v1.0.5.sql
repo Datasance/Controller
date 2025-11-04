@@ -809,4 +809,8 @@ ALTER TABLE MicroserviceStatuses ADD COLUMN health_status TEXT;
 
 ALTER TABLE Microservices ADD COLUMN is_activated BOOLEAN DEFAULT true;
 
+ALTER TABLE Microservices ADD COLUMN host_network_mode BOOLEAN DEFAULT false;
+ALTER TABLE Microservices ADD COLUMN is_privileged BOOLEAN DEFAULT false;
+ALTER TABLE Microservices DROP COLUMN root_host_access;
+
 COMMIT;

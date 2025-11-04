@@ -5165,7 +5165,9 @@ components:
                       type: string
               iofogUuid:
                 type: string
-              rootHostAccess:
+              hostNetworkMode:
+                type: boolean
+              isPrivileged:
                 type: boolean
               logSize:
                 type: number
@@ -5316,7 +5318,9 @@ components:
                     type: string
                   agentName:
                     type: string
-                  rootHostAccess:
+                  hostNetworkMode:
+                    type: boolean
+                  isPrivileged:
                     type: boolean
                   logSize:
                     type: number
@@ -6012,7 +6016,9 @@ components:
           type: string
         rebuild:
           type: boolean
-        rootHostAccess:
+        hostNetworkMode:
+          type: boolean
+        isPrivileged:
           type: boolean
         logSize:
           type: number
@@ -6364,7 +6370,9 @@ components:
           type: string
         annotations:
           type: string
-        rootHostAccess:
+        hostNetworkMode:
+          type: boolean
+        isPrivileged:
           type: boolean
         logLimit:
           type: number
@@ -6457,7 +6465,9 @@ components:
           type: string
         agentName:
           type: string
-        rootHostAccess:
+        hostNetworkMode:
+          type: boolean
+        isPrivileged:
           type: boolean
         logSize:
           type: number
@@ -6516,7 +6526,9 @@ components:
           type: string
         agentName:
           type: string
-        rootHostAccess:
+        hostNetworkMode:
+          type: boolean
+        isPrivileged:
           type: boolean
         logLimit:
           type: number

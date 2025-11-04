@@ -314,6 +314,10 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
     _validateImagesAgainstCatalog(catalogItem, microserviceData.images || [])
     microserviceData.images = catalogItem.images
     _validateImageFogType(microserviceData, fog, catalogItem.images)
+    // use catalog item's registryId if it is set
+    if (catalogItem.registryId) {
+      microserviceData.registryId = catalogItem.registryId
+    }
   } else {
     _validateImageFogType(microserviceData, fog, microserviceData.images)
   }
@@ -519,7 +523,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     catalogItemId: microserviceData.catalogItemId,
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
-    rootHostAccess: microserviceData.rootHostAccess,
+    hostNetworkMode: microserviceData.hostNetworkMode,
+    isPrivileged: microserviceData.isPrivileged,
     cpuSetCpus: microserviceData.cpuSetCpus,
     memoryLimit: microserviceData.memoryLimit,
     schedule: microserviceData.schedule,
@@ -600,6 +605,11 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
         await _deleteImages(microserviceUuid, transaction)
         microserviceDataUpdate.registryId = catalogItem.registryId || 1
       }
+    } else {
+      // use catalog item's registryId if it is set
+      if (catalogItem.registryId) {
+        microserviceDataUpdate.registryId = catalogItem.registryId
+      }
     }
   } else if (!microservice.catalogItemId && microserviceDataUpdate.images && microserviceDataUpdate.images.length === 0) {
     // No catalog, and no image
@@ -640,7 +650,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 
   // Set rebuild flag if needed
   microserviceDataUpdate.rebuild = microserviceDataUpdate.rebuild || !!(
-    (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
+    (microserviceDataUpdate.hostNetworkMode !== undefined && microservice.hostNetworkMode !== microserviceDataUpdate.hostNetworkMode) ||
+    (microserviceDataUpdate.isPrivileged !== undefined && microservice.isPrivileged !== microserviceDataUpdate.isPrivileged) ||
     microserviceDataUpdate.pidMode ||
     microserviceDataUpdate.ipcMode ||
     microserviceDataUpdate.cpuSetCpus ||
@@ -762,7 +773,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     catalogItemId: microserviceData.catalogItemId,
     rebuild: microserviceData.rebuild,
     iofogUuid: newFog.uuid,
-    rootHostAccess: microserviceData.rootHostAccess,
+    hostNetworkMode: microserviceData.hostNetworkMode,
+    isPrivileged: microserviceData.isPrivileged,
     cpuSetCpus: microserviceData.cpuSetCpus,
     memoryLimit: microserviceData.memoryLimit,
     schedule: microserviceData.schedule,
@@ -847,6 +859,11 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
         await _deleteImages(microserviceUuid, transaction)
         microserviceDataUpdate.registryId = catalogItem.registryId || 1
       }
+    } else {
+      // use catalog item's registryId if it is set
+      if (catalogItem.registryId) {
+        microserviceDataUpdate.registryId = catalogItem.registryId
+      }
     }
   } else if (!microservice.catalogItemId && microserviceDataUpdate.images && microserviceDataUpdate.images.length === 0) {
     // No catalog, and no image
@@ -887,7 +904,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
   // Set rebuild flag if needed
   microserviceDataUpdate.rebuild = microserviceDataUpdate.rebuild || !!(
-    (microserviceDataUpdate.rootHostAccess !== undefined && microservice.rootHostAccess !== microserviceDataUpdate.rootHostAccess) ||
+    (microserviceDataUpdate.hostNetworkMode !== undefined && microservice.hostNetworkMode !== microserviceDataUpdate.hostNetworkMode) ||
+    (microserviceDataUpdate.isPrivileged !== undefined && microservice.isPrivileged !== microserviceDataUpdate.isPrivileged) ||
     microserviceDataUpdate.pidMode ||
     microserviceDataUpdate.ipcMode ||
     microserviceDataUpdate.cpuSetCpus ||
@@ -1240,13 +1258,12 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_DELETE, microserviceUuid))
   }
 
-  await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
-
   const existingService = await ServiceManager.findOne({ type: `microservice`, resource: microservice.uuid }, transaction)
   if (existingService) {
     logger.info(`Deleting service ${existingService.name}`)
     await ServiceServices.deleteServiceEndpoint(existingService.name, transaction)
   }
+  await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   await _updateChangeTracking(false, microservice.iofogUuid, transaction)
 }
 
@@ -1726,7 +1743,8 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
     annotations: annotations,
     catalogItemId: microserviceData.catalogItemId,
     iofogUuid: microserviceData.iofogUuid,
-    rootHostAccess: microserviceData.rootHostAccess,
+    hostNetworkMode: microserviceData.hostNetworkMode,
+    isPrivileged: microserviceData.isPrivileged,
     cpuSetCpus: microserviceData.cpuSetCpus,
     memoryLimit: microserviceData.memoryLimit,
     pidMode: microserviceData.pidMode,

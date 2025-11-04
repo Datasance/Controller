@@ -30,7 +30,8 @@ const microserviceCreate = {
     },
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
-    'rootHostAccess': { 'type': 'boolean' },
+    'hostNetworkMode': { 'type': 'boolean' },
+    'isPrivileged': { 'type': 'boolean' },
     'schedule': {
       'type': 'integer',
       'minimum': 0,
@@ -100,7 +101,8 @@ const microserviceUpdate = {
     'rebuild': { 'type': 'boolean' },
     'iofogUuid': { 'type': 'string' },
     'agentName': { 'type': 'string' },
-    'rootHostAccess': { 'type': 'boolean' },
+    'hostNetworkMode': { 'type': 'boolean' },
+    'isPrivileged': { 'type': 'boolean' },
     'logSize': { 'type': 'integer', 'minimum': 0 },
     'schedule': {
       'type': 'integer',

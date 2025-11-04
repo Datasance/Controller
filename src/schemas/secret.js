@@ -15,6 +15,7 @@ const secretUpdate = {
   type: 'object',
   properties: {
     name: { type: 'string', minLength: 1, maxLength: 255 },
+    type: { type: 'string', enum: ['Opaque', 'tls'] },
     data: { type: 'object' }
   },
   required: ['data'],

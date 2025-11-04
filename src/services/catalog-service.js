@@ -24,11 +24,12 @@ const Op = require('sequelize').Op
 const Validator = require('../schemas/index')
 const RegistryManager = require('../data/managers/registry-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
-const MicroseriveStates = require('../enums/microservice-state')
+// const MicroseriveStates = require('../enums/microservice-state')
+const ChangeTrackingService = require('./change-tracking-service')
 
 const createCatalogItemEndPoint = async function (data, transaction) {
   await Validator.validate(data, Validator.schemas.catalogItemCreate)
-  await _checkForDuplicateName(data.name, transaction)
+  await _checkForDuplicateName(data.name, null, transaction)
   await _checkForRestrictedPublisher(data.publisher)
   const catalogItem = await _createCatalogItem(data, transaction)
   await _createCatalogImages(data, catalogItem, transaction)
@@ -129,6 +130,11 @@ const deleteCatalogItemEndPoint = async function (id, isCLI, transaction) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_CATALOG_ITEM_DELETE, id))
   }
 
+  const microservices = await MicroserviceManager.findAllWithStatuses({ catalogItemId: id }, transaction)
+  if (microservices.length > 0) {
+    throw new Errors.ValidationError(ErrorMessages.CATALOG_ITEM_IMAGES_IS_FROZEN)
+  }
+
   const affectedRows = await CatalogItemManager.delete(where, transaction)
   if (affectedRows === 0) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_CATALOG_ITEM_ID, id))
@@ -183,7 +189,7 @@ async function getHalCatalogItem (transaction) {
 
 const _checkForDuplicateName = async function (name, item, transaction) {
   if (name) {
-    const where = item.id
+    const where = (item && item.id)
       ? { name: name, id: { [Op.ne]: item.id } }
       : { name: name }
 
@@ -314,6 +320,12 @@ const _updateCatalogItem = async function (data, where, transaction) {
     if (!registry) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, data.registryId))
     }
+    const microservices = await MicroserviceManager.findAllWithStatuses({ catalogItemId: data.id }, transaction)
+    if (microservices.length > 0) {
+      for (const ms of microservices) {
+        await MicroserviceManager.updateAndFind({ uuid: ms.uuid }, { registryId: data.registryId }, transaction)
+      }
+    }
   }
 
   const item = await _checkIfItemExists(where, transaction)
@@ -328,12 +340,13 @@ const _updateCatalogItem = async function (data, where, transaction) {
 
 const _updateCatalogItemImages = async function (data, transaction) {
   if (data.images) {
-    const microservices = await MicroserviceManager.findAllWithStatuses({ catalogItemId: data.id }, transaction)
-    for (const ms of microservices) {
-      if (ms.microserviceStatus.status === MicroseriveStates.RUNNING) {
-        throw new Errors.ValidationError(ErrorMessages.CATALOG_ITEM_IMAGES_IS_FROZEN)
-      }
-    }
+    // TODO: Rather than not allowing images for running microservices, update changetracking for agent microsevice list so that once catalog item images are updated, the microservices are updated and restarted.
+    // const microservices = await MicroserviceManager.findAllWithStatuses({ catalogItemId: data.id }, transaction)
+    // for (const ms of microservices) {
+    //   if (ms.microserviceStatus.status === MicroseriveStates.RUNNING) {
+    //     throw new Errors.ValidationError(ErrorMessages.CATALOG_ITEM_IMAGES_IS_FROZEN)
+    //   }
+    // }
 
     for (const image of data.images) {
       await CatalogItemImageManager.updateOrCreate({
@@ -344,6 +357,13 @@ const _updateCatalogItemImages = async function (data, transaction) {
         fogTypeId: image.fogTypeId,
         containerImage: image.containerImage
       }, transaction)
+    }
+    const microservices = await MicroserviceManager.findAllWithStatuses({ catalogItemId: data.id }, transaction)
+    if (microservices.length > 0) {
+      for (const ms of microservices) {
+        await MicroserviceManager.updateAndFind({ uuid: ms.uuid }, { rebuild: true }, transaction)
+        await ChangeTrackingService.update(ms.iofogUuid, ChangeTrackingService.events.microserviceCommon, transaction)
+      }
     }
   }
 }
