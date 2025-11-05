@@ -444,27 +444,27 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
   // Add SSL profiles
   if (siteServerSecret) {
     config.sslProfiles[`${uuid}-site-server`] = {
-      CaCert: siteServerSecret.data['ca.crt'],
-      TlsCert: siteServerSecret.data['tls.crt'],
-      TlsKey: siteServerSecret.data['tls.key'],
+      caCert: siteServerSecret.data['ca.crt'],
+      tlsCert: siteServerSecret.data['tls.crt'],
+      tlsKey: siteServerSecret.data['tls.key'],
       name: `${uuid}-site-server`
     }
   }
 
   if (localServerSecret) {
     config.sslProfiles[`${uuid}-local-server`] = {
-      CaCert: localServerSecret.data['ca.crt'],
-      TlsCert: localServerSecret.data['tls.crt'],
-      TlsKey: localServerSecret.data['tls.key'],
+      caCert: localServerSecret.data['ca.crt'],
+      tlsCert: localServerSecret.data['tls.crt'],
+      tlsKey: localServerSecret.data['tls.key'],
       name: `${uuid}-local-server`
     }
   }
 
   if (localAgentSecret) {
     config.sslProfiles[`${uuid}-local-agent`] = {
-      CaCert: localAgentSecret.data['ca.crt'],
-      TlsCert: localAgentSecret.data['tls.crt'],
-      TlsKey: localAgentSecret.data['tls.key'],
+      caCert: localAgentSecret.data['ca.crt'],
+      tlsCert: localAgentSecret.data['tls.crt'],
+      tlsKey: localAgentSecret.data['tls.key'],
       name: `${uuid}-local-agent`
     }
   }

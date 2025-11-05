@@ -59,24 +59,24 @@ async function getLocalCertificateHosts (isKubernetes, namespace) {
   if (isKubernetes) {
     return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local,127.0.0.1,localhost,host.docker.internal,host.containers.internal`
   }
-  return '127.0.0.1,localhost,host.docker.internal,host.containers.internal'
+  return '127.0.0.1,localhost,host.docker.internal,host.containers.internal,iofog,service.local'
 }
 
 async function getSiteCertificateHosts (fogData, fogUuid, transaction) {
   const hosts = new Set()
-  const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
-  const isFogDefaultRouter = fogUuid === defaultRouter.iofogUuid
-  // Add existing hosts if isSystem and fog is default-router
-  if (fogData.isSystem && isFogDefaultRouter) {
-    if (fogData.host) hosts.add(fogData.host)
-    if (fogData.ipAddress) hosts.add(fogData.ipAddress)
-    if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
-  }
-  // Add default router host if not system or fog isSystem but not default-router
-  if (!fogData.isSystem || (fogData.isSystem && !isFogDefaultRouter)) {
-    // const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
-    if (defaultRouter.host) hosts.add(defaultRouter.host)
-  }
+  // const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+  // const isFogDefaultRouter = fogUuid === defaultRouter.iofogUuid
+  // // Add existing hosts if isSystem and fog is default-router
+  // if (fogData.isSystem && isFogDefaultRouter) {
+  //   if (fogData.host) hosts.add(fogData.host)
+  //   if (fogData.ipAddress) hosts.add(fogData.ipAddress)
+  //   if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
+  // }
+  // // Add default router host if not system or fog isSystem but not default-router
+  // if (!fogData.isSystem || (fogData.isSystem && !isFogDefaultRouter)) {
+  //   // const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+  //   if (defaultRouter.host) hosts.add(defaultRouter.host)
+  // }
   // Add upstream router hosts
   // const upstreamRouters = (fogData.upstreamRouters || []).filter(uuid => uuid !== 'default-router')
   // if (upstreamRouters.length) {
@@ -86,6 +86,9 @@ async function getSiteCertificateHosts (fogData, fogUuid, transaction) {
   //     if (routerHost.ipAddress) hosts.add(routerHost.ipAddress)
   //   }
   // }
+  if (fogData.host) hosts.add(fogData.host)
+  if (fogData.ipAddress) hosts.add(fogData.ipAddress)
+  if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
   return Array.from(hosts).join(',') || 'localhost'
 }
 
