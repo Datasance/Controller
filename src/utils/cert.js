@@ -139,11 +139,20 @@ async function loadCA (name) {
 
 /**
  * Generates a random serial number between 0 and 2^128-1
+ * Ensures the serial number is always positive by making sure the first byte < 0x80
  * @returns {string} - Serial number as a decimal string
  */
 function generateSerialNumber () {
   // Create a random 16-byte buffer
-  const randomBytes = forge.random.getBytesSync(16)
+  let randomBytes = forge.random.getBytesSync(16)
+  // Ensure first byte is < 0x80 to prevent negative serial numbers in ASN.1 encoding
+  // In ASN.1, INTEGER is signed, so if MSB of first byte is set (>= 0x80), it's negative
+  let firstByte = randomBytes.charCodeAt(0)
+  // Regenerate first byte if it's >= 0x80 to ensure positive serial number
+  while (firstByte >= 0x80) {
+    firstByte = forge.random.getBytesSync(1).charCodeAt(0)
+  }
+  randomBytes = String.fromCharCode(firstByte) + randomBytes.substring(1)
   // Convert to BigNumber
   const serialNumber = new BigNumber('0x' + forge.util.bytesToHex(randomBytes))
   return serialNumber.toString()
@@ -348,7 +357,7 @@ async function generateCertificate ({
 
     // Set certificate fields
     cert.publicKey = keys.publicKey
-    cert.serialNumber = forge.util.bytesToHex(forge.random.getBytesSync(16))
+    cert.serialNumber = generateSerialNumber()
 
     // Set validity period
     const now = new Date()
