@@ -1,7 +1,7 @@
 FROM node:iron-bookworm AS builder
 
 ARG PKG_VERSION
-ARG GITHUB_TOKEN
+# ARG GITHUB_TOKEN
 
 WORKDIR /tmp
 
@@ -11,10 +11,10 @@ COPY package.json .
 
 COPY . .
 
-# Set GitHub npm registry with authentication token
-RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
+# # Set GitHub npm registry with authentication token
+# RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
 
-RUN npm config set @datasance:registry https://npm.pkg.github.com/
+# RUN npm config set @datasance:registry https://npm.pkg.github.com/
 
 RUN npm i --build-from-source --force
 

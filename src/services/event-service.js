@@ -234,6 +234,53 @@ function extractActorId (req) {
     return null
   }
 
+  // Special handling for user authentication endpoints
+  if (req.path && req.path.startsWith('/api/v3/user/')) {
+    // For login endpoint: extract from req.body.email
+    if (req.path === '/api/v3/user/login' && req.body && req.body.email) {
+      return req.body.email
+    }
+
+    // For refresh endpoint: extract from req.body.refreshToken
+    if (req.path === '/api/v3/user/refresh' && req.body && req.body.refreshToken) {
+      try {
+        const tokenParts = req.body.refreshToken.split('.')
+        if (tokenParts.length === 3) {
+          const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+          return payload.preferred_username || payload.email || payload.sub || null
+        }
+      } catch (error) {
+        logger.debug('Failed to extract username from refresh token:', error)
+      }
+    }
+
+    // For logout endpoint: extract from access token in headers or kauth
+    if (req.path === '/api/v3/user/logout') {
+      // Try Keycloak middleware first
+      try {
+        if (req.kauth && req.kauth.grant && req.kauth.grant.access_token &&
+            req.kauth.grant.access_token.content && req.kauth.grant.access_token.content.preferred_username) {
+          return req.kauth.grant.access_token.content.preferred_username
+        }
+      } catch (error) {
+        logger.debug('Failed to extract username from Keycloak middleware:', error)
+      }
+
+      // Fallback: extract from Authorization header
+      try {
+        const authHeader = req.headers.authorization
+        if (authHeader) {
+          const username = extractUsernameFromToken(authHeader)
+          if (username) {
+            return username
+          }
+        }
+      } catch (error) {
+        logger.debug('Failed to extract username from access token:', error)
+      }
+    }
+  }
+
   // User endpoint - try Keycloak middleware first (for HTTP requests)
   try {
     if (req.kauth && req.kauth.grant && req.kauth.grant.access_token &&
@@ -244,7 +291,7 @@ function extractActorId (req) {
     logger.debug('Failed to extract username from Keycloak middleware:', error)
   }
 
-  // Fallback: extract from token directly (for WebSocket connections)
+  // Fallback: extract from token directly (for WebSocket connections or other endpoints)
   try {
     const authHeader = req.headers.authorization
     if (authHeader) {
