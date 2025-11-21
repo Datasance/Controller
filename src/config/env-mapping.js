@@ -39,6 +39,10 @@ module.exports = {
   'FOG_STATUS_UPDATE_INTERVAL': 'settings.fogStatusUpdateInterval',
   'FOG_STATUS_UPDATE_TOLERANCE': 'settings.fogStatusUpdateTolerance',
   'FOG_EXPIRED_TOKEN_CLEANUP_INTERVAL': 'settings.fogExpiredTokenCleanupInterval',
+  'EVENT_RETENTION_DAYS': 'settings.eventRetentionDays',
+  'EVENT_CLEANUP_INTERVAL': 'settings.eventCleanupInterval',
+  'EVENT_AUDIT_ENABLED': 'settings.eventAuditEnabled',
+  'EVENT_CAPTURE_IP_ADDRESS': 'settings.eventCaptureIpAddress',
 
   // Database Configuration
   'DB_PROVIDER': 'database.provider',

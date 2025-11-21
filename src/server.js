@@ -85,6 +85,11 @@ initialize().then(() => {
     next()
   })
 
+  // Event audit middleware - tracks non-GET operations
+  // Must be after authentication middleware but before route handlers
+  const eventAuditMiddleware = require('./middlewares/event-audit-middleware')
+  app.use(eventAuditMiddleware)
+
   global.appRoot = path.resolve(__dirname)
 
   const registerRoute = (route) => {

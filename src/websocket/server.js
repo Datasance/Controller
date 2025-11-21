@@ -24,6 +24,8 @@ const MESSAGE_TYPES = {
   ACTIVATION: 5
 }
 
+const EventService = require('../services/event-service')
+
 class WebSocketServer {
   constructor () {
     this.wss = null
@@ -299,6 +301,8 @@ class WebSocketServer {
           // If token is found in query params, format it as Bearer token
           if (token) {
             token = `Bearer ${token}`
+            // Store in headers for event creation code
+            req.headers.authorization = token
           }
         }
 
@@ -438,6 +442,38 @@ class WebSocketServer {
             microserviceUuid: msgMicroserviceUuid
           }))
           await this.setupMessageForwarding(execId, transaction)
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              const authHeader = req.headers.authorization
+              let actorId = null
+              if (authHeader) {
+                const [scheme, token] = authHeader.split(' ')
+                if (scheme.toLowerCase() === 'bearer' && token) {
+                  try {
+                    const tokenParts = token.split('.')
+                    if (tokenParts.length === 3) {
+                      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                      actorId = payload.sub || null
+                    }
+                  } catch (err) {
+                    // Ignore token parsing errors
+                  }
+                }
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'agent',
+                actorId: actorId,
+                path: req.url,
+                resourceId: msgMicroserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
+          })
         } else {
           this.attachPendingKeepAliveHandler(ws)
           try {
@@ -480,6 +516,39 @@ class WebSocketServer {
               microserviceUuid: msgMicroserviceUuid
             }))
             await this.setupMessageForwarding(execId, transaction)
+
+            // Record WebSocket connection event for agent (non-blocking)
+            // This covers the case when agent connects but no user is waiting (cross-replica or normal)
+            setImmediate(async () => {
+              try {
+                const authHeader = req.headers.authorization
+                let actorId = null
+                if (authHeader) {
+                  const [scheme, token] = authHeader.split(' ')
+                  if (scheme.toLowerCase() === 'bearer' && token) {
+                    try {
+                      const tokenParts = token.split('.')
+                      if (tokenParts.length === 3) {
+                        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                        actorId = payload.sub || null
+                      }
+                    } catch (err) {
+                      // Ignore token parsing errors
+                    }
+                  }
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'agent',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: msgMicroserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
           } catch (error) {
             logger.warn('[WS-SESSION] Failed to enable queue bridge for pending agent, will use direct relay when user connects:', {
               execId,
@@ -487,6 +556,38 @@ class WebSocketServer {
               error: error.message
             })
             agentOnlySession.queueBridgeEnabled = false
+
+            // Record WebSocket connection event even if queue bridge failed (non-blocking)
+            setImmediate(async () => {
+              try {
+                const authHeader = req.headers.authorization
+                let actorId = null
+                if (authHeader) {
+                  const [scheme, token] = authHeader.split(' ')
+                  if (scheme.toLowerCase() === 'bearer' && token) {
+                    try {
+                      const tokenParts = token.split('.')
+                      if (tokenParts.length === 3) {
+                        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                        actorId = payload.sub || null
+                      }
+                    } catch (err) {
+                      // Ignore token parsing errors
+                    }
+                  }
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'agent',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: msgMicroserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
           }
         }
       }
@@ -503,7 +604,40 @@ class WebSocketServer {
       }))
 
       // Handle connection close
-      ws.on('close', async () => {
+      ws.on('close', async (code, reason) => {
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            const authHeader = req.headers.authorization
+            let actorId = null
+            if (authHeader) {
+              const [scheme, token] = authHeader.split(' ')
+              if (scheme.toLowerCase() === 'bearer' && token) {
+                try {
+                  const tokenParts = token.split('.')
+                  if (tokenParts.length === 3) {
+                    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                    actorId = payload.sub || null
+                  }
+                } catch (err) {
+                  // Ignore token parsing errors
+                }
+              }
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'agent',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event (non-blocking):', err)
+          }
+        })
+
         for (const [execId, session] of this.sessionManager.sessions) {
           if (session.agent === ws) {
             // In cross-replica scenarios, send CLOSE message to user via queue
@@ -631,6 +765,27 @@ class WebSocketServer {
               agentState: pendingAgent.readyState
             })
             await this.setupMessageForwarding(availableExecId, transaction)
+
+            // Record WebSocket connection event (non-blocking)
+            setImmediate(async () => {
+              try {
+                // Extract actorId from token (req.kauth not available for WebSocket connections)
+                let actorId = null
+                if (req.headers && req.headers.authorization) {
+                  actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'user',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: microserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
             return
           }
         } else {
@@ -651,6 +806,27 @@ class WebSocketServer {
             execId: availableExecId,
             microserviceUuid,
             userState: ws.readyState
+          })
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              // Extract actorId from token (req.kauth not available for WebSocket connections)
+              let actorId = null
+              if (req.headers && req.headers.authorization) {
+                actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'user',
+                actorId: actorId,
+                path: req.url,
+                resourceId: microserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
           })
           return
         }
@@ -691,6 +867,26 @@ class WebSocketServer {
             }))
 
             await this.setupMessageForwarding(availableExecId, transaction)
+
+            // Record WebSocket connection event (non-blocking)
+            setImmediate(async () => {
+              try {
+                let actorId = null
+                if (req.headers && req.headers.authorization) {
+                  actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'user',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: microserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
             return // Exit early, session activated successfully
           }
         } else {
@@ -712,6 +908,26 @@ class WebSocketServer {
             execId: availableExecId,
             microserviceUuid,
             userState: ws.readyState
+          })
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              let actorId = null
+              if (req.headers && req.headers.authorization) {
+                actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'user',
+                actorId: actorId,
+                path: req.url,
+                resourceId: microserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
           })
           return
         }
@@ -783,6 +999,26 @@ class WebSocketServer {
                   }))
 
                   await this.setupMessageForwarding(availableExecId, transaction)
+
+                  // Record WebSocket connection event (non-blocking)
+                  setImmediate(async () => {
+                    try {
+                      let actorId = null
+                      if (req.headers && req.headers.authorization) {
+                        actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                      }
+                      await EventService.createWsConnectEvent({
+                        timestamp: Date.now(),
+                        endpointType: 'user',
+                        actorId: actorId,
+                        path: req.url,
+                        resourceId: microserviceUuid,
+                        ipAddress: EventService.extractIPv4Address(req) || null
+                      })
+                    } catch (err) {
+                      logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+                    }
+                  })
                   clearInterval(retryTimer) // Stop retry timer
                   return // Exit early, session activated successfully
                 }
@@ -805,6 +1041,26 @@ class WebSocketServer {
                   execId: availableExecId,
                   microserviceUuid,
                   userState: ws.readyState
+                })
+
+                // Record WebSocket connection event (non-blocking)
+                setImmediate(async () => {
+                  try {
+                    let actorId = null
+                    if (req.headers && req.headers.authorization) {
+                      actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                    }
+                    await EventService.createWsConnectEvent({
+                      timestamp: Date.now(),
+                      endpointType: 'user',
+                      actorId: actorId,
+                      path: req.url,
+                      resourceId: microserviceUuid,
+                      ipAddress: EventService.extractIPv4Address(req) || null
+                    })
+                  } catch (err) {
+                    logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+                  }
                 })
                 clearInterval(retryTimer) // Stop retry timer
                 return
@@ -881,7 +1137,29 @@ class WebSocketServer {
         }
       }, PENDING_USER_TIMEOUT)
 
-      ws.on('close', () => {
+      ws.on('close', (code, reason) => {
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            // Extract actorId from token (req.kauth not available for WebSocket connections)
+            let actorId = null
+            if (req.headers && req.headers.authorization) {
+              actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'user',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event (non-blocking):', err)
+          }
+        })
+
         for (const [execId, session] of this.sessionManager.sessions) {
           if (session.user === ws) {
             this.cleanupSession(execId, transaction)
