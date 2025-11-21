@@ -13,6 +13,7 @@ const keycloak = require('../config/keycloak.js').initKeycloak()
 const AuthDecorator = require('../decorators/authorization-decorator')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const msgpack = require('@msgpack/msgpack')
+const WebSocketQueueService = require('../services/websocket-queue-service')
 
 const MESSAGE_TYPES = {
   STDIN: 0,
@@ -23,6 +24,8 @@ const MESSAGE_TYPES = {
   ACTIVATION: 5
 }
 
+const EventService = require('../services/event-service')
+
 class WebSocketServer {
   constructor () {
     this.wss = null
@@ -31,13 +34,32 @@ class WebSocketServer {
     this.connectionLimits = new Map()
     this.rateLimits = new Map()
     this.sessionManager = new SessionManager(config.get('server.webSocket'))
+    this.queueService = WebSocketQueueService
+    this.pendingCloseTimeouts = new Map() // Track pending CLOSE messages in cross-replica scenarios
     this.config = {
       pingInterval: process.env.WS_PING_INTERVAL || config.get('server.webSocket.pingInterval'),
       pongTimeout: process.env.WS_PONG_TIMEOUT || config.get('server.webSocket.pongTimeout'),
       maxPayload: process.env.WS_MAX_PAYLOAD || config.get('server.webSocket.maxPayload'),
       sessionTimeout: process.env.WS_SESSION_TIMEOUT || config.get('server.webSocket.session.timeout'),
       cleanupInterval: process.env.WS_CLEANUP_INTERVAL || config.get('server.webSocket.session.cleanupInterval'),
-      sessionMaxConnections: process.env.WS_SESSION_MAX_CONNECTIONS || config.get('server.webSocket.session.maxConnections')
+      sessionMaxConnections: process.env.WS_SESSION_MAX_CONNECTIONS || config.get('server.webSocket.session.maxConnections'),
+      closeResponseTimeout: process.env.WS_CLOSE_RESPONSE_TIMEOUT || 5000 // 5 seconds timeout for agent CLOSE response
+    }
+
+    this.ensureSocketPongHandler = (ws) => {
+      if (!ws || ws._hasPingListener) {
+        return
+      }
+      ws._hasPingListener = true
+      ws.on('ping', () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.pong()
+          } catch (error) {
+            logger.debug('[RELAY] Failed to respond to ping frame', { error: error.message })
+          }
+        }
+      })
     }
   }
 
@@ -279,6 +301,8 @@ class WebSocketServer {
           // If token is found in query params, format it as Bearer token
           if (token) {
             token = `Bearer ${token}`
+            // Store in headers for event creation code
+            req.headers.authorization = token
           }
         }
 
@@ -353,6 +377,7 @@ class WebSocketServer {
 
   async handleAgentConnection (ws, req, token, microserviceUuid, transaction) {
     try {
+      this.ensureSocketPongHandler(ws)
       logger.debug('[WS-CONN] Processing agent connection:' + JSON.stringify({
         url: req.url,
         microserviceUuid,
@@ -416,18 +441,154 @@ class WebSocketServer {
             execId,
             microserviceUuid: msgMicroserviceUuid
           }))
-          this.setupMessageForwarding(execId, transaction)
+          await this.setupMessageForwarding(execId, transaction)
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              const authHeader = req.headers.authorization
+              let actorId = null
+              if (authHeader) {
+                const [scheme, token] = authHeader.split(' ')
+                if (scheme.toLowerCase() === 'bearer' && token) {
+                  try {
+                    const tokenParts = token.split('.')
+                    if (tokenParts.length === 3) {
+                      const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                      actorId = payload.sub || null
+                    }
+                  } catch (err) {
+                    // Ignore token parsing errors
+                  }
+                }
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'agent',
+                actorId: actorId,
+                path: req.url,
+                resourceId: msgMicroserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
+          })
         } else {
-          await this.sessionManager.addPendingAgent(msgMicroserviceUuid, execId, ws, transaction)
-          await MicroserviceExecStatusManager.update(
-            { microserviceUuid: microserviceUuid },
-            { execSessionId: execId, status: microserviceExecState.PENDING },
-            transaction
-          )
-          logger.info('[WS-SESSION] No pending user found for agent, added to pending list:' + JSON.stringify({
-            execId,
-            microserviceUuid: msgMicroserviceUuid
-          }))
+          this.attachPendingKeepAliveHandler(ws)
+          try {
+            await MicroserviceExecStatusManager.update(
+              { microserviceUuid: microserviceUuid },
+              { execSessionId: execId, status: microserviceExecState.PENDING },
+              transaction
+            )
+            logger.debug('[WS-SESSION] Updated microservice exec status to PENDING', {
+              execId,
+              microserviceUuid: microserviceUuid
+            })
+          } catch (error) {
+            logger.error('[WS-SESSION] Failed to update microservice exec status to PENDING', {
+              execId,
+              microserviceUuid: microserviceUuid,
+              error: error.message,
+              stack: error.stack
+            })
+            // Continue anyway - the in-memory state is correct
+          }
+          // Create session with agent only and enable queue bridge for cross-replica support
+          // This allows the agent to receive messages from users on other replicas via AMQP queues
+          const agentOnlySession = this.sessionManager.createSession(execId, msgMicroserviceUuid, ws, null, transaction)
+          try {
+            // Pass cleanup callback so queue service can notify us when CLOSE is received
+            await this.queueService.enableForSession(agentOnlySession, (execId) => {
+              // Clear timeout if it exists (agent responded to CLOSE)
+              const timeout = this.pendingCloseTimeouts.get(execId)
+              if (timeout) {
+                clearTimeout(timeout)
+                this.pendingCloseTimeouts.delete(execId)
+                logger.debug('[WS-SESSION] Cleared pending CLOSE timeout - agent responded', { execId })
+              }
+              this.cleanupSession(execId, transaction)
+            })
+            agentOnlySession.queueBridgeEnabled = true
+            logger.info('[WS-SESSION] No pending user found for agent, added to pending list and enabled queue bridge for cross-replica support:' + JSON.stringify({
+              execId,
+              microserviceUuid: msgMicroserviceUuid
+            }))
+            await this.setupMessageForwarding(execId, transaction)
+
+            // Record WebSocket connection event for agent (non-blocking)
+            // This covers the case when agent connects but no user is waiting (cross-replica or normal)
+            setImmediate(async () => {
+              try {
+                const authHeader = req.headers.authorization
+                let actorId = null
+                if (authHeader) {
+                  const [scheme, token] = authHeader.split(' ')
+                  if (scheme.toLowerCase() === 'bearer' && token) {
+                    try {
+                      const tokenParts = token.split('.')
+                      if (tokenParts.length === 3) {
+                        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                        actorId = payload.sub || null
+                      }
+                    } catch (err) {
+                      // Ignore token parsing errors
+                    }
+                  }
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'agent',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: msgMicroserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
+          } catch (error) {
+            logger.warn('[WS-SESSION] Failed to enable queue bridge for pending agent, will use direct relay when user connects:', {
+              execId,
+              microserviceUuid: msgMicroserviceUuid,
+              error: error.message
+            })
+            agentOnlySession.queueBridgeEnabled = false
+
+            // Record WebSocket connection event even if queue bridge failed (non-blocking)
+            setImmediate(async () => {
+              try {
+                const authHeader = req.headers.authorization
+                let actorId = null
+                if (authHeader) {
+                  const [scheme, token] = authHeader.split(' ')
+                  if (scheme.toLowerCase() === 'bearer' && token) {
+                    try {
+                      const tokenParts = token.split('.')
+                      if (tokenParts.length === 3) {
+                        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                        actorId = payload.sub || null
+                      }
+                    } catch (err) {
+                      // Ignore token parsing errors
+                    }
+                  }
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'agent',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: msgMicroserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
+          }
         }
       }
 
@@ -443,9 +604,67 @@ class WebSocketServer {
       }))
 
       // Handle connection close
-      ws.on('close', () => {
+      ws.on('close', async (code, reason) => {
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            const authHeader = req.headers.authorization
+            let actorId = null
+            if (authHeader) {
+              const [scheme, token] = authHeader.split(' ')
+              if (scheme.toLowerCase() === 'bearer' && token) {
+                try {
+                  const tokenParts = token.split('.')
+                  if (tokenParts.length === 3) {
+                    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                    actorId = payload.sub || null
+                  }
+                } catch (err) {
+                  // Ignore token parsing errors
+                }
+              }
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'agent',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event (non-blocking):', err)
+          }
+        })
+
         for (const [execId, session] of this.sessionManager.sessions) {
           if (session.agent === ws) {
+            // In cross-replica scenarios, send CLOSE message to user via queue
+            // Note: session.user is null on agent's replica in cross-replica scenarios
+            const queueEnabled = this.queueService.shouldUseQueue(execId)
+            if (queueEnabled) {
+              try {
+                const closeMsg = {
+                  type: MESSAGE_TYPES.CLOSE,
+                  execId: execId,
+                  microserviceUuid: session.microserviceUuid,
+                  timestamp: Date.now(),
+                  data: Buffer.from('Agent closed connection')
+                }
+                const encoded = this.encodeMessage(closeMsg)
+                await this.queueService.publishToUser(execId, encoded, { messageType: MESSAGE_TYPES.CLOSE })
+                logger.info('[WS-CLOSE] Sent CLOSE message to user via queue after agent disconnect', {
+                  execId,
+                  microserviceUuid: session.microserviceUuid
+                })
+              } catch (error) {
+                logger.error('[WS-CLOSE] Failed to send CLOSE message to user via queue', {
+                  execId,
+                  error: error.message
+                })
+              }
+            }
             this.cleanupSession(execId, transaction)
           }
         }
@@ -506,6 +725,7 @@ class WebSocketServer {
 
   async handleUserConnection (ws, req, token, microserviceUuid, transaction) {
     try {
+      this.ensureSocketPongHandler(ws)
       await this.validateUserConnection(token, microserviceUuid, transaction)
       logger.info('User connection validated successfully for microservice:' + microserviceUuid)
 
@@ -535,7 +755,7 @@ class WebSocketServer {
         const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
 
         if (pendingAgent) {
-          // Activate session using agent's execId
+          // Activate session using agent's execId (agent is on same replica)
           const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
           if (session) {
             logger.info('Session activated for user:', {
@@ -544,9 +764,71 @@ class WebSocketServer {
               userState: ws.readyState,
               agentState: pendingAgent.readyState
             })
-            this.setupMessageForwarding(availableExecId, transaction)
+            await this.setupMessageForwarding(availableExecId, transaction)
+
+            // Record WebSocket connection event (non-blocking)
+            setImmediate(async () => {
+              try {
+                // Extract actorId from token (req.kauth not available for WebSocket connections)
+                let actorId = null
+                if (req.headers && req.headers.authorization) {
+                  actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'user',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: microserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
             return
           }
+        } else {
+          // Agent is on a different replica - create session with just user and enable queue bridge
+          // The AMQP queues will handle message relay between replicas
+          logger.info('Found PENDING execId in DB but agent is on different replica, activating session with user only:', {
+            execId: availableExecId,
+            microserviceUuid
+          })
+          this.sessionManager.createSession(availableExecId, microserviceUuid, null, ws, transaction)
+          await MicroserviceExecStatusManager.update(
+            { microserviceUuid: microserviceUuid },
+            { execSessionId: availableExecId, status: microserviceExecState.ACTIVE },
+            transaction
+          )
+          await this.setupMessageForwarding(availableExecId, transaction)
+          logger.info('Cross-replica session activated with user only:', {
+            execId: availableExecId,
+            microserviceUuid,
+            userState: ws.readyState
+          })
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              // Extract actorId from token (req.kauth not available for WebSocket connections)
+              let actorId = null
+              if (req.headers && req.headers.authorization) {
+                actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'user',
+                actorId: actorId,
+                path: req.url,
+                resourceId: microserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
+          })
+          return
         }
       }
 
@@ -558,6 +840,7 @@ class WebSocketServer {
         pendingAgentCount: pendingAgentExecIds.length
       }))
       this.sessionManager.addPendingUser(microserviceUuid, ws)
+      this.attachPendingKeepAliveHandler(ws)
 
       // IMMEDIATE RE-CHECK: Look for any newly available agents after adding user (database query)
       const retryPendingAgents = await this.getPendingAgentExecIdsFromDB(microserviceUuid, transaction)
@@ -572,6 +855,8 @@ class WebSocketServer {
         const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
 
         if (pendingAgent) {
+          // Remove user from pending first since we're activating
+          this.sessionManager.removePendingUser(microserviceUuid, ws)
           const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
           if (session) {
             logger.info('Session activated immediately after re-check:' + JSON.stringify({
@@ -581,9 +866,70 @@ class WebSocketServer {
               agentState: pendingAgent.readyState
             }))
 
-            this.setupMessageForwarding(availableExecId, transaction)
+            await this.setupMessageForwarding(availableExecId, transaction)
+
+            // Record WebSocket connection event (non-blocking)
+            setImmediate(async () => {
+              try {
+                let actorId = null
+                if (req.headers && req.headers.authorization) {
+                  actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                }
+                await EventService.createWsConnectEvent({
+                  timestamp: Date.now(),
+                  endpointType: 'user',
+                  actorId: actorId,
+                  path: req.url,
+                  resourceId: microserviceUuid,
+                  ipAddress: EventService.extractIPv4Address(req) || null
+                })
+              } catch (err) {
+                logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+              }
+            })
             return // Exit early, session activated successfully
           }
+        } else {
+          // Agent is on different replica - activate with user only
+          logger.info('Found PENDING execId in retry but agent is on different replica, activating session with user only:', {
+            execId: availableExecId,
+            microserviceUuid
+          })
+          // Remove user from pending first
+          this.sessionManager.removePendingUser(microserviceUuid, ws)
+          this.sessionManager.createSession(availableExecId, microserviceUuid, null, ws, transaction)
+          await MicroserviceExecStatusManager.update(
+            { microserviceUuid: microserviceUuid },
+            { execSessionId: availableExecId, status: microserviceExecState.ACTIVE },
+            transaction
+          )
+          await this.setupMessageForwarding(availableExecId, transaction)
+          logger.info('Cross-replica session activated with user only (retry):', {
+            execId: availableExecId,
+            microserviceUuid,
+            userState: ws.readyState
+          })
+
+          // Record WebSocket connection event (non-blocking)
+          setImmediate(async () => {
+            try {
+              let actorId = null
+              if (req.headers && req.headers.authorization) {
+                actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+              }
+              await EventService.createWsConnectEvent({
+                timestamp: Date.now(),
+                endpointType: 'user',
+                actorId: actorId,
+                path: req.url,
+                resourceId: microserviceUuid,
+                ipAddress: EventService.extractIPv4Address(req) || null
+              })
+            } catch (err) {
+              logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+            }
+          })
+          return
         }
       }
 
@@ -641,6 +987,8 @@ class WebSocketServer {
               const pendingAgent = this.sessionManager.findPendingAgentForExecId(microserviceUuid, availableExecId)
 
               if (pendingAgent) {
+                // Remove user from pending first
+                this.sessionManager.removePendingUser(microserviceUuid, ws)
                 const session = this.sessionManager.tryActivateSession(microserviceUuid, availableExecId, ws, false, transaction)
                 if (session) {
                   logger.info('Session activated via periodic retry:' + JSON.stringify({
@@ -650,10 +998,72 @@ class WebSocketServer {
                     agentState: pendingAgent.readyState
                   }))
 
-                  this.setupMessageForwarding(availableExecId, transaction)
+                  await this.setupMessageForwarding(availableExecId, transaction)
+
+                  // Record WebSocket connection event (non-blocking)
+                  setImmediate(async () => {
+                    try {
+                      let actorId = null
+                      if (req.headers && req.headers.authorization) {
+                        actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                      }
+                      await EventService.createWsConnectEvent({
+                        timestamp: Date.now(),
+                        endpointType: 'user',
+                        actorId: actorId,
+                        path: req.url,
+                        resourceId: microserviceUuid,
+                        ipAddress: EventService.extractIPv4Address(req) || null
+                      })
+                    } catch (err) {
+                      logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+                    }
+                  })
                   clearInterval(retryTimer) // Stop retry timer
                   return // Exit early, session activated successfully
                 }
+              } else {
+                // Agent is on different replica - activate with user only
+                logger.info('Periodic retry found PENDING execId but agent is on different replica, activating session with user only:', {
+                  execId: availableExecId,
+                  microserviceUuid
+                })
+                // Remove user from pending first
+                this.sessionManager.removePendingUser(microserviceUuid, ws)
+                this.sessionManager.createSession(availableExecId, microserviceUuid, null, ws, transaction)
+                await MicroserviceExecStatusManager.update(
+                  { microserviceUuid: microserviceUuid },
+                  { execSessionId: availableExecId, status: microserviceExecState.ACTIVE },
+                  transaction
+                )
+                await this.setupMessageForwarding(availableExecId, transaction)
+                logger.info('Cross-replica session activated with user only (periodic retry):', {
+                  execId: availableExecId,
+                  microserviceUuid,
+                  userState: ws.readyState
+                })
+
+                // Record WebSocket connection event (non-blocking)
+                setImmediate(async () => {
+                  try {
+                    let actorId = null
+                    if (req.headers && req.headers.authorization) {
+                      actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+                    }
+                    await EventService.createWsConnectEvent({
+                      timestamp: Date.now(),
+                      endpointType: 'user',
+                      actorId: actorId,
+                      path: req.url,
+                      resourceId: microserviceUuid,
+                      ipAddress: EventService.extractIPv4Address(req) || null
+                    })
+                  } catch (err) {
+                    logger.error('Failed to create WS_CONNECT event (non-blocking):', err)
+                  }
+                })
+                clearInterval(retryTimer) // Stop retry timer
+                return
               }
             }
           } catch (retryError) {
@@ -727,7 +1137,29 @@ class WebSocketServer {
         }
       }, PENDING_USER_TIMEOUT)
 
-      ws.on('close', () => {
+      ws.on('close', (code, reason) => {
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            // Extract actorId from token (req.kauth not available for WebSocket connections)
+            let actorId = null
+            if (req.headers && req.headers.authorization) {
+              actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'user',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event (non-blocking):', err)
+          }
+        })
+
         for (const [execId, session] of this.sessionManager.sessions) {
           if (session.user === ws) {
             this.cleanupSession(execId, transaction)
@@ -777,7 +1209,7 @@ class WebSocketServer {
   //   return noisePatterns.some(pattern => pattern.test(output))
   // }
 
-  setupMessageForwarding (execId, transaction) {
+  async setupMessageForwarding (execId, transaction) {
     const session = this.sessionManager.getSession(execId)
     if (!session) {
       logger.error('[RELAY] Failed to setup message forwarding: No session found for execId=' + execId)
@@ -793,40 +1225,81 @@ class WebSocketServer {
       agentState: agent ? agent.readyState : 'N/A',
       userState: user ? user.readyState : 'N/A'
     }))
+    this.detachPendingKeepAliveHandler(user)
+    this.detachPendingKeepAliveHandler(agent)
+    try {
+      // Pass cleanup callback so queue service can notify us when CLOSE is received
+      await this.queueService.enableForSession(session, (execId) => {
+        // Clear timeout if it exists (agent responded to CLOSE)
+        const timeout = this.pendingCloseTimeouts.get(execId)
+        if (timeout) {
+          clearTimeout(timeout)
+          this.pendingCloseTimeouts.delete(execId)
+          logger.debug('[RELAY] Cleared pending CLOSE timeout - agent responded', { execId })
+        }
+        const currentTransaction = session.transaction
+        this.cleanupSession(execId, currentTransaction)
+      })
+      session.queueBridgeEnabled = true
+      logger.info('[RELAY] AMQP queue bridge enabled for exec session', {
+        execId,
+        microserviceUuid: session.microserviceUuid
+      })
+    } catch (error) {
+      session.queueBridgeEnabled = false
+      logger.warn('[RELAY] Failed to enable AMQP queue bridge, falling back to direct WebSocket relay', {
+        execId,
+        error: error.message
+      })
+    }
 
-    // Send activation message to agent
-    if (agent) {
-      const activationMsg = {
-        type: MESSAGE_TYPES.ACTIVATION,
-        data: Buffer.from(JSON.stringify({
-          execId: execId,
-          microserviceUuid: session.microserviceUuid,
-          timestamp: Date.now()
-        })),
-        microserviceUuid: session.microserviceUuid,
+    // Send activation message to agent (works for both direct WebSocket and queue-based forwarding)
+    const activationMsg = {
+      type: MESSAGE_TYPES.ACTIVATION,
+      data: Buffer.from(JSON.stringify({
         execId: execId,
+        microserviceUuid: session.microserviceUuid,
         timestamp: Date.now()
-      }
+      })),
+      microserviceUuid: session.microserviceUuid,
+      execId: execId,
+      timestamp: Date.now()
+    }
 
-      this.sendMessageToAgent(agent, activationMsg, execId, session.microserviceUuid)
-        .then(success => {
-          if (success) {
-            logger.info('[RELAY] Session activation complete:' + JSON.stringify({
-              execId,
-              microserviceUuid: session.microserviceUuid,
-              agentState: agent.readyState
-            }))
-          } else {
-            logger.error('[RELAY] Session activation failed:' + JSON.stringify({
-              execId,
-              microserviceUuid: session.microserviceUuid,
-              agentState: agent.readyState
-            }))
-            // Cleanup the session if activation fails
+    // sendMessageToAgent handles queue-based forwarding when agent is null
+    this.sendMessageToAgent(session.agent, activationMsg, execId, session.microserviceUuid)
+      .then(success => {
+        if (success) {
+          logger.info('[RELAY] Session activation complete:' + JSON.stringify({
+            execId,
+            microserviceUuid: session.microserviceUuid,
+            agentState: session.agent ? session.agent.readyState : 'N/A (cross-replica)',
+            queueEnabled: this.queueService.shouldUseQueue(execId)
+          }))
+        } else {
+          logger.error('[RELAY] Session activation failed:' + JSON.stringify({
+            execId,
+            microserviceUuid: session.microserviceUuid,
+            agentState: session.agent ? session.agent.readyState : 'N/A',
+            queueEnabled: this.queueService.shouldUseQueue(execId)
+          }))
+          // Only cleanup if we have a direct agent connection (not queue-based)
+          if (session.agent) {
             this.cleanupSession(execId, transaction)
           }
-        })
-    }
+        }
+      })
+      .catch(error => {
+        logger.error('[RELAY] Session activation error:' + JSON.stringify({
+          execId,
+          microserviceUuid: session.microserviceUuid,
+          error: error.message
+        }))
+        // Only cleanup if we have a direct agent connection (not queue-based)
+        if (session.agent) {
+          this.cleanupSession(execId, transaction)
+        }
+      })
 
     // Remove any previous message handlers to avoid duplicates
     if (user) {
@@ -838,8 +1311,8 @@ class WebSocketServer {
       agent.removeAllListeners('message')
     }
 
-    // Forward user -> agent
-    if (user && agent) {
+    // Forward user -> agent (works for both direct WebSocket and queue-based forwarding)
+    if (user) {
       logger.debug('[RELAY] Setting up user->agent message forwarding for execId=' + execId)
       user.on('message', async (data, isBinary) => {
         logger.debug('[RELAY] User message received:' + JSON.stringify({
@@ -848,7 +1321,8 @@ class WebSocketServer {
           dataType: typeof data,
           dataLength: data.length,
           userState: user.readyState,
-          agentState: agent.readyState
+          agentState: agent ? agent.readyState : 'N/A (cross-replica)',
+          queueEnabled: this.queueService.shouldUseQueue(execId)
         }))
 
         if (!isBinary) {
@@ -859,7 +1333,8 @@ class WebSocketServer {
             text,
             length: text.length,
             userState: user.readyState,
-            agentState: agent.readyState
+            agentState: session.agent ? session.agent.readyState : 'N/A (cross-replica)',
+            queueEnabled: this.queueService.shouldUseQueue(execId)
           }))
 
           // Convert text to binary message in agent's expected format
@@ -871,7 +1346,8 @@ class WebSocketServer {
             timestamp: Date.now()
           }
 
-          await this.sendMessageToAgent(agent, msg, execId, session.microserviceUuid)
+          // sendMessageToAgent handles queue-based forwarding when agent is null
+          await this.sendMessageToAgent(session.agent, msg, execId, session.microserviceUuid)
           return
         }
 
@@ -885,11 +1361,72 @@ class WebSocketServer {
 
           if (msg.type === MESSAGE_TYPES.CLOSE) {
             logger.info(`[RELAY] User sent CLOSE for execId=${execId}`)
-            await this.sendMessageToAgent(agent, msg, execId, session.microserviceUuid)
-            // Get current transaction from the session
-            const currentTransaction = session.transaction
-            this.cleanupSession(execId, currentTransaction)
-            return
+
+            const queueEnabled = this.queueService.shouldUseQueue(execId)
+
+            // Forward CLOSE to agent first
+            await this.sendMessageToAgent(session.agent, msg, execId, session.microserviceUuid)
+
+            if (queueEnabled) {
+              // Cross-replica scenario: Don't close socket immediately
+              // Wait for agent's CLOSE response via queue
+              // The queue service will handle closing the socket in _handleCloseMessage
+              // when it receives the agent's CLOSE response
+              logger.debug('[RELAY] Cross-replica CLOSE: waiting for agent response via queue', {
+                execId,
+                microserviceUuid: session.microserviceUuid
+              })
+
+              // Set timeout in case agent doesn't respond
+              const timeout = setTimeout(() => {
+                const currentSession = this.sessionManager.getSession(execId)
+                if (currentSession && currentSession.user && currentSession.user.readyState === WebSocket.OPEN) {
+                  logger.warn('[RELAY] Agent did not respond to CLOSE within timeout, closing user socket', {
+                    execId,
+                    microserviceUuid: session.microserviceUuid,
+                    timeout: this.config.closeResponseTimeout
+                  })
+                  try {
+                    currentSession.user.close(1000, 'Session closed (timeout)')
+                    const currentTransaction = currentSession.transaction
+                    this.cleanupSession(execId, currentTransaction)
+                  } catch (error) {
+                    logger.error('[RELAY] Failed to close user socket on timeout', {
+                      execId,
+                      error: error.message
+                    })
+                  }
+                }
+                this.pendingCloseTimeouts.delete(execId)
+              }, this.config.closeResponseTimeout)
+
+              this.pendingCloseTimeouts.set(execId, timeout)
+              // Don't cleanup yet - queue service will call cleanup callback when agent responds
+              return
+            } else {
+              // Same replica: Close immediately (existing behavior)
+              // Close user WebSocket with code 1000 so client's onclose handler shows "Successfully closed"
+              // The client expects code 1000 (normal closure) to display the success message
+              if (user && user.readyState === WebSocket.OPEN) {
+                try {
+                  user.close(1000, 'Session closed')
+                  logger.debug('[RELAY] Closed user WebSocket with code 1000:' + JSON.stringify({
+                    execId,
+                    microserviceUuid: session.microserviceUuid
+                  }))
+                } catch (error) {
+                  logger.warn('[RELAY] Failed to close user WebSocket:' + JSON.stringify({
+                    execId,
+                    error: error.message
+                  }))
+                }
+              }
+
+              // Get current transaction from the session and cleanup
+              const currentTransaction = session.transaction
+              this.cleanupSession(execId, currentTransaction)
+              return
+            }
           }
 
           if (msg.type === MESSAGE_TYPES.CONTROL) {
@@ -919,7 +1456,8 @@ class WebSocketServer {
             }
           }
 
-          await this.sendMessageToAgent(agent, msg, execId, session.microserviceUuid)
+          // sendMessageToAgent handles queue-based forwarding when agent is null
+          await this.sendMessageToAgent(session.agent, msg, execId, session.microserviceUuid)
         } catch (error) {
           logger.error('[RELAY] Failed to process binary message:' + JSON.stringify({
             execId,
@@ -927,12 +1465,14 @@ class WebSocketServer {
             stack: error.stack,
             bufferLength: buffer.length,
             userState: user.readyState,
-            agentState: agent.readyState
+            agentState: session.agent ? session.agent.readyState : 'N/A (cross-replica)'
           }))
         }
       })
+    }
 
-      // Forward agent -> user
+    // Forward agent -> user (works for both direct WebSocket and queue-based forwarding)
+    if (agent) {
       logger.debug('[RELAY] Setting up agent->user message forwarding for execId=' + execId)
       agent.on('message', async (data, isBinary) => {
         logger.debug('[RELAY] Agent message received:' + JSON.stringify({
@@ -940,8 +1480,9 @@ class WebSocketServer {
           isBinary,
           dataType: typeof data,
           dataLength: data.length,
-          userState: user.readyState,
-          agentState: agent.readyState
+          userState: session.user ? session.user.readyState : 'N/A (cross-replica)',
+          agentState: agent.readyState,
+          queueEnabled: this.queueService.shouldUseQueue(execId)
         }))
 
         try {
@@ -956,16 +1497,50 @@ class WebSocketServer {
 
           if (msg.type === MESSAGE_TYPES.CLOSE) {
             logger.info(`[RELAY] Agent sent CLOSE for execId=${execId}`)
-            if (user.readyState === WebSocket.OPEN) {
-              user.close(1000, 'Agent closed connection')
+
+            const queueEnabled = this.queueService.shouldUseQueue(execId)
+
+            // In cross-replica scenarios, publish CLOSE to queue so user's replica can handle it
+            if (queueEnabled) {
+              try {
+                // Pass message type so queue receiver can detect CLOSE without decoding
+                await this.queueService.publishToUser(execId, buffer, { messageType: MESSAGE_TYPES.CLOSE })
+                logger.debug('[RELAY] Forwarded agent CLOSE message to user via queue:' + JSON.stringify({
+                  execId,
+                  type: msg.type
+                }))
+              } catch (error) {
+                logger.error('[RELAY] Failed to enqueue CLOSE message for user', {
+                  execId,
+                  error: error.message
+                })
+              }
+            } else if (session.user && session.user.readyState === WebSocket.OPEN) {
+              // Direct connection - close user WebSocket immediately
+              session.user.close(1000, 'Agent closed connection')
             }
+
             // Get current transaction from the session
             const currentTransaction = session.transaction
             this.cleanupSession(execId, currentTransaction)
             return
           }
 
-          if (user.readyState === WebSocket.OPEN) {
+          const queueEnabled = this.queueService.shouldUseQueue(execId)
+          if (queueEnabled) {
+            try {
+              await this.queueService.publishToUser(execId, buffer)
+              logger.debug('[RELAY] Forwarded agent message to user via queue:' + JSON.stringify({
+                execId,
+                type: msg.type
+              }))
+            } catch (error) {
+              logger.error('[RELAY] Failed to enqueue message for user', {
+                execId,
+                error: error.message
+              })
+            }
+          } else if (session.user && session.user.readyState === WebSocket.OPEN) {
             if (msg.type === MESSAGE_TYPES.STDOUT || msg.type === MESSAGE_TYPES.STDERR) {
               if (msg.data && msg.data.length > 0) {
                 // Create MessagePack message for user
@@ -978,7 +1553,7 @@ class WebSocketServer {
                 }
                 // Encode and send as binary
                 const encoded = this.encodeMessage(userMsg)
-                user.send(encoded, {
+                session.user.send(encoded, {
                   binary: true,
                   compress: false,
                   mask: false,
@@ -993,7 +1568,7 @@ class WebSocketServer {
                 }))
               }
             } else if (msg.type === MESSAGE_TYPES.CONTROL) {
-              user.send(data, {
+              session.user.send(data, {
                 binary: true,
                 compress: false,
                 mask: false,
@@ -1001,10 +1576,11 @@ class WebSocketServer {
               })
             }
           } else {
-            logger.error('[RELAY] User not ready to receive message:' + JSON.stringify({
+            logger.debug('[RELAY] User not available (cross-replica), message should be delivered via queue:' + JSON.stringify({
               execId,
-              userState: user.readyState,
-              messageType: msg.type
+              userState: session.user ? session.user.readyState : 'N/A',
+              messageType: msg.type,
+              queueEnabled
             }))
           }
         } catch (error) {
@@ -1187,6 +1763,14 @@ class WebSocketServer {
     const session = this.sessionManager.getSession(execId)
     if (!session) return
 
+    // Clear any pending CLOSE timeout
+    const timeout = this.pendingCloseTimeouts.get(execId)
+    if (timeout) {
+      clearTimeout(timeout)
+      this.pendingCloseTimeouts.delete(execId)
+      logger.debug('[RELAY] Cleared pending CLOSE timeout during cleanup', { execId })
+    }
+
     // Send CLOSE message to agent if it's still connected
     if (session.agent && session.agent.readyState === WebSocket.OPEN) {
       const closeMsg = {
@@ -1215,7 +1799,8 @@ class WebSocketServer {
       }
     }
 
-    // Close the connections
+    // Close the connections (only if not already closed)
+    // Note: User connection may already be closed if user initiated the close
     if (session.user && session.user.readyState === WebSocket.OPEN) {
       session.user.close(1000, 'Session closed')
     }
@@ -1225,6 +1810,13 @@ class WebSocketServer {
 
     this.sessionManager.removeSession(execId, transaction)
     logger.info('[RELAY] Session cleaned up for execId=' + execId)
+    this.queueService.cleanup(execId)
+      .catch(error => {
+        logger.warn('[RELAY] Failed to cleanup queue bridge during session cleanup', {
+          execId,
+          error: error.message
+        })
+      })
   }
 
   // Utility to extract microserviceUuid from path
@@ -1243,18 +1835,32 @@ class WebSocketServer {
 
   // Helper method for sending messages to agent
   async sendMessageToAgent (agent, message, execId, microserviceUuid) {
-    if (!agent || agent.readyState !== WebSocket.OPEN) {
-      logger.error('[RELAY] Cannot send message - agent not ready:' + JSON.stringify({
-        execId,
-        microserviceUuid,
-        agentState: agent ? agent.readyState : 'N/A',
-        messageType: message.type
-      }))
-      return false
-    }
-
     try {
       const encoded = this.encodeMessage(message)
+      const isQueueEnabled = this.queueService.shouldUseQueue(execId)
+      const messageType = typeof message.type === 'number' ? message.type : null
+
+      if (isQueueEnabled) {
+        await this.queueService.publishToAgent(execId, encoded, { messageType })
+        logger.debug('[RELAY] Queued message for agent via AMQP:' + JSON.stringify({
+          execId,
+          microserviceUuid,
+          messageType: message.type,
+          encodedLength: encoded.length
+        }))
+        return true
+      }
+
+      if (!agent || agent.readyState !== WebSocket.OPEN) {
+        logger.error('[RELAY] Cannot send message - agent not ready:' + JSON.stringify({
+          execId,
+          microserviceUuid,
+          agentState: agent ? agent.readyState : 'N/A',
+          messageType: message.type
+        }))
+        return false
+      }
+
       agent.send(encoded, {
         binary: true,
         compress: false,
@@ -1277,6 +1883,65 @@ class WebSocketServer {
         stack: error.stack
       }))
       return false
+    }
+  }
+
+  attachPendingKeepAliveHandler (ws) {
+    if (!ws || ws._pendingKeepAliveHandler) {
+      return
+    }
+    ws._pendingKeepAliveHandler = (data, isBinary) => {
+      if (!isBinary) return
+      let msg
+      try {
+        msg = this.decodeMessage(Buffer.from(data))
+      } catch (error) {
+        return
+      }
+      if (msg.type === MESSAGE_TYPES.CONTROL) {
+        const controlData = msg.data ? msg.data.toString() : ''
+        if (controlData === 'keepalive') {
+          this._sendKeepAliveResponse(ws, msg.execId || 'pending', msg.microserviceUuid || null)
+        }
+      }
+    }
+    ws.on('message', ws._pendingKeepAliveHandler)
+    ws.on('ping', () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.pong()
+        } catch (error) {
+          logger.debug('[RELAY] Failed to send pong on pending connection', { error: error.message })
+        }
+      }
+    })
+  }
+
+  detachPendingKeepAliveHandler (ws) {
+    if (ws && ws._pendingKeepAliveHandler) {
+      ws.removeListener('message', ws._pendingKeepAliveHandler)
+      ws._pendingKeepAliveHandler = null
+    }
+  }
+
+  _sendKeepAliveResponse (ws, execId, microserviceUuid) {
+    try {
+      const keepAliveResponse = {
+        type: MESSAGE_TYPES.CONTROL,
+        data: Buffer.from('keepalive'),
+        microserviceUuid,
+        execId,
+        timestamp: Date.now()
+      }
+      const encoded = this.encodeMessage(keepAliveResponse)
+      ws.send(encoded, {
+        binary: true,
+        compress: false,
+        mask: false,
+        fin: true
+      })
+    } catch (error) {
+      logger.debug('[RELAY] Failed to send keepalive response', { error: error.message })
     }
   }
 

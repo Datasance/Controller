@@ -1,7 +1,5 @@
-START TRANSACTION;
-
 CREATE TABLE IF NOT EXISTS Flows (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) UNIQUE,
     description VARCHAR(255) DEFAULT '',
     is_activated BOOLEAN DEFAULT false,
@@ -11,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Flows (
 );
 
 CREATE TABLE IF NOT EXISTS Registries (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     url VARCHAR(255),
     is_public BOOLEAN,
     user_name TEXT,
@@ -21,7 +19,7 @@ CREATE TABLE IF NOT EXISTS Registries (
 
 
 CREATE TABLE IF NOT EXISTS CatalogItems (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) UNIQUE,
     description VARCHAR(255),
     category TEXT,
@@ -125,7 +123,7 @@ CREATE TABLE IF NOT EXISTS Fogs (
 CREATE INDEX idx_fog_fog_type_id ON Fogs (fog_type_id);
 
 CREATE TABLE IF NOT EXISTS ChangeTrackings (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     microservice_config BOOLEAN DEFAULT false,
     reboot BOOLEAN DEFAULT false,
     deletenode BOOLEAN DEFAULT false,
@@ -148,7 +146,7 @@ CREATE TABLE IF NOT EXISTS ChangeTrackings (
 CREATE INDEX idx_change_tracking_iofog_uuid ON ChangeTrackings (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS FogAccessTokens (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     expiration_time BIGINT,
     token TEXT,
     iofog_uuid VARCHAR(36),
@@ -158,7 +156,7 @@ CREATE TABLE IF NOT EXISTS FogAccessTokens (
 CREATE INDEX idx_fog_access_tokens_iofogUuid ON FogAccessTokens (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS FogProvisionKeys (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     provisioning_string VARCHAR(100),
     expiration_time BIGINT,
     iofog_uuid VARCHAR(36),
@@ -168,7 +166,7 @@ CREATE TABLE IF NOT EXISTS FogProvisionKeys (
 CREATE INDEX idx_fog_provision_keys_iofogUuid ON FogProvisionKeys (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS FogVersionCommands (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     version_command VARCHAR(100),
     iofog_uuid VARCHAR(36),
     FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE
@@ -177,7 +175,7 @@ CREATE TABLE IF NOT EXISTS FogVersionCommands (
 CREATE INDEX idx_fog_version_commands_iofogUuid ON FogVersionCommands (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS HWInfos (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     info TEXT,
     created_at DATETIME,
     updated_at DATETIME,
@@ -188,7 +186,7 @@ CREATE TABLE IF NOT EXISTS HWInfos (
 CREATE INDEX idx_hw_infos_iofogUuid ON HWInfos (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS USBInfos (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     info TEXT,
     created_at DATETIME,
     updated_at DATETIME,
@@ -199,7 +197,7 @@ CREATE TABLE IF NOT EXISTS USBInfos (
 CREATE INDEX idx_usb_infos_iofogUuid ON USBInfos (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS Tunnels (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     username TEXT,
     password TEXT,
     host TEXT,
@@ -230,6 +228,9 @@ CREATE TABLE IF NOT EXISTS Microservices (
     registry_id INT DEFAULT 1,
     iofog_uuid VARCHAR(36),
     application_id INT,
+    run_as_user TEXT,
+    platform TEXT,
+    runtime TEXT,
     FOREIGN KEY (catalog_item_id) REFERENCES CatalogItems (id) ON DELETE CASCADE,
     FOREIGN KEY (registry_id) REFERENCES Registries (id) ON DELETE SET NULL,
     FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE,
@@ -242,7 +243,7 @@ CREATE INDEX idx_microservices_iofogUuid ON Microservices (iofog_uuid);
 CREATE INDEX idx_microservices_applicationId ON Microservices (application_id);
 
 CREATE TABLE IF NOT EXISTS MicroserviceArgs (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     cmd TEXT,
     microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
@@ -251,7 +252,7 @@ CREATE TABLE IF NOT EXISTS MicroserviceArgs (
 CREATE INDEX idx_microservice_args_microserviceUuid ON MicroserviceArgs (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS MicroserviceEnvs (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     `key` TEXT,
     `value` TEXT,
     microservice_uuid VARCHAR(36),
@@ -261,10 +262,9 @@ CREATE TABLE IF NOT EXISTS MicroserviceEnvs (
 CREATE INDEX idx_microservice_envs_microserviceUuid ON MicroserviceEnvs (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS MicroserviceExtraHost (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     template_type TEXT,
     name TEXT,
-    public_port INT,
     template TEXT,
     `value` TEXT,
     microservice_uuid VARCHAR(36),
@@ -280,12 +280,10 @@ CREATE INDEX idx_microservice_extra_host_targetMicroserviceUuid ON MicroserviceE
 CREATE INDEX idx_microservice_extra_host_targetFogUuid ON MicroserviceExtraHost (target_fog_uuid);
 
 CREATE TABLE IF NOT EXISTS MicroservicePorts (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     port_internal INT,
     port_external INT,
     is_udp BOOLEAN,
-    is_public BOOLEAN,
-    is_proxy BOOLEAN,
     created_at DATETIME,
     updated_at DATETIME,
     microservice_uuid VARCHAR(36),
@@ -295,7 +293,7 @@ CREATE TABLE IF NOT EXISTS MicroservicePorts (
 CREATE INDEX idx_microservice_port_microserviceUuid ON MicroservicePorts (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS MicroservicePublicPorts (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     port_id INT UNIQUE,
     host_id VARCHAR(255) UNIQUE,
     local_proxy_id TEXT,
@@ -316,7 +314,7 @@ CREATE INDEX idx_microservice_public_port_hostId ON MicroservicePublicPorts (hos
 
 
 CREATE TABLE IF NOT EXISTS MicroserviceStatuses (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     status VARCHAR(255) DEFAULT 'QUEUED',
     operating_duration BIGINT DEFAULT 0,
     start_time BIGINT DEFAULT 0,
@@ -334,7 +332,7 @@ CREATE TABLE IF NOT EXISTS MicroserviceStatuses (
 CREATE INDEX idx_microservice_status_microserviceUuid ON MicroserviceStatuses (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS StraceDiagnostics (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     strace_run BOOLEAN,
     buffer VARCHAR(255) DEFAULT '',
     microservice_uuid VARCHAR(36),
@@ -344,7 +342,7 @@ CREATE TABLE IF NOT EXISTS StraceDiagnostics (
 CREATE INDEX idx_strace_diagnostics_microserviceUuid ON StraceDiagnostics (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS VolumeMappings (
-    uuid INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    uuid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     host_destination TEXT,
     container_destination TEXT,
     access_mode TEXT,
@@ -357,7 +355,7 @@ CREATE INDEX idx_volume_mappings_microserviceUuid ON VolumeMappings (microservic
 
 
 CREATE TABLE IF NOT EXISTS CatalogItemImages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     container_image TEXT,
     catalog_item_id INT,
     microservice_uuid VARCHAR(36),
@@ -372,7 +370,7 @@ CREATE INDEX idx_catalog_item_image_microservice_uuid ON CatalogItemImages (micr
 CREATE INDEX idx_catalog_item_image_fog_type_id ON CatalogItemImages (fog_type_id);
 
 CREATE TABLE IF NOT EXISTS CatalogItemInputTypes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     info_type TEXT,
     info_format TEXT,
     catalog_item_id INT,
@@ -382,7 +380,7 @@ CREATE TABLE IF NOT EXISTS CatalogItemInputTypes (
 CREATE INDEX idx_catalog_item_input_type_catalog_item_id ON CatalogItemInputTypes (catalog_item_id);
 
 CREATE TABLE IF NOT EXISTS CatalogItemOutputTypes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     info_type TEXT,
     info_format TEXT,
     catalog_item_id INT,
@@ -393,7 +391,7 @@ CREATE INDEX idx_catalog_item_output_type_catalog_item_id ON CatalogItemOutputTy
 
 
 CREATE TABLE IF NOT EXISTS Routings (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name TEXT NOT NULL,
     source_microservice_uuid VARCHAR(36),
     dest_microservice_uuid VARCHAR(36),
@@ -408,7 +406,7 @@ CREATE INDEX idx_routing_destMicroserviceUuid ON Routings (dest_microservice_uui
 CREATE INDEX idx_routing_applicationId ON Routings (application_id);
 
 CREATE TABLE IF NOT EXISTS Routers (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     is_edge BOOLEAN DEFAULT true,
     messaging_port INT DEFAULT 5671,
     edge_router_port INT,
@@ -426,7 +424,7 @@ CREATE INDEX idx_router_iofogUuid ON Routers (iofog_uuid);
 
 
 CREATE TABLE RouterConnections (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     source_router INT,
     dest_router INT,
     created_at DATETIME NOT NULL,
@@ -441,7 +439,7 @@ CREATE INDEX idx_routerconnections_destRouter ON RouterConnections (dest_router)
 
 
 CREATE TABLE IF NOT EXISTS Config (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     `key` VARCHAR(255) NOT NULL UNIQUE,
     value VARCHAR(255) NOT NULL,
     created_at DATETIME,
@@ -452,12 +450,12 @@ CREATE INDEX idx_config_key ON Config (`key`);
 
 
 CREATE TABLE IF NOT EXISTS Tags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     value VARCHAR(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS IofogTags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     fog_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (fog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE,
@@ -468,7 +466,7 @@ CREATE INDEX idx_iofogtags_fog_uuid ON IofogTags (fog_uuid);
 CREATE INDEX idx_iofogtags_tag_id ON IofogTags (tag_id);
 
 CREATE TABLE IF NOT EXISTS EdgeResources (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) NOT NULL,
     version TEXT,
     description TEXT,
@@ -482,7 +480,7 @@ CREATE TABLE IF NOT EXISTS EdgeResources (
 
 
 CREATE TABLE IF NOT EXISTS AgentEdgeResources (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     fog_uuid VARCHAR(36),
     edge_resource_id INT,
     FOREIGN KEY (fog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE,
@@ -490,7 +488,7 @@ CREATE TABLE IF NOT EXISTS AgentEdgeResources (
 );
 
 CREATE TABLE IF NOT EXISTS EdgeResourceOrchestrationTags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     edge_resource_id INT,
     tag_id INT,
     FOREIGN KEY (edge_resource_id) REFERENCES EdgeResources (id) ON DELETE CASCADE,
@@ -503,13 +501,13 @@ CREATE INDEX idx_edgeresourceorchestrationtags_edge_resource_id ON EdgeResourceO
 CREATE INDEX idx_edgeresourceorchestrationtags_tag_id ON EdgeResourceOrchestrationTags (tag_id);
 
 CREATE TABLE IF NOT EXISTS HTTPBasedResourceInterfaces (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     edge_resource_id INT,
     FOREIGN KEY (edge_resource_id) REFERENCES EdgeResources (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS HTTPBasedResourceInterfaceEndpoints (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     interface_id INT,
     name TEXT,
     description TEXT,
@@ -527,7 +525,7 @@ CREATE INDEX idx_httpbasedresourceinterfaceendpoints_interface_id ON HTTPBasedRe
 
 
 CREATE TABLE IF NOT EXISTS ApplicationTemplates (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL DEFAULT 'new-application',
     description VARCHAR(255) DEFAULT '',
     schema_version VARCHAR(255) DEFAULT '',
@@ -539,7 +537,7 @@ CREATE TABLE IF NOT EXISTS ApplicationTemplates (
 
 
 CREATE TABLE IF NOT EXISTS ApplicationTemplateVariables (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     application_template_id INT NOT NULL,
     `key` TEXT,
     description VARCHAR(255) DEFAULT '',
@@ -552,7 +550,7 @@ CREATE TABLE IF NOT EXISTS ApplicationTemplateVariables (
 CREATE INDEX idx_applicationtemplatevariables_application_template_id ON ApplicationTemplateVariables (application_template_id);
 
 CREATE TABLE IF NOT EXISTS MicroserviceCdiDevices (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     cdi_devices TEXT,
     microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
@@ -560,14 +558,8 @@ CREATE TABLE IF NOT EXISTS MicroserviceCdiDevices (
 
 CREATE INDEX idx_microservice_cdiDevices_microserviceUuid ON MicroserviceCdiDevices (microservice_uuid);
 
-ALTER TABLE Microservices
-ADD COLUMN run_as_user TEXT DEFAULT NULL,
-ADD COLUMN platform TEXT DEFAULT NULL,
-ADD COLUMN runtime TEXT DEFAULT NULL;
-
-
 CREATE TABLE IF NOT EXISTS MicroservicePubTags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     microservice_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
@@ -575,7 +567,7 @@ CREATE TABLE IF NOT EXISTS MicroservicePubTags (
 );
 
 CREATE TABLE IF NOT EXISTS MicroserviceSubTags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     microservice_uuid VARCHAR(36),
     tag_id INT,
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
@@ -583,12 +575,12 @@ CREATE TABLE IF NOT EXISTS MicroserviceSubTags (
 );
 
 CREATE INDEX idx_microservicepubtags_microservice_uuid ON MicroservicePubTags (microservice_uuid);
-CREATE INDEX idx_microservicesubtags_microservice_uuid ON MicroserviceSubTags (microservice_uuid);
+CREATE INDEX idx_microservicesubtags_microservice_uuid ON MicroservicesubTags (microservice_uuid);
 CREATE INDEX idx_microservicepubtags_tag_id ON MicroservicePubTags (tag_id);
-CREATE INDEX idx_microservicesubtags_tag_id ON MicroserviceSubTags (tag_id);
+CREATE INDEX idx_microservicesubtags_tag_id ON MicroservicesubTags (tag_id);
 
 CREATE TABLE IF NOT EXISTS MicroserviceCapAdd (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     cap_add TEXT,
     microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
@@ -597,7 +589,7 @@ CREATE TABLE IF NOT EXISTS MicroserviceCapAdd (
 CREATE INDEX idx_microservice_capAdd_microserviceUuid ON MicroserviceCapAdd (microservice_uuid);
 
 CREATE TABLE IF NOT EXISTS MicroserviceCapDrop (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     cap_drop TEXT,
     microservice_uuid VARCHAR(36),
     FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
@@ -605,11 +597,10 @@ CREATE TABLE IF NOT EXISTS MicroserviceCapDrop (
 
 CREATE INDEX idx_microservice_capDrop_microserviceUuid ON MicroserviceCapDrop (microservice_uuid);
 
-ALTER TABLE Microservices
-ADD COLUMN annotations TEXT;
+ALTER TABLE Microservices ADD COLUMN annotations TEXT;
 
 CREATE TABLE IF NOT EXISTS FogPublicKeys (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     public_key TEXT,
     iofog_uuid VARCHAR(36),
     created_at DATETIME,
@@ -620,7 +611,7 @@ CREATE TABLE IF NOT EXISTS FogPublicKeys (
 CREATE INDEX idx_fog_public_keys_iofogUuid ON FogPublicKeys (iofog_uuid);
 
 CREATE TABLE IF NOT EXISTS FogUsedTokens (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     jti VARCHAR(255) NOT NULL,
     iofog_uuid VARCHAR(36),
     expiry_time BIGINT NOT NULL,
@@ -636,7 +627,7 @@ DROP TABLE IF EXISTS FogAccessTokens;
 ALTER TABLE MicroserviceStatuses ADD COLUMN ip_address TEXT;
 
 CREATE TABLE IF NOT EXISTS Secrets (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
     type VARCHAR(50) NOT NULL CHECK (type IN ('Opaque', 'tls')),
     data TEXT NOT NULL,
@@ -647,50 +638,50 @@ CREATE TABLE IF NOT EXISTS Secrets (
 CREATE INDEX idx_secrets_name ON Secrets (name);
 
 CREATE TABLE IF NOT EXISTS Certificates (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
     subject TEXT NOT NULL,
     is_ca BOOLEAN DEFAULT false,
-    signed_by_id INT,
+    signed_by_id INTEGER,
     hosts TEXT,
     valid_from DATETIME NOT NULL,
     valid_to DATETIME NOT NULL,
     serial_number TEXT NOT NULL,
-    secret_id INT,
+    secret_id INTEGER,
     created_at DATETIME,
     updated_at DATETIME,
     FOREIGN KEY (signed_by_id) REFERENCES Certificates (id) ON DELETE SET NULL,
     FOREIGN KEY (secret_id) REFERENCES Secrets (id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX idx_certificates_name_unique ON Certificates (name(255));
+CREATE INDEX idx_certificates_name ON Certificates (name);
 CREATE INDEX idx_certificates_valid_to ON Certificates (valid_to);
 CREATE INDEX idx_certificates_is_ca ON Certificates (is_ca);
 CREATE INDEX idx_certificates_signed_by_id ON Certificates (signed_by_id);
 CREATE INDEX idx_certificates_secret_id ON Certificates (secret_id);
 
 CREATE TABLE IF NOT EXISTS Services (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    type VARCHAR(50) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    type TEXT NOT NULL,
     resource TEXT NOT NULL,
-    target_port INT NOT NULL,
-    service_port INT,
+    target_port INTEGER NOT NULL,
+    service_port INTEGER,
     k8s_type TEXT,
-    bridge_port INT,
+    bridge_port INTEGER,
     default_bridge TEXT,
     service_endpoint TEXT,
     created_at DATETIME,
     updated_at DATETIME
 );
 
-CREATE INDEX idx_services_name ON Services (name);
 CREATE INDEX idx_services_id ON Services (id);
+CREATE INDEX idx_services_name ON Services (name);
 
 CREATE TABLE IF NOT EXISTS ServiceTags (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    service_id INT NOT NULL,
-    tag_id INT NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    service_id INTEGER NOT NULL,
+    tag_id INTEGER NOT NULL,
     created_at DATETIME,
     updated_at DATETIME,
   FOREIGN KEY (service_id) REFERENCES Services (id) ON DELETE CASCADE,
@@ -703,17 +694,13 @@ CREATE INDEX idx_service_tags_tag_id ON ServiceTags (tag_id);
 ALTER TABLE Fogs ADD COLUMN container_engine VARCHAR(36);
 ALTER TABLE Fogs ADD COLUMN deployment_type VARCHAR(36);
 
-ALTER TABLE MicroserviceExtraHost DROP COLUMN public_port;
-ALTER TABLE MicroservicePorts DROP COLUMN is_public;
-ALTER TABLE MicroservicePorts DROP COLUMN is_proxy;
-
 DROP TABLE IF EXISTS MicroservicePublicPorts;
 
 ALTER TABLE MicroserviceEnvs ADD COLUMN value_from_secret TEXT;
 ALTER TABLE MicroserviceEnvs ADD COLUMN value_from_config_map TEXT;
 
 CREATE TABLE IF NOT EXISTS ConfigMaps (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     name VARCHAR(255) UNIQUE NOT NULL,
     immutable BOOLEAN DEFAULT false,
     data TEXT NOT NULL,
@@ -728,7 +715,7 @@ CREATE TABLE IF NOT EXISTS VolumeMounts (
     name VARCHAR(255) NOT NULL,
     config_map_name VARCHAR(255),
     secret_name VARCHAR(255),
-    version INT DEFAULT 1,
+    version INTEGER DEFAULT 1,
     created_at DATETIME,
     updated_at DATETIME,
     FOREIGN KEY (config_map_name) REFERENCES ConfigMaps (name) ON DELETE CASCADE,
@@ -740,7 +727,7 @@ CREATE INDEX idx_volume_mounts_config_map_name ON VolumeMounts (config_map_name)
 CREATE INDEX idx_volume_mounts_secret_name ON VolumeMounts (secret_name);
 
 CREATE TABLE IF NOT EXISTS FogVolumeMounts (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     fog_uuid VARCHAR(36),
     volume_mount_uuid VARCHAR(36),
     FOREIGN KEY (fog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE,
@@ -759,7 +746,7 @@ ALTER TABLE ChangeTrackings ADD COLUMN exec_sessions BOOLEAN DEFAULT false;
 ALTER TABLE Services ADD COLUMN provisioning_status VARCHAR(36) DEFAULT 'pending';
 ALTER TABLE Services ADD COLUMN provisioning_error TEXT;
 
-ALTER TABLE Fogs ADD COLUMN warning_message TEXT;
+ALTER TABLE Fogs ADD COLUMN warning_message TEXT DEFAULT 'HEALTHY';
 ALTER TABLE Fogs ADD COLUMN gps_device VARCHAR(36);
 ALTER TABLE Fogs ADD COLUMN gps_scan_frequency INT DEFAULT 60;
 ALTER TABLE Fogs ADD COLUMN edge_guard_frequency INT DEFAULT 0;
@@ -773,7 +760,7 @@ ALTER TABLE MicroserviceStatuses ADD COLUMN exec_session_ids TEXT;
 ALTER TABLE Microservices ADD COLUMN schedule INT DEFAULT 50;
 
 CREATE TABLE IF NOT EXISTS MicroserviceExecStatuses (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     status VARCHAR(255) DEFAULT 'INACTIVE',
     exec_session_id VARCHAR(255),
     microservice_uuid VARCHAR(36),
@@ -790,12 +777,12 @@ ALTER TABLE Microservices ADD COLUMN cpu_set_cpus TEXT;
 ALTER TABLE Microservices ADD COLUMN memory_limit FLOAT;
 
 CREATE TABLE IF NOT EXISTS MicroserviceHealthChecks (
-    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     test TEXT,
-    interval BIGINT,
-    timeout BIGINT,
-    start_period BIGINT,
-    start_interval BIGINT,
+    interval FLOAT,
+    timeout FLOAT,
+    start_period FLOAT,
+    start_interval FLOAT,
     retries INT,
     microservice_uuid VARCHAR(36),
     created_at DATETIME,
@@ -811,6 +798,33 @@ ALTER TABLE Microservices ADD COLUMN is_activated BOOLEAN DEFAULT true;
 
 ALTER TABLE Microservices ADD COLUMN host_network_mode BOOLEAN DEFAULT false;
 ALTER TABLE Microservices ADD COLUMN is_privileged BOOLEAN DEFAULT false;
-ALTER TABLE Microservices DROP COLUMN root_host_access;
 
-COMMIT;
+CREATE TABLE IF NOT EXISTS Events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    timestamp BIGINT NOT NULL,
+    event_type VARCHAR(20) NOT NULL,
+    endpoint_type VARCHAR(10) NOT NULL,
+    actor_id VARCHAR(255),
+    method VARCHAR(10),
+    resource_type VARCHAR(50),
+    resource_id VARCHAR(255),
+    endpoint_path TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    status VARCHAR(20) NOT NULL,
+    status_code INTEGER,
+    status_message TEXT,
+    request_id VARCHAR(255),
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+
+CREATE INDEX IF NOT EXISTS idx_events_timestamp ON Events (timestamp);
+CREATE INDEX IF NOT EXISTS idx_events_endpoint_type ON Events (endpoint_type);
+CREATE INDEX IF NOT EXISTS idx_events_actor_id ON Events (actor_id);
+CREATE INDEX IF NOT EXISTS idx_events_resource_type ON Events (resource_type);
+CREATE INDEX IF NOT EXISTS idx_events_status ON Events (status);
+CREATE INDEX IF NOT EXISTS idx_events_method ON Events (method);
+CREATE INDEX IF NOT EXISTS idx_events_event_type ON Events (event_type);
+CREATE INDEX IF NOT EXISTS idx_events_created_at ON Events (created_at);
+

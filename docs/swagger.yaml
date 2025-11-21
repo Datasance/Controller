@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.5.0
+  version: 3.5.9
   title: Datasance PoT Controller
 paths:
   /status:
@@ -4935,6 +4935,123 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  /events:
+    get:
+      tags:
+        - Events
+      summary: List audit events
+      description: Retrieve audit events with optional filters and pagination.
+      operationId: listEvents
+      security:
+        - authToken: []
+      parameters:
+        - in: query
+          name: limit
+          description: Maximum number of events to return (default 200, max 1000)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+          required: false
+        - in: query
+          name: offset
+          description: Number of events to skip before collecting results
+          schema:
+            type: integer
+            minimum: 0
+          required: false
+        - in: query
+          name: startTime
+          description: Start of time range (Unix timestamp in ms or ISO 8601)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: endTime
+          description: End of time range (Unix timestamp in ms or ISO 8601)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: endpointType
+          description: Filter by endpoint type (agent or user)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: resourceType
+          description: Filter by resource type (agent, microservice, etc.)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: status
+          description: Filter by status (SUCCESS or FAILED)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: method
+          description: Filter by HTTP/WS method(s)
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          required: false
+        - in: query
+          name: actorId
+          description: Filter by actor identifier (username or fog UUID)
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: eventType
+          description: Filter by event type (HTTP, WS_CONNECT, WS_DISCONNECT)
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: Events list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventListResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Events
+      summary: Delete audit events
+      description: Delete all events when `days` is 0, or delete events older than the provided number of days.
+      operationId: deleteEvents
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventDeleteRequest"
+      responses:
+        "200":
+          description: Deletion summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventDeleteResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
 tags:
   - name: Controller
     description: Manage your controller
@@ -4972,6 +5089,8 @@ tags:
     description: Manage your volume mounts
   - name: ConfigMap
     description: Manage your config maps
+  - name: Events
+    description: Manage audit events
 servers:
   - url: http://localhost:51121/api/v3
 components:
@@ -5014,6 +5133,106 @@ components:
       description: New Flow Info
       required: true
   schemas:
+    EventRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: integer
+          format: int64
+        eventType:
+          type: string
+        endpointType:
+          type: string
+        actorId:
+          type: string
+          nullable: true
+        method:
+          type: string
+          nullable: true
+        resourceType:
+          type: string
+          nullable: true
+        resourceId:
+          type: string
+          nullable: true
+        endpointPath:
+          type: string
+        ipAddress:
+          type: string
+          nullable: true
+        status:
+          type: string
+        statusCode:
+          type: integer
+          nullable: true
+        statusMessage:
+          type: string
+          nullable: true
+        requestId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - timestamp
+        - eventType
+        - endpointType
+        - endpointPath
+        - status
+        - createdAt
+        - updatedAt
+    EventListResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventRecord"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - events
+        - total
+        - limit
+        - offset
+    EventDeleteRequest:
+      type: object
+      properties:
+        days:
+          type: integer
+          minimum: 0
+          maximum: 365
+      required:
+        - days
+    EventDeleteResponse:
+      type: object
+      properties:
+        deletedCount:
+          type: integer
+        deletedBefore:
+          type: string
+          format: date-time
+          nullable: true
+        deletedAt:
+          type: string
+          format: date-time
+        deletedAll:
+          type: boolean
+      required:
+        - deletedCount
+        - deletedAt
+        - deletedAll
     EdgeResourcesListResponse:
       type: object
       properties:

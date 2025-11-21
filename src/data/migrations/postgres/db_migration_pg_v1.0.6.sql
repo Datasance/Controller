@@ -812,3 +812,33 @@ ALTER TABLE "Microservices" ADD COLUMN is_activated BOOLEAN DEFAULT true;
 ALTER TABLE "Microservices" ADD COLUMN host_network_mode BOOLEAN DEFAULT false;
 ALTER TABLE "Microservices" ADD COLUMN is_privileged BOOLEAN DEFAULT false;
 ALTER TABLE "Microservices" DROP COLUMN root_host_access;
+
+CREATE TABLE IF NOT EXISTS "Events" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    timestamp BIGINT NOT NULL,
+    event_type VARCHAR(20) NOT NULL,
+    endpoint_type VARCHAR(10) NOT NULL,
+    actor_id VARCHAR(255),
+    method VARCHAR(10),
+    resource_type VARCHAR(50),
+    resource_id VARCHAR(255),
+    endpoint_path TEXT NOT NULL,
+    ip_address VARCHAR(45),
+    status VARCHAR(20) NOT NULL,
+    status_code INT,
+    status_message TEXT,
+    request_id VARCHAR(255),
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+
+CREATE INDEX idx_events_timestamp ON "Events" (timestamp);
+CREATE INDEX idx_events_endpoint_type ON "Events" (endpoint_type);
+CREATE INDEX idx_events_actor_id ON "Events" (actor_id);
+CREATE INDEX idx_events_resource_type ON "Events" (resource_type);
+CREATE INDEX idx_events_status ON "Events" (status);
+CREATE INDEX idx_events_method ON "Events" (method);
+CREATE INDEX idx_events_event_type ON "Events" (event_type);
+CREATE INDEX idx_events_created_at ON "Events" (created_at);
+
