@@ -51,7 +51,7 @@ settings:
   fogStatusUpdateInterval: 30             # Fog status update interval in seconds
   fogStatusUpdateTolerance: 3             # Fog status update tolerance
   fogExpiredTokenCleanupInterval: 300     # Fog expired token cleanup interval in seconds
-  eventRetentionDays: 30                 # Days to retain events (default: 30)
+  eventRetentionDays: 7                 # Days to retain events (default: 7)
   eventCleanupInterval: 86400            # Cleanup job interval in seconds (default: 24 hours)
   eventAuditEnabled: true                # Enable/disable event auditing
   eventCaptureIpAddress: true             # Capture IP address (default: true, set false for privacy compliance)

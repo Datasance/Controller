@@ -34,7 +34,8 @@ function eventAuditMiddleware (req, res, next) {
   }
 
   // Check if auditing is enabled (reads from YAML or env var)
-  const auditEnabled = process.env.EVENT_AUDIT_ENABLED || config.get('settings.eventAuditEnabled', true)
+  // Use config.get() which properly parses boolean strings from env vars
+  const auditEnabled = config.get('settings.eventAuditEnabled', true)
   if (!auditEnabled) {
     return next()
   }
