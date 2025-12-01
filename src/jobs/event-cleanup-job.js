@@ -31,7 +31,7 @@ async function run () {
 async function cleanupOldEvents () {
   try {
     // Read retention days from config
-    const retentionDays = process.env.EVENT_RETENTION_DAYS || Config.get('settings.eventRetentionDays', 30)
+    const retentionDays = process.env.EVENT_RETENTION_DAYS || Config.get('settings.eventRetentionDays', 7)
 
     logger.debug(`Starting cleanup of events older than ${retentionDays} days`)
     const count = await EventManager.deleteEventsOlderThanDays(retentionDays, { fakeTransaction: true })

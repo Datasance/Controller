@@ -55,14 +55,21 @@ async function checkKubernetesEnvironment () {
   return controlPlane && controlPlane.toLowerCase() === 'kubernetes'
 }
 
-async function getLocalCertificateHosts (isKubernetes, namespace) {
-  if (isKubernetes) {
-    return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local,127.0.0.1,localhost,host.docker.internal,host.containers.internal`
-  }
-  return '127.0.0.1,localhost,host.docker.internal,host.containers.internal,iofog,service.local'
+async function getLocalCertificateHosts (fogData) {
+  const hosts = new Set()
+  const defaultHost = ['localhost', '127.0.0.1', 'host.docker.internal', 'host.containers.internal', 'iofog', 'service.local']
+  // Add default hosts individually
+  defaultHost.forEach(host => hosts.add(host))
+  if (fogData.host) hosts.add(fogData.host)
+  if (fogData.ipAddress) hosts.add(fogData.ipAddress)
+  if (fogData.ipAddressExternal) hosts.add(fogData.ipAddressExternal)
+  // if (isKubernetes) {
+  //   return `router-local,router-local.${namespace},router-local.${namespace}.svc.cluster.local,127.0.0.1,localhost,host.docker.internal,host.containers.internal`
+  // }
+  return Array.from(hosts).join(',') || 'localhost'
 }
 
-async function getSiteCertificateHosts (fogData, fogUuid, transaction) {
+async function getSiteCertificateHosts (fogData) {
   const hosts = new Set()
   // const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
   // const isFogDefaultRouter = fogUuid === defaultRouter.iofogUuid
@@ -97,7 +104,7 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
 
   // Check if we're in Kubernetes environment
   const isKubernetes = await checkKubernetesEnvironment()
-  const namespace = isKubernetes ? process.env.CONTROLLER_NAMESPACE : null
+  // const namespace = isKubernetes ? process.env.CONTROLLER_NAMESPACE : null
 
   // Helper to check CA existence
   async function ensureCA (name, subject) {
@@ -185,14 +192,24 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
     // If routerMode is 'none', only ensure DEFAULT_ROUTER_LOCAL_CA and its signed certificate
     if (fogData.routerMode === 'none') {
       logger.debug('Router mode is none, ensuring DEFAULT_ROUTER_LOCAL_CA exists')
-      await ensureCA(DEFAULT_ROUTER_LOCAL_CA, DEFAULT_ROUTER_LOCAL_CA)
+      if (isKubernetes) {
+        await ensureCA(DEFAULT_ROUTER_LOCAL_CA, DEFAULT_ROUTER_LOCAL_CA)
+      }
       logger.debug('Ensuring local-agent certificate signed by DEFAULT_ROUTER_LOCAL_CA')
-      const localHosts = await getLocalCertificateHosts(isKubernetes, namespace)
+      const localHosts = await getLocalCertificateHosts(fogData)
+      let defaultRouterLocalCA
+      if (isKubernetes) {
+        defaultRouterLocalCA = DEFAULT_ROUTER_LOCAL_CA
+      } else {
+        const defaultRouter = await RouterManager.findOne({ isDefault: true }, transaction)
+        defaultRouterLocalCA = `${defaultRouter.iofogUuid}-local-ca`
+      }
+
       await ensureCert(
         `${uuid}-local-agent`,
         `${uuid}-local-agent`,
         localHosts,
-        { type: 'direct', secretName: DEFAULT_ROUTER_LOCAL_CA },
+        { type: 'direct', secretName: defaultRouterLocalCA },
         isRouterModeChanged
       )
       logger.debug('Successfully completed _handleRouterCertificates for routerMode none')
@@ -202,7 +219,7 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
     // For other router modes, ensure all other certificates
     // Always ensure site-server cert exists
     logger.debug('Ensuring site-server certificate exists')
-    const siteHosts = await getSiteCertificateHosts(fogData, uuid, transaction)
+    const siteHosts = await getSiteCertificateHosts(fogData)
     await ensureCert(
       `${uuid}-site-server`,
       `${uuid}-site-server`,
@@ -217,7 +234,7 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
 
     // Always ensure local-server cert exists
     logger.debug('Ensuring local-server certificate exists')
-    const localHosts = await getLocalCertificateHosts(isKubernetes, namespace)
+    const localHosts = await getLocalCertificateHosts(fogData)
     await ensureCert(
       `${uuid}-local-server`,
       `${uuid}-local-server`,

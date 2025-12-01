@@ -6,7 +6,10 @@ const CertificateService = require('./certificate-service')
 const SecretService = require('./secret-service')
 const os = require('os')
 
-const CONTROLLER_CERT_NAME = 'controller-exec-session-client'
+const CONTROLLER_CERT_PREFIX = 'controller-exec-session-client'
+const hostname = process.env.HOSTNAME || os.hostname()
+const CONTROLLER_CERT_NAME = hostname ? `${CONTROLLER_CERT_PREFIX}-${hostname}` : CONTROLLER_CERT_PREFIX
+
 const DEFAULT_ROUTER_SERVICE = 'router'
 const AMQP_DEFAULT_PORT = 5671
 
@@ -264,8 +267,10 @@ class RouterConnectionService {
 
   _buildControllerHosts () {
     const hosts = new Set(['localhost', '127.0.0.1'])
-    const hostname = process.env.HOSTNAME || os.hostname()
     if (hostname) hosts.add(hostname)
+    if (this._isKubernetes() && (process.env.CONTROLLER_NAMESPACE != null && process.env.CONTROLLER_NAMESPACE !== '')) {
+      hosts.add(`controller.${process.env.CONTROLLER_NAMESPACE}.svc.cluster.local`)
+    }
     if (process.env.CONTROLLER_HOST) hosts.add(process.env.CONTROLLER_HOST)
     return Array.from(hosts)
   }
