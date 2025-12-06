@@ -40,6 +40,7 @@ const ServiceManager = require('../data/managers/service-manager')
 const ServiceServices = require('./services-service')
 const ConfigMapManager = require('../data/managers/config-map-manager')
 const SecretManager = require('../data/managers/secret-manager')
+const VolumeMountService = require('./volume-mount-service')
 
 const Op = require('sequelize').Op
 const FogManager = require('../data/managers/iofog-manager')
@@ -463,6 +464,118 @@ function _validateVolumeMappings (volumeMappings) {
         throw new Errors.InvalidArgumentError('hostDestination includes invalid characters for a local volume name, only ' +
           '"[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use type: bind')
       }
+    }
+  }
+}
+
+function _validateKeyPath (data, keyPath, resourceName, resourceType, volumeMountName) {
+  if (!keyPath || keyPath === '') {
+    return true // No key path to validate
+  }
+
+  // ConfigMap and Secret keys are always flat - they're strings that can contain slashes
+  // The key path can be:
+  // 1. A full key name: "foo/bar/baz.conf" - maps to the file
+  // 2. A prefix of a key: "foo" - maps to the directory containing keys starting with "foo/"
+  // 3. A nested prefix: "foo/bar" - maps to the directory containing keys starting with "foo/bar/"
+  //
+  // For validation, we check if there's at least one key in the data that starts with the given keyPath
+  // This allows mapping entire directories (prefixes) or specific files (exact match)
+
+  // First, check for exact match (full file path)
+  if (data[keyPath] !== undefined && data[keyPath] !== null) {
+    return true // Exact key exists
+  }
+
+  // If no exact match, check if any key starts with the keyPath followed by '/'
+  // This validates that the keyPath is a valid prefix for directory mapping
+  // Handle trailing slash: if keyPath already ends with '/', use it as-is; otherwise add '/'
+  const keyPathWithSlash = keyPath.endsWith('/') ? keyPath : keyPath + '/'
+  const hasMatchingKey = Object.keys(data).some(key => key.startsWith(keyPathWithSlash))
+
+  if (hasMatchingKey) {
+    return true // Key path is a valid prefix for directory mapping
+  }
+
+  // No exact match and no keys with this prefix - key path is invalid
+  if (resourceType === 'Secret') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SECRET_KEY_NOT_FOUND_IN_VOLUME_MOUNT, keyPath, resourceName, volumeMountName))
+  } else {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_KEY_NOT_FOUND_IN_VOLUME_MOUNT, keyPath, resourceName, volumeMountName))
+  }
+}
+
+async function _validateVolumeMountReference (hostDestination, fogUuid, transaction) {
+  if (!hostDestination || typeof hostDestination !== 'string') {
+    return // No validation needed if hostDestination is empty or not a string
+  }
+
+  // Check if hostDestination starts with $VolumeMount/
+  if (!hostDestination.startsWith('$VolumeMount/')) {
+    return // Not a volume mount reference, skip validation
+  }
+
+  // Parse the volume mount reference: $VolumeMount/<volume-mount-name>/<optional-key-path>
+  const withoutPrefix = hostDestination.substring('$VolumeMount/'.length)
+  if (!withoutPrefix || withoutPrefix === '') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING, 'Volume mount reference must include a volume mount name'))
+  }
+
+  // Split by '/' to separate volume mount name and optional key path
+  const parts = withoutPrefix.split('/')
+  const volumeMountName = parts[0]
+  const keyPath = parts.length > 1 ? parts.slice(1).join('/') : null
+
+  if (!volumeMountName || volumeMountName === '') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING, 'Volume mount name cannot be empty'))
+  }
+
+  // Validate volume mount exists
+  let volumeMount
+  try {
+    volumeMount = await VolumeMountService.getVolumeMountEndpoint(volumeMountName, transaction)
+  } catch (error) {
+    if (error instanceof Errors.NotFoundError) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.VOLUME_MOUNT_NOT_FOUND, volumeMountName))
+    }
+    throw error
+  }
+
+  // If key path is provided, validate it exists in the secret/configmap
+  if (keyPath && keyPath !== '') {
+    if (volumeMount.secretName) {
+      const secret = await SecretManager.getSecret(volumeMount.secretName, transaction)
+      if (!secret) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, volumeMount.secretName))
+      }
+      _validateKeyPath(secret.data, keyPath, volumeMount.secretName, 'Secret', volumeMountName)
+    } else if (volumeMount.configMapName) {
+      const configMap = await ConfigMapManager.getConfigMap(volumeMount.configMapName, transaction)
+      if (!configMap) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_NOT_FOUND, volumeMount.configMapName))
+      }
+      _validateKeyPath(configMap.data, keyPath, volumeMount.configMapName, 'ConfigMap', volumeMountName)
+    } else {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING, `Volume mount ${volumeMountName} does not have a secret or configmap associated`))
+    }
+  }
+
+  // Check if volume mount is linked to the fog node
+  let linkedFogUuids
+  try {
+    linkedFogUuids = await VolumeMountService.findVolumeMountedFogNodes(volumeMountName, transaction)
+  } catch (error) {
+    // If volume mount doesn't exist (shouldn't happen at this point), rethrow
+    throw error
+  }
+
+  // If fog node is not linked, link it
+  if (!linkedFogUuids.includes(fogUuid)) {
+    try {
+      await VolumeMountService.linkVolumeMountEndpoint(volumeMountName, [fogUuid], transaction)
+    } catch (error) {
+      logger.error(`Failed to link volume mount ${volumeMountName} to fog node ${fogUuid}:`, error.message)
+      throw new Errors.ValidationError(`Failed to link volume mount ${volumeMountName} to fog node: ${error.message}`)
     }
   }
 }
@@ -1871,6 +1984,15 @@ async function _createMicroserviceImages (microservice, images, transaction) {
 }
 
 async function _createVolumeMappings (microservice, volumeMappings, transaction) {
+  // Validate volume mount references before creating mappings
+  if (volumeMappings && microservice.iofogUuid) {
+    for (const volumeMapping of volumeMappings) {
+      if (volumeMapping.hostDestination) {
+        await _validateVolumeMountReference(volumeMapping.hostDestination, microservice.iofogUuid, transaction)
+      }
+    }
+  }
+
   const mappings = []
   for (const volumeMapping of volumeMappings) {
     const mapping = Object.assign({}, volumeMapping)
@@ -1883,6 +2005,21 @@ async function _createVolumeMappings (microservice, volumeMappings, transaction)
 
 async function _updateVolumeMappings (volumeMappings, microserviceUuid, transaction) {
   _validateVolumeMappings(volumeMappings)
+
+  // Get microservice to find fogUuid for volume mount validation
+  const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+  if (!microservice) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+
+  // Validate volume mount references before updating mappings
+  if (volumeMappings && microservice.iofogUuid) {
+    for (const volumeMapping of volumeMappings) {
+      if (volumeMapping.hostDestination) {
+        await _validateVolumeMountReference(volumeMapping.hostDestination, microservice.iofogUuid, transaction)
+      }
+    }
+  }
 
   await VolumeMappingManager.delete({
     microserviceUuid: microserviceUuid

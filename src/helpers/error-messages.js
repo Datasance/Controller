@@ -140,6 +140,9 @@ module.exports = {
   INVALID_CONFIGMAP_REFERENCE: 'Invalid configmap reference: {}',
   SECRET_KEY_NOT_FOUND: 'Secret key {} not found in secret {}',
   CONFIGMAP_KEY_NOT_FOUND: 'Configmap key {} not found in configmap {}',
+  SECRET_KEY_NOT_FOUND_IN_VOLUME_MOUNT: 'Secret key {} not found in secret {} in volume mount {}',
+  CONFIGMAP_KEY_NOT_FOUND_IN_VOLUME_MOUNT: 'Configmap key {} not found in configmap {} in volume mount {}',
   CONFIGMAP_IMMUTABLE: 'Configmap {} is immutable and cannot be updated. If you want to update it, please delete it and create a new configmap.',
-  VOLUME_MOUNT_NOT_FOUND: 'Volume mount with name {} not found'
+  VOLUME_MOUNT_NOT_FOUND: 'Volume mount with name {} not found',
+  INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING: 'Invalid volume mount reference for volume mapping: {}'
 }

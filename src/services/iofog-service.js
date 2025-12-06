@@ -489,6 +489,15 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
   }
 
+  // Prevent overwriting detected fogType (1 or 2) with "auto" (0)
+  // If fogType is being set to "auto" (0) but the agent has already detected its type (1 or 2),
+  // preserve the detected type to ensure getAgentMicroservices can find matching images
+  if (fogData.fogType === 0 && (oldFog.fogTypeId === 1 || oldFog.fogTypeId === 2)) {
+    updateFogData.fogTypeId = undefined
+    // Remove undefined fields again after modifying updateFogData
+    updateFogData = AppHelper.deleteUndefinedFields(updateFogData)
+  }
+
   // Update tags
   await _setTags(oldFog, fogData.tags, transaction)
 
