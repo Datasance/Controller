@@ -843,4 +843,42 @@ CREATE INDEX idx_events_created_at ON Events (created_at);
 
 ALTER TABLE ConfigMaps ADD COLUMN use_vault BOOLEAN DEFAULT true;
 
+CREATE TABLE IF NOT EXISTS MicroserviceLogStatuses (
+    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    microservice_uuid VARCHAR(36),
+    log_session_id TEXT,
+    session_id VARCHAR(255) UNIQUE NOT NULL,
+    status TEXT,
+    tail_config TEXT,
+    agent_connected BOOLEAN DEFAULT false,
+    user_connected BOOLEAN DEFAULT false,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_microservice_log_status_microservice_uuid ON MicroserviceLogStatuses (microservice_uuid);
+CREATE INDEX idx_microservice_log_status_session_id ON MicroserviceLogStatuses (session_id);
+
+CREATE TABLE IF NOT EXISTS FogLogStatuses (
+    id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
+    iofog_uuid VARCHAR(36),
+    log_session_id TEXT,
+    session_id VARCHAR(255) UNIQUE NOT NULL,
+    status TEXT,
+    tail_config TEXT,
+    agent_connected BOOLEAN DEFAULT false,
+    user_connected BOOLEAN DEFAULT false,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_fog_log_status_iofog_uuid ON FogLogStatuses (iofog_uuid);
+CREATE INDEX idx_fog_log_status_session_id ON FogLogStatuses (session_id);
+
+ALTER TABLE ChangeTrackings ADD COLUMN microservice_logs BOOLEAN DEFAULT false;
+ALTER TABLE ChangeTrackings ADD COLUMN fog_logs BOOLEAN DEFAULT false;
+
+
 COMMIT;

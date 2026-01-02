@@ -3,6 +3,7 @@ const config = require('../config')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
 const SessionManager = require('./session-manager')
+const LogSessionManager = require('./log-session-manager')
 const { WebSocketError } = require('./error-handler')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const ApplicationManager = require('../data/managers/application-manager')
@@ -14,6 +15,11 @@ const AuthDecorator = require('../decorators/authorization-decorator')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const msgpack = require('@msgpack/msgpack')
 const WebSocketQueueService = require('../services/websocket-queue-service')
+const AppHelper = require('../helpers/app-helper')
+const MicroserviceLogStatusManager = require('../data/managers/microservice-log-status-manager')
+const FogLogStatusManager = require('../data/managers/fog-log-status-manager')
+const ChangeTrackingService = require('../services/change-tracking-service')
+const FogManager = require('../data/managers/iofog-manager')
 
 const MESSAGE_TYPES = {
   STDIN: 0,
@@ -21,7 +27,11 @@ const MESSAGE_TYPES = {
   STDERR: 2,
   CONTROL: 3,
   CLOSE: 4,
-  ACTIVATION: 5
+  ACTIVATION: 5,
+  LOG_LINE: 6, // Log line from agent
+  LOG_START: 7, // Log streaming started
+  LOG_STOP: 8, // Log streaming stopped
+  LOG_ERROR: 9 // Log streaming error
 }
 
 const EventService = require('../services/event-service')
@@ -34,6 +44,7 @@ class WebSocketServer {
     this.connectionLimits = new Map()
     this.rateLimits = new Map()
     this.sessionManager = new SessionManager(config.get('server.webSocket'))
+    this.logSessionManager = new LogSessionManager(config.get('server.webSocket'))
     this.queueService = WebSocketQueueService
     this.pendingCloseTimeouts = new Map() // Track pending CLOSE messages in cross-replica scenarios
     this.config = {
@@ -316,22 +327,34 @@ class WebSocketServer {
           return
         }
 
-        const microserviceUuid = this.extractMicroserviceUuid(req.url)
-        if (!microserviceUuid) {
-          logger.error('WebSocket connection failed: Invalid endpoint - no UUID found')
-          try {
-            ws.close(1008, 'Invalid endpoint')
-          } catch (error) {
-            logger.error('Error closing WebSocket:' + error.message)
-          }
-          return
-        }
-
         // Determine connection type and handle accordingly
         if (req.url.startsWith('/api/v3/agent/exec/')) {
+          const microserviceUuid = this.extractMicroserviceUuid(req.url)
+          if (!microserviceUuid) {
+            logger.error('WebSocket connection failed: Invalid endpoint - no UUID found')
+            try {
+              ws.close(1008, 'Invalid endpoint')
+            } catch (error) {
+              logger.error('Error closing WebSocket:' + error.message)
+            }
+            return
+          }
           await this.handleAgentConnection(ws, req, token, microserviceUuid, transaction)
         } else if (req.url.startsWith('/api/v3/microservices/exec/')) {
+          const microserviceUuid = this.extractMicroserviceUuid(req.url)
+          if (!microserviceUuid) {
+            logger.error('WebSocket connection failed: Invalid endpoint - no UUID found')
+            try {
+              ws.close(1008, 'Invalid endpoint')
+            } catch (error) {
+              logger.error('Error closing WebSocket:' + error.message)
+            }
+            return
+          }
           await this.handleUserConnection(ws, req, token, microserviceUuid, transaction)
+        } else if (req.url.includes('/logs')) {
+          // Handle log connections (may not have microserviceUuid - could be fog logs)
+          await this.handleLogConnection(ws, req, token, transaction)
         } else {
           logger.error('WebSocket connection failed: Invalid endpoint')
           try {
@@ -1638,6 +1661,61 @@ class WebSocketServer {
     }
   }
 
+  async validateAgentLogsConnection (token, microserviceUuid, iofogUuid, sessionId, transaction) {
+    try {
+      // 1. Validate agent token and get fog
+      let fog = {}
+      const req = { headers: { authorization: token }, transaction }
+      const handler = AuthDecorator.checkFogToken(async (req, fogObj) => {
+        fog = fogObj
+        return fogObj
+      })
+      await handler(req)
+
+      if (!fog) {
+        logger.error('Agent validation failed: Invalid agent token')
+        throw new WebSocketError(1008, 'Invalid agent token')
+      }
+
+      // 2. Validate microservice or fog
+      if (microserviceUuid) {
+        // Verify microservice exists and belongs to this fog
+        const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+        if (!microservice || microservice.iofogUuid !== fog.uuid) {
+          logger.error('Agent validation failed: Microservice not found or not associated with this agent' + JSON.stringify({
+            microserviceUuid,
+            fogUuid: fog.uuid,
+            found: !!microservice,
+            microserviceFogUuid: microservice ? microservice.iofogUuid : null
+          }))
+          throw new WebSocketError(1008, 'Microservice not found or not associated with this agent')
+        }
+      } else if (iofogUuid) {
+        // Verify fog UUID matches the authenticated fog
+        if (iofogUuid !== fog.uuid) {
+          logger.error('Agent validation failed: Fog UUID mismatch' + JSON.stringify({
+            iofogUuid,
+            fogUuid: fog.uuid
+          }))
+          throw new WebSocketError(1008, 'Fog UUID mismatch')
+        }
+      } else {
+        throw new WebSocketError(1008, 'Either microserviceUuid or iofogUuid must be provided')
+      }
+
+      return fog
+    } catch (error) {
+      logger.error('Agent logs validation error:' + JSON.stringify({
+        error: error.message,
+        stack: error.stack,
+        microserviceUuid,
+        iofogUuid,
+        sessionId
+      }))
+      throw error // Propagate the original error
+    }
+  }
+
   async validateUserConnection (token, microserviceUuid, transaction) {
     try {
       // 1. Authenticate user first (Keycloak) - Direct token verification
@@ -1746,6 +1824,103 @@ class WebSocketServer {
       return { success: true } // Just indicate validation passed
     } catch (error) {
       logger.error('User connection validation failed:' + JSON.stringify({ error: error.message, stack: error.stack }))
+      throw error
+    }
+  }
+
+  async validateUserLogsConnection (token, microserviceUuid, fogUuid, transaction) {
+    try {
+      // 1. Authenticate user first (Keycloak) - Direct token verification
+      let userRoles = []
+
+      // Extract Bearer token
+      const bearerToken = token.replace('Bearer ', '')
+      if (!bearerToken) {
+        throw new Errors.AuthenticationError('Missing or invalid authorization token')
+      }
+
+      // Check if we're in development mode (mock Keycloak)
+      const isDevMode = process.env.SERVER_DEV_MODE || config.get('server.devMode', true)
+      const hasAuthConfig = this.isAuthConfigured()
+
+      if (!hasAuthConfig && isDevMode) {
+        // Use mock roles for development
+        userRoles = ['SRE', 'Developer', 'Viewer']
+        logger.debug('Using mock authentication for development mode')
+      } else {
+        // Use real Keycloak token verification
+        try {
+          // Create a grant from the access token
+          const grant = await keycloak.grantManager.createGrant({
+            access_token: bearerToken
+          })
+
+          // Extract roles from the token - get client-specific roles
+          const clientId = process.env.KC_CLIENT || config.get('auth.client.id')
+          const resourceAccess = grant.access_token.content.resource_access
+
+          if (resourceAccess && resourceAccess[clientId] && resourceAccess[clientId].roles) {
+            userRoles = resourceAccess[clientId].roles
+          } else {
+            // Fallback to realm roles if client roles not found
+            userRoles = grant.access_token.content.realm_access && grant.access_token.content.realm_access.roles
+              ? grant.access_token.content.realm_access.roles
+              : []
+          }
+
+          logger.debug('Token verification successful, user roles:' + JSON.stringify(userRoles))
+        } catch (keycloakError) {
+          logger.error('Keycloak token verification failed:' + JSON.stringify({
+            error: keycloakError.message,
+            stack: keycloakError.stack
+          }))
+          throw new Errors.AuthenticationError('Invalid or expired token')
+        }
+      }
+
+      // Check if user has required roles (SRE/Developer/Viewer for logs)
+      const hasRequiredRole = userRoles.some(role => ['SRE', 'Developer', 'Viewer'].includes(role))
+      if (!hasRequiredRole) {
+        throw new Errors.AuthenticationError('Insufficient permissions. Required roles: SRE, Developer, or Viewer for log access')
+      }
+
+      // 2. Validate microservice or fog
+      if (microserviceUuid) {
+        const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+        if (!microservice) {
+          throw new Errors.NotFoundError('Microservice not found')
+        }
+
+        const application = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+        if (!application) {
+          throw new Errors.NotFoundError('Application not found')
+        }
+
+        const statusArr = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
+        if (!statusArr || statusArr.length === 0) {
+          throw new Errors.NotFoundError('Microservice status not found')
+        }
+        const status = statusArr[0]
+        if (status.status !== microserviceState.RUNNING) {
+          throw new Errors.ValidationError('Microservice is not running')
+        }
+
+        if (application.isSystem && !userRoles.includes('SRE')) {
+          throw new Errors.AuthenticationError('Only SRE can access system microservices')
+        }
+      } else if (fogUuid) {
+        const fog = await FogManager.findOne({ uuid: fogUuid }, transaction)
+        if (!fog) {
+          throw new Errors.NotFoundError('Fog not found')
+        }
+        // For fog logs, we can allow SRE/Developer/Viewer - no additional status check needed
+      } else {
+        throw new Errors.ValidationError('Either microserviceUuid or fogUuid must be provided')
+      }
+
+      return { success: true } // Just indicate validation passed
+    } catch (error) {
+      logger.error('User logs connection validation failed:' + JSON.stringify({ error: error.message, stack: error.stack }))
       throw error
     }
   }
@@ -1958,6 +2133,710 @@ class WebSocketServer {
       const value = config.get(configKey)
       return value !== undefined && value !== null && value !== ''
     })
+  }
+
+  // Helper method to validate ISO 8601 format
+  isValidISO8601 (dateString) {
+    if (!dateString || typeof dateString !== 'string') {
+      return false
+    }
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})$/
+    if (!iso8601Regex.test(dateString)) {
+      return false
+    }
+    const date = new Date(dateString)
+    return date instanceof Date && !isNaN(date.getTime())
+  }
+
+  // Route log connections to appropriate handler
+  async handleLogConnection (ws, req, token, transaction) {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host}`)
+      const pathParts = url.pathname.split('/').filter(p => p)
+
+      // Check if this is an agent log connection (has sessionId in path)
+      if (pathParts.includes('agent') && pathParts.includes('logs')) {
+        // Extract microserviceUuid or iofogUuid and sessionId
+        let microserviceUuid = null
+        let iofogUuid = null
+        let sessionId = null
+
+        if (pathParts.includes('microservice')) {
+          const microserviceIndex = pathParts.indexOf('microservice')
+          microserviceUuid = pathParts[microserviceIndex + 1]
+          sessionId = pathParts[microserviceIndex + 2]
+        } else if (pathParts.includes('iofog')) {
+          const iofogIndex = pathParts.indexOf('iofog')
+          iofogUuid = pathParts[iofogIndex + 1]
+          sessionId = pathParts[iofogIndex + 2]
+        }
+
+        if (sessionId) {
+          await this.handleAgentLogsConnection(ws, req, token, microserviceUuid, iofogUuid, sessionId, transaction)
+        } else {
+          ws.close(1008, 'Missing sessionId in agent log connection')
+        }
+      } else {
+        // User log connection
+        let microserviceUuid = null
+        let fogUuid = null
+
+        if (pathParts.includes('microservices')) {
+          const microserviceIndex = pathParts.indexOf('microservices')
+          microserviceUuid = pathParts[microserviceIndex + 1]
+        } else if (pathParts.includes('iofog')) {
+          const iofogIndex = pathParts.indexOf('iofog')
+          fogUuid = pathParts[iofogIndex + 1]
+        }
+
+        await this.handleUserLogsConnection(ws, req, token, microserviceUuid, fogUuid, transaction)
+      }
+    } catch (error) {
+      logger.error('Error in handleLogConnection:', error)
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1008, error.message || 'Connection error')
+      }
+    }
+  }
+
+  async handleUserLogsConnection (ws, req, token, microserviceUuid, fogUuid, transaction) {
+    try {
+      this.ensureSocketPongHandler(ws)
+
+      // 1. Validate user authentication
+      await this.validateUserLogsConnection(token, microserviceUuid, fogUuid, transaction)
+
+      // 2. Parse tail configuration from query parameters
+      const url = new URL(req.url, `http://${req.headers.host}`)
+
+      // Parse and validate tail config
+      const tailLines = parseInt(url.searchParams.get('tail'))
+      const tailConfig = {
+        lines: (tailLines && tailLines >= 1 && tailLines <= 10000) ? tailLines : 100, // Default: 100, Range: 1-10000
+        follow: url.searchParams.get('follow') !== 'false', // default: true
+        since: url.searchParams.get('since') || null, // ISO 8601 format
+        until: url.searchParams.get('until') || null // ISO 8601 format
+      }
+
+      // Validate ISO 8601 format for since/until (if provided)
+      if (tailConfig.since && !this.isValidISO8601(tailConfig.since)) {
+        ws.close(1008, 'Invalid since format. Expected ISO 8601.')
+        return
+      }
+      if (tailConfig.until && !this.isValidISO8601(tailConfig.until)) {
+        ws.close(1008, 'Invalid until format. Expected ISO 8601.')
+        return
+      }
+
+      // 3. Generate unique sessionId for this user session
+      const sessionId = AppHelper.generateUUID()
+      const logSessionId = fogUuid ? `logs-${fogUuid}` : `logs-${microserviceUuid}`
+
+      // 4. Create log session in database (no HTTP POST needed!)
+      if (microserviceUuid) {
+        await MicroserviceLogStatusManager.create({
+          microserviceUuid: microserviceUuid,
+          logSessionId: logSessionId,
+          sessionId: sessionId, // Unique per user session
+          status: 'PENDING',
+          tailConfig: JSON.stringify(tailConfig),
+          agentConnected: false,
+          userConnected: true
+        }, transaction)
+      } else if (fogUuid) {
+        await FogLogStatusManager.create({
+          iofogUuid: fogUuid,
+          logSessionId: logSessionId,
+          sessionId: sessionId, // Unique per user session
+          status: 'PENDING',
+          tailConfig: JSON.stringify(tailConfig),
+          agentConnected: false,
+          userConnected: true
+        }, transaction)
+      }
+
+      // 5. Trigger change tracking (notify agent of new session)
+      let fogUuidForTracking = fogUuid
+      if (!fogUuidForTracking && microserviceUuid) {
+        const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+        if (!microservice) {
+          throw new Error(`Microservice not found: ${microserviceUuid}`)
+        }
+        fogUuidForTracking = microservice.iofogUuid
+      }
+
+      if (!fogUuidForTracking) {
+        throw new Error('Unable to determine fog UUID for change tracking')
+      }
+
+      const fog = await FogManager.findOne({
+        uuid: fogUuidForTracking
+      }, transaction)
+
+      if (!fog) {
+        throw new Error(`Fog not found: ${fogUuidForTracking}`)
+      }
+
+      await ChangeTrackingService.update(
+        fog.uuid,
+        fogUuid ? ChangeTrackingService.events.fogLogs : ChangeTrackingService.events.microserviceLogs,
+        transaction
+      )
+
+      logger.debug('Change tracking updated for log session:' + JSON.stringify({
+        fogUuid: fog.uuid,
+        microserviceUuid,
+        eventType: microserviceUuid ? 'microserviceLogs' : 'fogLogs',
+        sessionId
+      }))
+
+      // 6. Create in-memory session (one-to-one: user only, waiting for agent)
+      this.logSessionManager.createLogSession(
+        sessionId,
+        microserviceUuid,
+        fogUuid,
+        null, // Agent not connected yet
+        ws, // User connected
+        tailConfig,
+        transaction
+      )
+
+      // 7. Send sessionId to user (MessagePack encoded)
+      const sessionInfoMsg = {
+        type: MESSAGE_TYPES.LOG_START,
+        data: Buffer.from(JSON.stringify({
+          sessionId: sessionId,
+          tailConfig: tailConfig
+        })),
+        sessionId: sessionId,
+        timestamp: Date.now()
+      }
+      ws.send(this.encodeMessage(sessionInfoMsg), { binary: true })
+
+      // 8. Send waiting message to user (agent not connected yet)
+      try {
+        const waitingMsg = {
+          type: MESSAGE_TYPES.LOG_LINE,
+          data: Buffer.from('Waiting for agent connection. Log streaming will begin once the agent connects.\n'),
+          sessionId: sessionId,
+          timestamp: Date.now(),
+          microserviceUuid: microserviceUuid || null,
+          iofogUuid: fogUuid || null
+        }
+        ws.send(this.encodeMessage(waitingMsg), { binary: true })
+        logger.info('Sent waiting status message to user for log session:' + JSON.stringify({
+          sessionId,
+          microserviceUuid,
+          fogUuid
+        }))
+      } catch (error) {
+        logger.warn('Failed to send waiting status message to user:' + JSON.stringify({
+          error: error.message,
+          sessionId
+        }))
+      }
+
+      // 9. Setup message forwarding (will be activated when agent connects)
+      await this.setupLogMessageForwarding(sessionId, transaction)
+
+      // 10. Record WebSocket connection event (non-blocking)
+      setImmediate(async () => {
+        try {
+          // Extract actorId from token (req.kauth not available for WebSocket connections)
+          let actorId = null
+          if (req.headers && req.headers.authorization) {
+            actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+          }
+          await EventService.createWsConnectEvent({
+            timestamp: Date.now(),
+            endpointType: 'user',
+            actorId: actorId,
+            path: req.url,
+            resourceId: microserviceUuid || fogUuid,
+            ipAddress: EventService.extractIPv4Address(req) || null
+          })
+        } catch (err) {
+          logger.error('Failed to create WS_CONNECT event for user log session (non-blocking):', err)
+        }
+      })
+
+      // Handle user disconnect
+      ws.on('close', async (code, reason) => {
+        const session = this.logSessionManager.getLogSession(sessionId)
+        if (session) {
+          session.user = null // Mark user as disconnected
+          session.lastActivity = Date.now()
+
+          // Update database
+          if (microserviceUuid) {
+            await MicroserviceLogStatusManager.update(
+              { sessionId: sessionId },
+              { userConnected: false },
+              transaction
+            )
+          } else if (fogUuid) {
+            await FogLogStatusManager.update(
+              { sessionId: sessionId },
+              { userConnected: false },
+              transaction
+            )
+          }
+
+          // If agent also disconnected, remove session
+          if (!session.agent) {
+            await this.logSessionManager.removeLogSession(sessionId, transaction)
+          } else {
+            // Trigger change tracking (agent will see user disconnected on next poll)
+            const fogForTracking = await FogManager.findOne({
+              uuid: fogUuid || (await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)).iofogUuid
+            }, transaction)
+            await ChangeTrackingService.update(
+              fogForTracking.uuid,
+              fogUuid ? ChangeTrackingService.events.fogLogs : ChangeTrackingService.events.microserviceLogs,
+              transaction
+            )
+          }
+        }
+
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            // Extract actorId from token (req.kauth not available for WebSocket connections)
+            let actorId = null
+            if (req.headers && req.headers.authorization) {
+              actorId = EventService.extractUsernameFromToken(req.headers.authorization)
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'user',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid || fogUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event for user log session (non-blocking):', err)
+          }
+        })
+      })
+    } catch (error) {
+      logger.error('User logs connection error:', error)
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1008, error.message)
+      }
+    }
+  }
+
+  async handleAgentLogsConnection (ws, req, token, microserviceUuid, iofogUuid, sessionId, transaction) {
+    try {
+      this.ensureSocketPongHandler(ws)
+
+      // 1. Validate agent token and resource (microservice or fog)
+      await this.validateAgentLogsConnection(token, microserviceUuid, iofogUuid, sessionId, transaction)
+
+      // 2. Get session from database (by sessionId)
+      let logStatus = null
+      if (microserviceUuid) {
+        logStatus = await MicroserviceLogStatusManager.findOne(
+          { sessionId: sessionId },
+          transaction
+        )
+      } else if (iofogUuid) {
+        logStatus = await FogLogStatusManager.findOne(
+          { sessionId: sessionId },
+          transaction
+        )
+      }
+
+      if (!logStatus) {
+        logger.error('Agent connected to non-existent session:', sessionId)
+        ws.close(1008, 'Session not found')
+        return
+      }
+
+      // Validate sessionId belongs to correct resource
+      if (microserviceUuid && logStatus.microserviceUuid !== microserviceUuid) {
+        logger.error('Session does not belong to microservice:', { sessionId, microserviceUuid, logStatusMicroserviceUuid: logStatus.microserviceUuid })
+        ws.close(1008, 'Session mismatch')
+        return
+      }
+      if (iofogUuid && logStatus.iofogUuid !== iofogUuid) {
+        logger.error('Session does not belong to fog:', { sessionId, iofogUuid, logStatusIofogUuid: logStatus.iofogUuid })
+        ws.close(1008, 'Session mismatch')
+        return
+      }
+
+      // 3. Parse tail config from database
+      const tailConfig = JSON.parse(logStatus.tailConfig)
+
+      // 4. Update database
+      if (microserviceUuid) {
+        await MicroserviceLogStatusManager.update(
+          { sessionId: sessionId },
+          { agentConnected: true, status: 'ACTIVE' },
+          transaction
+        )
+      } else if (iofogUuid) {
+        await FogLogStatusManager.update(
+          { sessionId: sessionId },
+          { agentConnected: true, status: 'ACTIVE' },
+          transaction
+        )
+      }
+
+      // 5. Get or create in-memory session
+      let session = this.logSessionManager.getLogSession(sessionId)
+      if (!session) {
+        // Session might be on different replica, create it
+        session = this.logSessionManager.createLogSession(
+          sessionId,
+          logStatus.microserviceUuid,
+          logStatus.iofogUuid,
+          ws, // Agent
+          null, // User (might be on different replica)
+          tailConfig,
+          transaction
+        )
+      } else {
+        session.agent = ws
+        session.lastActivity = Date.now()
+      }
+
+      // 5.5. Set up message handler IMMEDIATELY on the agent WebSocket
+      // This ensures messages are captured even if they arrive before setupLogMessageForwarding completes
+      // Critical for microservice logs which may have timing issues
+      ws.removeAllListeners('message')
+      ws.on('message', async (data, isBinary) => {
+        if (!isBinary) {
+          logger.warn('Received non-binary message from agent, expected MessagePack')
+          return
+        }
+
+        // Decode MessagePack (same as exec sessions)
+        const buffer = Buffer.from(data)
+        let msg
+        try {
+          msg = this.decodeMessage(buffer) // MessagePack decode
+        } catch (error) {
+          logger.error('Failed to decode MessagePack from agent (direct handler):' + JSON.stringify({
+            error: error.message,
+            sessionId,
+            bufferLength: buffer.length
+          }))
+          return
+        }
+
+        logger.debug('Received log message from agent (direct handler):' + JSON.stringify({
+          sessionId,
+          type: msg.type,
+          hasData: !!msg.data,
+          dataLength: msg.data ? msg.data.length : 0
+        }))
+
+        if (msg.type === MESSAGE_TYPES.LOG_LINE) {
+          // Forward to user (one-to-one, like exec sessions)
+          await this.forwardLogToUser(sessionId, buffer, transaction)
+        } else if (msg.type === MESSAGE_TYPES.LOG_START ||
+                 msg.type === MESSAGE_TYPES.LOG_STOP ||
+                 msg.type === MESSAGE_TYPES.LOG_ERROR) {
+          // Handle control messages
+          await this.forwardLogToUser(sessionId, buffer, transaction)
+        }
+      })
+
+      logger.debug('Set up direct message handler on agent WebSocket:' + JSON.stringify({
+        sessionId,
+        microserviceUuid: logStatus.microserviceUuid,
+        iofogUuid: logStatus.iofogUuid,
+        agentState: ws.readyState
+      }))
+
+      // 6. Send tail config to agent (so agent knows what to stream)
+      const configMsg = {
+        type: MESSAGE_TYPES.LOG_START,
+        data: Buffer.from(JSON.stringify({
+          sessionId: sessionId,
+          tailConfig: tailConfig
+        })),
+        sessionId: sessionId,
+        timestamp: Date.now()
+      }
+      ws.send(this.encodeMessage(configMsg), { binary: true })
+
+      // 7. Notify user that agent has connected and streaming has started
+      if (session.user && session.user.readyState === WebSocket.OPEN) {
+        try {
+          const agentConnectedMsg = {
+            type: MESSAGE_TYPES.LOG_START,
+            data: Buffer.from(JSON.stringify({
+              sessionId: sessionId,
+              message: 'Agent connected. Log streaming started.\n'
+            })),
+            sessionId: sessionId,
+            timestamp: Date.now()
+          }
+          session.user.send(this.encodeMessage(agentConnectedMsg), { binary: true })
+          logger.info('Notified user that agent connected for log session:' + JSON.stringify({
+            sessionId,
+            microserviceUuid: logStatus.microserviceUuid,
+            iofogUuid: logStatus.iofogUuid
+          }))
+        } catch (error) {
+          logger.warn('Failed to notify user that agent connected:' + JSON.stringify({
+            error: error.message,
+            sessionId
+          }))
+        }
+      }
+
+      // 8. Setup message forwarding (unidirectional: agent → user, one-to-one)
+      await this.setupLogMessageForwarding(sessionId, transaction)
+
+      // 9. Record WebSocket connection event (non-blocking)
+      setImmediate(async () => {
+        try {
+          // Extract actorId from token (fog UUID from JWT sub field)
+          const authHeader = req.headers.authorization
+          let actorId = null
+          if (authHeader) {
+            const [scheme, token] = authHeader.split(' ')
+            if (scheme.toLowerCase() === 'bearer' && token) {
+              try {
+                const tokenParts = token.split('.')
+                if (tokenParts.length === 3) {
+                  const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                  actorId = payload.sub || null
+                }
+              } catch (err) {
+                // Ignore token parsing errors
+              }
+            }
+          }
+          await EventService.createWsConnectEvent({
+            timestamp: Date.now(),
+            endpointType: 'agent',
+            actorId: actorId,
+            path: req.url,
+            resourceId: microserviceUuid || iofogUuid,
+            ipAddress: EventService.extractIPv4Address(req) || null
+          })
+        } catch (err) {
+          logger.error('Failed to create WS_CONNECT event for agent log session (non-blocking):', err)
+        }
+      })
+
+      // Handle agent disconnect
+      ws.on('close', async (code, reason) => {
+        const session = this.logSessionManager.getLogSession(sessionId)
+        if (session) {
+          session.agent = null // Mark agent as disconnected
+          session.lastActivity = Date.now()
+
+          // Update database
+          if (microserviceUuid) {
+            await MicroserviceLogStatusManager.update(
+              { sessionId: sessionId },
+              { agentConnected: false },
+              transaction
+            )
+          } else if (iofogUuid) {
+            await FogLogStatusManager.update(
+              { sessionId: sessionId },
+              { agentConnected: false },
+              transaction
+            )
+          }
+
+          // If user also disconnected, remove session
+          if (!session.user) {
+            await this.logSessionManager.removeLogSession(sessionId, transaction)
+          } else {
+            // Trigger change tracking (agent will see it disconnected on next poll)
+            const fog = await FogManager.findOne({
+              uuid: iofogUuid || logStatus.iofogUuid || (await MicroserviceManager.findOne({ uuid: logStatus.microserviceUuid }, transaction)).iofogUuid
+            }, transaction)
+            await ChangeTrackingService.update(
+              fog.uuid,
+              iofogUuid ? ChangeTrackingService.events.fogLogs : ChangeTrackingService.events.microserviceLogs,
+              transaction
+            )
+          }
+        }
+
+        // Record WebSocket disconnection event (non-blocking)
+        setImmediate(async () => {
+          try {
+            // Extract actorId from token (fog UUID from JWT sub field)
+            const authHeader = req.headers.authorization
+            let actorId = null
+            if (authHeader) {
+              const [scheme, token] = authHeader.split(' ')
+              if (scheme.toLowerCase() === 'bearer' && token) {
+                try {
+                  const tokenParts = token.split('.')
+                  if (tokenParts.length === 3) {
+                    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString())
+                    actorId = payload.sub || null
+                  }
+                } catch (err) {
+                  // Ignore token parsing errors
+                }
+              }
+            }
+            await EventService.createWsDisconnectEvent({
+              timestamp: Date.now(),
+              endpointType: 'agent',
+              actorId: actorId,
+              path: req.url,
+              resourceId: microserviceUuid || iofogUuid,
+              ipAddress: EventService.extractIPv4Address(req) || null,
+              closeCode: code
+            })
+          } catch (err) {
+            logger.error('Failed to create WS_DISCONNECT event for agent log session (non-blocking):', err)
+          }
+        })
+      })
+    } catch (error) {
+      logger.error('Agent logs connection error:', error)
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1008, error.message)
+      }
+    }
+  }
+
+  async setupLogMessageForwarding (sessionId, transaction) {
+    const session = this.logSessionManager.getLogSession(sessionId)
+    if (!session) {
+      logger.warn('setupLogMessageForwarding: Session not found:' + JSON.stringify({ sessionId }))
+      return
+    }
+
+    // Enable queue bridge for cross-replica support (one-to-one, like exec sessions)
+    await this.queueService.enableForLogSession(session, (sessionId) => {
+      this.cleanupLogSession(sessionId, transaction)
+    })
+
+    // ONLY agent → user forwarding (unidirectional, one-to-one)
+    // All messages from agent are MessagePack encoded (binary)
+    if (session.agent) {
+      // Remove any existing message handlers to avoid duplicates (like exec sessions)
+      session.agent.removeAllListeners('message')
+
+      logger.debug('Setting up agent message handler for log session:' + JSON.stringify({
+        sessionId,
+        microserviceUuid: session.microserviceUuid,
+        fogUuid: session.fogUuid,
+        agentState: session.agent.readyState,
+        userState: session.user ? session.user.readyState : 'N/A'
+      }))
+
+      session.agent.on('message', async (data, isBinary) => {
+        if (!isBinary) {
+          logger.warn('Received non-binary message from agent, expected MessagePack')
+          return
+        }
+
+        // Decode MessagePack (same as exec sessions)
+        const buffer = Buffer.from(data)
+        let msg
+        try {
+          msg = this.decodeMessage(buffer) // MessagePack decode
+        } catch (error) {
+          logger.error('Failed to decode MessagePack from agent:' + JSON.stringify({
+            error: error.message,
+            sessionId,
+            bufferLength: buffer.length
+          }))
+          return
+        }
+
+        logger.debug('Received log message from agent:' + JSON.stringify({
+          sessionId,
+          type: msg.type,
+          hasData: !!msg.data,
+          dataLength: msg.data ? msg.data.length : 0
+        }))
+
+        if (msg.type === MESSAGE_TYPES.LOG_LINE) {
+          // Forward to user (one-to-one, like exec sessions)
+          await this.forwardLogToUser(sessionId, buffer, transaction)
+        } else if (msg.type === MESSAGE_TYPES.LOG_START ||
+                 msg.type === MESSAGE_TYPES.LOG_STOP ||
+                 msg.type === MESSAGE_TYPES.LOG_ERROR) {
+          // Handle control messages
+          await this.forwardLogToUser(sessionId, buffer, transaction)
+        }
+      })
+    } else {
+      logger.debug('setupLogMessageForwarding: Agent not connected yet:' + JSON.stringify({
+        sessionId,
+        microserviceUuid: session.microserviceUuid,
+        fogUuid: session.fogUuid
+      }))
+    }
+
+    // NO user → agent forwarding needed!
+    // Users are read-only
+  }
+
+  async forwardLogToUser (sessionId, buffer, transaction) {
+    const session = this.logSessionManager.getLogSession(sessionId)
+    if (!session) {
+      logger.warn('forwardLogToUser: Session not found:' + JSON.stringify({ sessionId }))
+      return
+    }
+
+    // Buffer is already MessagePack encoded from agent
+    // Following exec session pattern: Use queue for ALL scenarios (single and multi-replica)
+    // One-to-one forwarding (agent → user) via queue
+    const useQueue = this.queueService.shouldUseQueueForLogs(sessionId)
+    logger.debug('forwardLogToUser:' + JSON.stringify({
+      sessionId,
+      useQueue,
+      hasUser: !!session.user,
+      userState: session.user ? session.user.readyState : 'N/A',
+      bufferLength: buffer.length
+    }))
+
+    if (useQueue) {
+      // Publish MessagePack encoded buffer to user queue
+      await this.queueService.publishLogToUser(sessionId, buffer)
+    } else {
+      // Fallback: Direct WebSocket (only if queue not enabled)
+      // Send MessagePack encoded buffer directly (binary)
+      if (session.user && session.user.readyState === WebSocket.OPEN) {
+        try {
+          session.user.send(buffer, {
+            binary: true, // MessagePack is binary
+            compress: false,
+            mask: false,
+            fin: true
+          })
+          logger.debug('Sent log message directly to user:' + JSON.stringify({
+            sessionId,
+            bufferLength: buffer.length
+          }))
+        } catch (error) {
+          logger.error('Failed to send log to user:' + JSON.stringify({
+            error: error.message,
+            sessionId,
+            bufferLength: buffer.length
+          }))
+        }
+      } else {
+        logger.warn('Cannot send log to user - user not connected:' + JSON.stringify({
+          sessionId,
+          userState: session.user ? session.user.readyState : 'N/A'
+        }))
+      }
+    }
+  }
+
+  async cleanupLogSession (sessionId, transaction) {
+    await this.logSessionManager.removeLogSession(sessionId, transaction)
+    await this.queueService.cleanupLogSession(sessionId)
   }
 }
 

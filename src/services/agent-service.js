@@ -46,10 +46,12 @@ const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
 const SecretManager = require('../data/managers/secret-manager')
 const ConfigMapManager = require('../data/managers/config-map-manager')
+const MicroserviceLogStatusManager = require('../data/managers/microservice-log-status-manager')
+const FogLogStatusManager = require('../data/managers/fog-log-status-manager')
 
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
-const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions']
+const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions', 'microserviceLogs', 'fogLogs']
 for (const key of CHANGE_TRACKING_KEYS) {
   CHANGE_TRACKING_DEFAULT[key] = false
 }
@@ -739,6 +741,61 @@ const getControllerCA = async function (fog, transaction) {
   throw new Errors.ValidationError('No valid SSL certificate configuration found')
 }
 
+// New endpoint: Get active log sessions for agent
+const getAgentLogSessions = async function (fog, transaction) {
+  const Op = require('sequelize').Op
+
+  // Get all microservices for this fog
+  const microservices = await MicroserviceManager.findAll(
+    { iofogUuid: fog.uuid },
+    transaction
+  )
+
+  const allSessions = []
+
+  // Get microservice log sessions
+  for (const ms of microservices) {
+    const sessions = await MicroserviceLogStatusManager.findAll(
+      {
+        microserviceUuid: ms.uuid,
+        status: { [Op.in]: ['PENDING', 'ACTIVE'] }
+      },
+      transaction
+    )
+
+    for (const session of sessions) {
+      allSessions.push({
+        microserviceUuid: ms.uuid,
+        sessionId: session.sessionId,
+        tailConfig: JSON.parse(session.tailConfig),
+        status: session.status,
+        agentConnected: session.agentConnected
+      })
+    }
+  }
+
+  // Get fog node log sessions
+  const fogSessions = await FogLogStatusManager.findAll(
+    {
+      iofogUuid: fog.uuid,
+      status: { [Op.in]: ['PENDING', 'ACTIVE'] }
+    },
+    transaction
+  )
+
+  for (const session of fogSessions) {
+    allSessions.push({
+      iofogUuid: fog.uuid,
+      sessionId: session.sessionId,
+      tailConfig: JSON.parse(session.tailConfig),
+      status: session.status,
+      agentConnected: session.agentConnected
+    })
+  }
+
+  return { logSessions: allSessions }
+}
+
 const getAgentLinkedVolumeMounts = async function (fog, transaction) {
   const volumeMounts = []
   const resourceAttributes = [
@@ -819,5 +876,6 @@ module.exports = {
   putImageSnapshot: TransactionDecorator.generateTransaction(putImageSnapshot),
   getAgentLinkedEdgeResources: TransactionDecorator.generateTransaction(getAgentLinkedEdgeResources),
   getAgentLinkedVolumeMounts: TransactionDecorator.generateTransaction(getAgentLinkedVolumeMounts),
-  getControllerCA: TransactionDecorator.generateTransaction(getControllerCA)
+  getControllerCA: TransactionDecorator.generateTransaction(getControllerCA),
+  getAgentLogSessions: TransactionDecorator.generateTransaction(getAgentLogSessions)
 }

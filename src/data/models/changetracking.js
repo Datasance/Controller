@@ -101,6 +101,16 @@ module.exports = (sequelize, DataTypes) => {
       field: 'exec_sessions',
       defaultValue: false
     },
+    microserviceLogs: {
+      type: DataTypes.BOOLEAN,
+      field: 'microservice_logs',
+      defaultValue: false
+    },
+    fogLogs: {
+      type: DataTypes.BOOLEAN,
+      field: 'fog_logs',
+      defaultValue: false
+    },
     lastUpdated: {
       type: DataTypes.STRING,
       field: 'last_updated',

@@ -445,5 +445,49 @@ module.exports = [
         logger.apiRes({ req: req, user: user, res: res, responseObject: responseObject })
       })
     }
+  },
+  {
+    method: 'ws',
+    path: '/api/v3/iofog/:uuid/logs',
+    middleware: async (ws, req) => {
+      const WebSocketServer = require('../websocket/server')
+      logger.apiReq(req)
+      try {
+        const token = req.headers.authorization
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token')
+          try {
+            ws.close(1008, 'Missing authentication token')
+          } catch (error) {
+            logger.error('Error closing WebSocket:' + JSON.stringify({
+              error: error.message,
+              originalError: 'Missing authentication token'
+            }))
+          }
+          return
+        }
+
+        // Initialize WebSocket connection for fog logs
+        const wsServer = WebSocketServer.getInstance()
+        await wsServer.handleConnection(ws, req)
+      } catch (error) {
+        logger.error('Error in fog logs WebSocket connection:' + JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          url: req.url,
+          iofogUuid: req.params.uuid
+        }))
+        try {
+          if (ws.readyState === ws.OPEN) {
+            ws.close(1008, error.message || 'Authentication failed')
+          }
+        } catch (closeError) {
+          logger.error('Error closing fog logs WebSocket:' + JSON.stringify({
+            error: closeError.message,
+            originalError: error.message
+          }))
+        }
+      }
+    }
   }
 ]

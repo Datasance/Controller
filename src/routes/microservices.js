@@ -1402,5 +1402,48 @@ module.exports = [
         }
       }
     }
+  },
+  {
+    method: 'ws',
+    path: '/api/v3/microservices/:uuid/logs',
+    middleware: async (ws, req) => {
+      logger.apiReq(req)
+      try {
+        const token = req.headers.authorization
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token')
+          try {
+            ws.close(1008, 'Missing authentication token')
+          } catch (error) {
+            logger.error('Error closing WebSocket:' + JSON.stringify({
+              error: error.message,
+              originalError: 'Missing authentication token'
+            }))
+          }
+          return
+        }
+
+        // Initialize WebSocket connection for microservice logs
+        const wsServer = WebSocketServer.getInstance()
+        await wsServer.handleConnection(ws, req)
+      } catch (error) {
+        logger.error('Error in microservice logs WebSocket connection:' + JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          url: req.url,
+          microserviceUuid: req.params.uuid
+        }))
+        try {
+          if (ws.readyState === ws.OPEN) {
+            ws.close(1008, error.message || 'Authentication failed')
+          }
+        } catch (closeError) {
+          logger.error('Error closing microservice logs WebSocket:' + JSON.stringify({
+            error: closeError.message,
+            originalError: error.message
+          }))
+        }
+      }
+    }
   }
 ]
