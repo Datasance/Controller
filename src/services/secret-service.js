@@ -23,6 +23,8 @@ const Validator = require('../schemas/index')
 const VolumeMountService = require('./volume-mount-service')
 const VolumeMountingManager = require('../data/managers/volume-mounting-manager')
 const CertificateManager = require('../data/managers/certificate-manager')
+const SecretHelper = require('../helpers/secret-helper')
+const vaultManager = require('../vault/vault-manager')
 
 function validateBase64 (value) {
   try {
@@ -82,9 +84,13 @@ async function updateSecretEndpoint (secretName, secretData, transaction) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, secretName))
   }
 
+  if (existingSecret.type !== secretData.type) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SECRET_TYPE_MISMATCH, secretName, existingSecret.type, secretData.type))
+  }
+
   validateSecretData(existingSecret.type, secretData.data)
 
-  const secret = await SecretManager.updateSecret(secretName, secretData.data, transaction)
+  const secret = await SecretManager.updateSecret(secretName, secretData.type, secretData.data, transaction)
   await _updateChangeTrackingForFogs(secretName, transaction)
   await _updateMicroservicesUsingSecret(secretName, transaction)
   return {
@@ -141,15 +147,37 @@ async function deleteSecretEndpoint (secretName, transaction) {
           throw new Errors.ValidationError(`Cannot delete CA that has signed certificates. Please delete the following certificates first: ${signedCerts.map(cert => cert.name).join(', ')}`)
         }
         await CertificateManager.deleteCertificate(certificate.name, transaction)
+        await SecretManager.deleteSecret(secretName, transaction)
+        // Remove secret from external vault if configured
+        if (vaultManager.isEnabled()) {
+          await SecretHelper.deleteSecret(secretName, existingSecret.type)
+        }
         await _deleteVolumeMountsUsingSecret(secretName, transaction)
       } else {
         await CertificateManager.deleteCertificate(certificate.name, transaction)
         await _deleteVolumeMountsUsingSecret(secretName, transaction)
+        await SecretManager.deleteSecret(secretName, transaction)
+        // Remove secret from external vault if configured
+        if (vaultManager.isEnabled()) {
+          await SecretHelper.deleteSecret(secretName, existingSecret.type)
+        }
+      }
+    } else {
+      // Delete secret from database and external vault
+      await SecretManager.deleteSecret(secretName, transaction)
+      await _deleteVolumeMountsUsingSecret(secretName, transaction)
+      // Remove secret from external vault if configured
+      if (vaultManager.isEnabled()) {
+        await SecretHelper.deleteSecret(secretName, existingSecret.type)
       }
     }
   } else {
     await SecretManager.deleteSecret(secretName, transaction)
     await _deleteVolumeMountsUsingSecret(secretName, transaction)
+    // Remove secret from external vault if configured
+    if (vaultManager.isEnabled()) {
+      await SecretHelper.deleteSecret(secretName, existingSecret.type)
+    }
   }
   return {}
 }

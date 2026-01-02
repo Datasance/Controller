@@ -46,6 +46,7 @@ const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
 const SecretManager = require('../data/managers/secret-manager')
 const ConfigMapManager = require('../data/managers/config-map-manager')
+
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
 const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions']
@@ -121,6 +122,9 @@ const agentDeprovision = async function (deprovisionData, fog, transaction) {
   )
 
   await _invalidateFogNode(fog, transaction)
+
+  // Delete the public key
+  await FogKeyService.deletePublicKey(fog.uuid, transaction)
 }
 
 const _invalidateFogNode = async function (fog, transaction) {
@@ -748,19 +752,22 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
   for (const resource of resources) {
     const resourceObject = resource.toJSON()
     let data = {}
+    let type = null
 
     if (resourceObject.configMapName) {
       // Handle ConfigMap
+      type = 'configMap'
       const configMap = await ConfigMapManager.getConfigMap(resourceObject.configMapName, transaction)
       if (configMap) {
         // For configmaps, we need to base64 encode all values
         data = Object.entries(configMap.data).reduce((acc, [key, value]) => {
-          acc[key] = Buffer.from(value).toString('base64')
+          acc[key] = Buffer.from(String(value)).toString('base64')
           return acc
         }, {})
       }
     } else if (resourceObject.secretName) {
       // Handle Secret
+      type = 'secret'
       const secret = await SecretManager.getSecret(resourceObject.secretName, transaction)
       if (secret) {
         if (secret.type === 'tls') {
@@ -769,7 +776,7 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
         } else {
           // For Opaque secrets, we need to base64 encode all values
           data = Object.entries(secret.data).reduce((acc, [key, value]) => {
-            acc[key] = Buffer.from(value).toString('base64')
+            acc[key] = Buffer.from(String(value)).toString('base64')
             return acc
           }, {})
         }
@@ -781,6 +788,7 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
       uuid: resourceObject.uuid,
       name: resourceObject.name,
       version: resourceObject.version,
+      type: type,
       data: data
     }
     volumeMounts.push(responseObject)

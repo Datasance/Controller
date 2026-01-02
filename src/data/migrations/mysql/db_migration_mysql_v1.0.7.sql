@@ -841,4 +841,6 @@ CREATE INDEX idx_events_method ON Events (method);
 CREATE INDEX idx_events_event_type ON Events (event_type);
 CREATE INDEX idx_events_created_at ON Events (created_at);
 
+ALTER TABLE ConfigMaps ADD COLUMN use_vault BOOLEAN DEFAULT true;
+
 COMMIT;

@@ -32,9 +32,10 @@ const constants = require('../helpers/constants')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
 const SecretManager = require('../data/managers/secret-manager')
 const FogManager = require('../data/managers/iofog-manager')
+const config = require('../config')
 
 const SITE_CONFIG_VERSION = 'pot'
-const SITE_CONFIG_NAMESPACE = 'datasance'
+const SITE_CONFIG_NAMESPACE = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace')
 
 async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog, defaultRouter, transaction) {
   if (!upstreamRouterIds) {
@@ -399,10 +400,6 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     platform = 'podman'
   }
 
-  let namespace = SITE_CONFIG_NAMESPACE
-  if (process.env.CONTROLLER_NAMESPACE) {
-    namespace = process.env.CONTROLLER_NAMESPACE
-  }
   const config = {
     addresses: {
       mc: {
@@ -429,7 +426,7 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     },
     siteConfig: {
       name: uuid,
-      namespace: namespace,
+      namespace: SITE_CONFIG_NAMESPACE,
       platform: platform,
       version: SITE_CONFIG_VERSION
     },

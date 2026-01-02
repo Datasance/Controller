@@ -4,6 +4,7 @@ const configMapCreate = {
   properties: {
     name: { type: 'string', minLength: 1, maxLength: 255 },
     immutable: { type: 'boolean' },
+    useVault: { type: 'boolean' },
     data: { type: 'object' }
   },
   required: ['name', 'data'],
@@ -16,6 +17,7 @@ const configMapUpdate = {
   properties: {
     name: { type: 'string', minLength: 1, maxLength: 255 },
     immutable: { type: 'boolean' },
+    useVault: { type: 'boolean' },
     data: { type: 'object' }
   },
   required: ['data'],
@@ -29,6 +31,7 @@ const configMapResponse = {
     id: { type: 'integer' },
     name: { type: 'string' },
     immutable: { type: 'boolean' },
+    useVault: { type: 'boolean' },
     data: { type: 'object' },
     created_at: { type: 'string', format: 'date-time' },
     updated_at: { type: 'string', format: 'date-time' }
@@ -49,6 +52,7 @@ const configMapListResponse = {
           id: { type: 'integer' },
           name: { type: 'string' },
           immutable: { type: 'boolean' },
+          useVault: { type: 'boolean' },
           created_at: { type: 'string', format: 'date-time' },
           updated_at: { type: 'string', format: 'date-time' }
         },

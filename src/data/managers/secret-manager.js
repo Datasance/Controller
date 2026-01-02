@@ -17,11 +17,11 @@ class SecretManager extends BaseManager {
     }, transaction)
   }
 
-  async updateSecret (name, data, transaction) {
-    const encryptedData = await SecretHelper.encryptSecret(data, name)
+  async updateSecret (name, type, data, transaction) {
+    const encryptedData = await SecretHelper.encryptSecret(data, name, type)
     return this.update(
       { name },
-      { data: encryptedData },
+      { type, data: encryptedData },
       transaction
     )
   }

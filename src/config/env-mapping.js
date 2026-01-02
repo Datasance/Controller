@@ -2,6 +2,7 @@ module.exports = {
   // Application Configuration
   'APP_NAME': 'app.name',
   'CONTROL_PLANE': 'app.controlPlane',
+  'CONTROLLER_NAMESPACE': 'app.namespace',
 
   // Server Configuration
   'SERVER_PORT': 'server.port',
@@ -89,6 +90,27 @@ module.exports = {
 
   // Diagnostics Configuration
   'DIAGNOSTICS_DIRECTORY': 'diagnostics.directory',
+
+  // Vault Configuration
+  'VAULT_ENABLED': 'vault.enabled',
+  'VAULT_PROVIDER': 'vault.provider',
+  'VAULT_BASE_PATH': 'vault.basePath',
+  // HashiCorp Vault
+  'VAULT_HASHICORP_ADDRESS': 'vault.hashicorp.address',
+  'VAULT_HASHICORP_TOKEN': 'vault.hashicorp.token',
+  'VAULT_HASHICORP_MOUNT': 'vault.hashicorp.mount',
+  // AWS Secrets Manager
+  'VAULT_AWS_REGION': 'vault.aws.region',
+  'VAULT_AWS_ACCESS_KEY_ID': 'vault.aws.accessKeyId',
+  'VAULT_AWS_ACCESS_KEY': 'vault.aws.accessKey',
+  // Azure Key Vault
+  'VAULT_AZURE_URL': 'vault.azure.url',
+  'VAULT_AZURE_TENANT_ID': 'vault.azure.tenantId',
+  'VAULT_AZURE_CLIENT_ID': 'vault.azure.clientId',
+  'VAULT_AZURE_CLIENT_SECRET': 'vault.azure.clientSecret',
+  // Google Secret Manager
+  'VAULT_GOOGLE_PROJECT_ID': 'vault.google.projectId',
+  'VAULT_GOOGLE_CREDENTIALS': 'vault.google.credentials',
 
   // OpenTelemetry Configuration
   'ENABLE_TELEMETRY': 'otel.enabled',

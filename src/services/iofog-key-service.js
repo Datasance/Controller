@@ -16,6 +16,7 @@ const FogPublicKeyManager = require('../data/managers/iofog-public-key-manager')
 const FogUsedTokenManager = require('../data/managers/fog-used-token-manager')
 const SecretHelper = require('../helpers/secret-helper')
 const jose = require('jose')
+const vaultManager = require('../vault/vault-manager')
 
 /**
  * Generate Ed25519 key pair and return as JWK strings
@@ -47,10 +48,12 @@ const generateKeyPair = async function (transaction) {
  * @returns {Promise} Promise resolving to the stored public key
  */
 const storePublicKey = async function (fogUuid, publicKey, transaction) {
-  // Encrypt the public key using SecretHelper for better security and database compatibility
-  const encryptedPublicKey = await SecretHelper.encryptSecret(publicKey, fogUuid)
+  // Encrypt the public key using SecretHelper (will use vault if enabled)
+  // SecretHelper will automatically route to vault or internal encryption
+  // Wrap string so KV backends (e.g., HashiCorp) get an object payload
+  const encryptedPublicKey = await SecretHelper.encryptSecret({ value: publicKey }, fogUuid, 'agent-auth-key')
 
-  // Store the encrypted public key
+  // Store the encrypted public key or vault reference
   return FogPublicKeyManager.updateOrCreate(fogUuid, encryptedPublicKey, transaction)
 }
 
@@ -68,10 +71,24 @@ const getPublicKey = async function (fogUuid, transaction) {
     return null
   }
 
-  // Decrypt the public key using SecretHelper for better security and database compatibility
-  return SecretHelper.decryptSecret(fogPublicKey.publicKey, fogUuid)
+  // Decrypt the public key using SecretHelper (will use vault if enabled)
+  const decrypted = await SecretHelper.decryptSecret(fogPublicKey.publicKey, fogUuid, 'agent-auth-key')
+  return decrypted && decrypted.value ? decrypted.value : decrypted
 }
 
+/**
+ * Delete the public key for a fog node
+ * @param {string} fogUuid - UUID of the fog node
+ * @param {Object} transaction - Sequelize transaction
+ * @returns {Promise} Promise resolving to the deleted public key
+ */
+const deletePublicKey = async function (fogUuid, transaction) {
+  await FogPublicKeyManager.deleteByFogUuid(fogUuid, transaction)
+  if (vaultManager.isEnabled()) {
+    await SecretHelper.deleteSecret(fogUuid, 'agent-auth-key')
+  }
+  return {}
+}
 /**
  * Verify a JWT signed by a fog node
  * @param {string} token - JWT token
@@ -125,6 +142,7 @@ module.exports = {
   generateKeyPair,
   storePublicKey,
   getPublicKey,
+  deletePublicKey,
   verifyJWT,
   all
 }

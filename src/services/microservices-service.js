@@ -464,6 +464,11 @@ function _validateVolumeMappings (volumeMappings) {
         throw new Errors.InvalidArgumentError('hostDestination includes invalid characters for a local volume name, only ' +
           '"[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use type: bind')
       }
+      if (mapping.type === 'volumeMount') {
+        if (!mapping.hostDestination || mapping.hostDestination === '') {
+          throw new Errors.ValidationError('hostDestination is required when type is volumeMount')
+        }
+      }
     }
   }
 }
@@ -505,24 +510,32 @@ function _validateKeyPath (data, keyPath, resourceName, resourceType, volumeMoun
   }
 }
 
-async function _validateVolumeMountReference (hostDestination, fogUuid, transaction) {
+/**
+ * Validates a volume mount reference when type is 'volumeMount'
+ * @param {string} hostDestination - Volume mount reference in format: <volume-mount-name>/<optional-key-path>
+ * @param {string} type - Volume mapping type ('volume', 'bind', or 'volumeMount')
+ * @param {string} fogUuid - UUID of the fog node
+ * @param {object} transaction - Database transaction
+ * @returns {Promise<void>}
+ */
+async function _validateVolumeMountReference (hostDestination, type, fogUuid, transaction) {
   if (!hostDestination || typeof hostDestination !== 'string') {
     return // No validation needed if hostDestination is empty or not a string
   }
 
-  // Check if hostDestination starts with $VolumeMount/
-  if (!hostDestination.startsWith('$VolumeMount/')) {
+  // Check if type is volumeMount - only validate when explicitly using volumeMount type
+  if (type !== 'volumeMount') {
     return // Not a volume mount reference, skip validation
   }
 
-  // Parse the volume mount reference: $VolumeMount/<volume-mount-name>/<optional-key-path>
-  const withoutPrefix = hostDestination.substring('$VolumeMount/'.length)
-  if (!withoutPrefix || withoutPrefix === '') {
+  // Parse the volume mount reference: <volume-mount-name>/<optional-key-path>
+  // Format: "my-volume-mount" or "my-volume-mount/config/app.conf"
+  if (!hostDestination || hostDestination === '') {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING, 'Volume mount reference must include a volume mount name'))
   }
 
   // Split by '/' to separate volume mount name and optional key path
-  const parts = withoutPrefix.split('/')
+  const parts = hostDestination.split('/')
   const volumeMountName = parts[0]
   const keyPath = parts.length > 1 ? parts.slice(1).join('/') : null
 
@@ -1700,6 +1713,12 @@ async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData,
 
   _validateVolumeMappings([volumeMappingData])
 
+  // Validate volume mount references before creating mapping
+  // When type is 'volumeMount', validates that the volume mount exists and is linked to the fog node
+  if (volumeMappingData.hostDestination && microservice.iofogUuid) {
+    await _validateVolumeMountReference(volumeMappingData.hostDestination, type, microservice.iofogUuid, transaction)
+  }
+
   const volumeMappingObj = {
     microserviceUuid: microserviceUuid,
     hostDestination: volumeMappingData.hostDestination,
@@ -1736,6 +1755,12 @@ async function createSystemVolumeMappingEndPoint (microserviceUuid, volumeMappin
   }
 
   _validateVolumeMappings([volumeMappingData])
+
+  // Validate volume mount references before creating mapping
+  // When type is 'volumeMount', validates that the volume mount exists and is linked to the fog node
+  if (volumeMappingData.hostDestination && microservice.iofogUuid) {
+    await _validateVolumeMountReference(volumeMappingData.hostDestination, type, microservice.iofogUuid, transaction)
+  }
 
   const volumeMappingObj = {
     microserviceUuid: microserviceUuid,
@@ -1985,10 +2010,12 @@ async function _createMicroserviceImages (microservice, images, transaction) {
 
 async function _createVolumeMappings (microservice, volumeMappings, transaction) {
   // Validate volume mount references before creating mappings
+  // When type is 'volumeMount', validates that the volume mount exists and is linked to the fog node
   if (volumeMappings && microservice.iofogUuid) {
     for (const volumeMapping of volumeMappings) {
       if (volumeMapping.hostDestination) {
-        await _validateVolumeMountReference(volumeMapping.hostDestination, microservice.iofogUuid, transaction)
+        const type = volumeMapping.type || VOLUME_MAPPING_DEFAULT
+        await _validateVolumeMountReference(volumeMapping.hostDestination, type, microservice.iofogUuid, transaction)
       }
     }
   }
@@ -2013,10 +2040,12 @@ async function _updateVolumeMappings (volumeMappings, microserviceUuid, transact
   }
 
   // Validate volume mount references before updating mappings
+  // When type is 'volumeMount', validates that the volume mount exists and is linked to the fog node
   if (volumeMappings && microservice.iofogUuid) {
     for (const volumeMapping of volumeMappings) {
       if (volumeMapping.hostDestination) {
-        await _validateVolumeMountReference(volumeMapping.hostDestination, microservice.iofogUuid, transaction)
+        const type = volumeMapping.type || VOLUME_MAPPING_DEFAULT
+        await _validateVolumeMountReference(volumeMapping.hostDestination, type, microservice.iofogUuid, transaction)
       }
     }
   }

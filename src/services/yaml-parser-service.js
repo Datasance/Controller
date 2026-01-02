@@ -150,18 +150,28 @@ async function parseConfigMapFile (fileContent, options = {}) {
         throw new Errors.ValidationError(`ConfigMap name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.configMapName})`)
       }
 
-      // For updates, we only need the data
-      return {
-        data: doc.data
+      // For updates, return data and useVault if provided
+      const result = {
+        data: doc.data,
+        immutable: doc.spec.immutable
       }
+      if (doc.spec && doc.spec.useVault !== undefined) {
+        result.useVault = doc.spec.useVault
+      }
+      return result
     }
 
     // For creates, return full object
-    return {
+    const result = {
       name: lget(doc, 'metadata.name', undefined),
       data: doc.data,
       immutable: doc.spec.immutable
     }
+    // Include useVault if specified in YAML
+    if (doc.spec && doc.spec.useVault !== undefined) {
+      result.useVault = doc.spec.useVault
+    }
+    return result
   } catch (error) {
     if (error instanceof Errors.ValidationError) {
       throw error

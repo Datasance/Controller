@@ -83,6 +83,11 @@ class FogPublicKeyManager extends BaseManager {
       }
     })
   }
+
+  // Delete public key by fog UUID
+  deleteByFogUuid (fogUuid, transaction) {
+    return this.delete({ iofogUuid: fogUuid }, transaction)
+  }
 }
 
 const instance = new FogPublicKeyManager()
