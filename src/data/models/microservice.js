@@ -118,6 +118,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       field: 'is_activated',
       defaultValue: true
+    },
+    serviceAccountId: {
+      type: DataTypes.INTEGER,
+      field: 'service_account_id',
+      allowNull: true
     }
   }, {
     tableName: 'Microservices',
@@ -234,6 +239,14 @@ module.exports = (sequelize, DataTypes) => {
 
     Microservice.belongsToMany(models.Tags, { as: 'pubTags', through: 'MicroservicePubTags' })
     Microservice.belongsToMany(models.Tags, { as: 'subTags', through: 'MicroserviceSubTags' })
+
+    Microservice.belongsTo(models.RbacServiceAccount, {
+      foreignKey: {
+        name: 'serviceAccountId',
+        field: 'service_account_id'
+      },
+      as: 'serviceAccount'
+    })
   }
 
   return Microservice

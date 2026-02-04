@@ -866,3 +866,78 @@ CREATE INDEX idx_fog_log_status_session_id ON FogLogStatuses (session_id);
 
 ALTER TABLE ChangeTrackings ADD COLUMN microservice_logs BOOLEAN DEFAULT false;
 ALTER TABLE ChangeTrackings ADD COLUMN fog_logs BOOLEAN DEFAULT false;
+
+
+CREATE TABLE IF NOT EXISTS RbacRoles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    kind TEXT DEFAULT 'Role',
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+
+CREATE TABLE IF NOT EXISTS RbacRoleRules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    role_id INTEGER NOT NULL,
+    api_groups TEXT NOT NULL,
+    resources TEXT NOT NULL,
+    verbs TEXT NOT NULL,
+    resource_names TEXT,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (role_id) REFERENCES RbacRoles (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS RbacRoleBindings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    kind TEXT DEFAULT 'RoleBinding',
+    role_ref TEXT NOT NULL,
+    subjects TEXT NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS RbacServiceAccounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    role_ref TEXT,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE INDEX idx_rbac_role_rules_role_id ON RbacRoleRules (role_id);
+CREATE INDEX idx_rbac_roles_name ON RbacRoles (name);
+CREATE INDEX idx_rbac_role_bindings_name ON RbacRoleBindings (name);
+CREATE INDEX idx_rbac_service_accounts_name ON RbacServiceAccounts (name);
+
+CREATE TABLE IF NOT EXISTS RbacCacheVersion (
+    id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    version INTEGER NOT NULL DEFAULT 1,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+ALTER TABLE Microservices ADD COLUMN service_account_id INTEGER;
+CREATE INDEX idx_microservices_service_account_id ON Microservices (service_account_id);
+
+ALTER TABLE RbacRoleBindings ADD COLUMN role_id INTEGER;
+CREATE INDEX idx_rbac_role_bindings_role_id ON RbacRoleBindings (role_id);
+
+ALTER TABLE RbacServiceAccounts ADD COLUMN role_id INTEGER;
+CREATE INDEX idx_rbac_service_accounts_role_id ON RbacServiceAccounts (role_id);
+
+CREATE TABLE IF NOT EXISTS ClusterControllers (
+    uuid VARCHAR(36) PRIMARY KEY NOT NULL,
+    host VARCHAR(255),
+    process_id INTEGER,
+    last_heartbeat DATETIME,
+    is_active BOOLEAN DEFAULT true,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE INDEX idx_cluster_controllers_uuid ON ClusterControllers (uuid);
+CREATE INDEX idx_cluster_controllers_host ON ClusterControllers (host);
+CREATE INDEX idx_cluster_controllers_active ON ClusterControllers (is_active, last_heartbeat);

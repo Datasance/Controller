@@ -15,7 +15,7 @@ const FlowController = require('../controllers/application-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -32,11 +32,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for both SRE and Developer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const getFlowsByUserEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationsByUserEndPoint, successCode, errorCodes)
         const responseObject = await getFlowsByUserEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send({ flows: responseObject.body.applications })
@@ -63,11 +63,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for both SRE and Developer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const createFlowEndPoint = ResponseDecorator.handleErrors(FlowController.createApplicationEndPoint, successCode, errorCodes)
         const responseObject = await createFlowEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -94,11 +94,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for both SRE and Developer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const getFlowEndPoint = ResponseDecorator.handleErrors(FlowController.getApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await getFlowEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -129,11 +129,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for both SRE and Developer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateFlowEndPoint = ResponseDecorator.handleErrors(FlowController.patchApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await updateFlowEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -160,8 +160,8 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for both SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for both SRE and Developer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteFlowEndPoint = ResponseDecorator.handleErrors(FlowController.deleteApplicationByIdEndPoint, successCode, errorCodes)
         const responseObject = await deleteFlowEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

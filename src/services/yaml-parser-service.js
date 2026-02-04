@@ -363,7 +363,8 @@ const parseMicroserviceYAML = async (microservice) => {
     pubTags: lget(microservice, 'msRoutes.pubTags', []),
     subTags: lget(microservice, 'msRoutes.subTags', []),
     application: microservice.application,
-    schedule: lget(microservice, 'schedule', 50)
+    schedule: lget(microservice, 'schedule', 50),
+    serviceAccount: lget(microservice, 'serviceAccount', undefined)
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData
@@ -404,6 +405,80 @@ async function parseMicroserviceFile (fileContent) {
 
 const _deleteUndefinedFields = (obj) => Object.keys(obj).forEach(key => obj[key] === undefined && delete obj[key])
 
+async function parseRoleFile (fileContent) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (doc.kind !== 'Role') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}, expected Role`)
+    }
+    if (doc.metadata == null) {
+      throw new Errors.ValidationError('Invalid YAML format: metadata is required')
+    }
+    return {
+      name: doc.metadata.name,
+      kind: doc.kind,
+      // apiVersion removed - not stored in database
+      // namespace removed - not stored in database (controller manages single namespace)
+      rules: doc.rules || []
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing Role YAML: ${error.message}`)
+  }
+}
+
+async function parseRoleBindingFile (fileContent) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (doc.kind !== 'RoleBinding') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}, expected RoleBinding`)
+    }
+    if (doc.metadata == null || doc.roleRef == null) {
+      throw new Errors.ValidationError('Invalid YAML format: metadata and roleRef are required')
+    }
+    return {
+      name: doc.metadata.name,
+      kind: doc.kind,
+      // apiVersion removed - not stored in database
+      // namespace removed - not stored in database (controller manages single namespace)
+      roleRef: doc.roleRef,
+      subjects: doc.subjects || []
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing RoleBinding YAML: ${error.message}`)
+  }
+}
+
+async function parseServiceAccountFile (fileContent) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (doc.kind !== 'ServiceAccount') {
+      throw new Errors.ValidationError(`Invalid kind ${doc.kind}, expected ServiceAccount`)
+    }
+    if (doc.metadata == null) {
+      throw new Errors.ValidationError('Invalid YAML format: metadata is required')
+    }
+    if (!doc.roleRef || !doc.roleRef.name) {
+      throw new Errors.ValidationError('ServiceAccount must have a roleRef with a name')
+    }
+    return {
+      name: doc.metadata.name,
+      // namespace removed - not stored in database (controller manages single namespace)
+      roleRef: doc.roleRef
+    }
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing ServiceAccount YAML: ${error.message}`)
+  }
+}
+
 async function parseCertificateFile (fileContent) {
   try {
     const doc = yaml.load(fileContent)
@@ -443,5 +518,8 @@ module.exports = {
   parseVolumeMountFile: parseVolumeMountFile,
   parseConfigMapFile: parseConfigMapFile,
   parseCertificateFile: parseCertificateFile,
-  parseServiceFile: parseServiceFile
+  parseServiceFile: parseServiceFile,
+  parseRoleFile: parseRoleFile,
+  parseRoleBindingFile: parseRoleBindingFile,
+  parseServiceAccountFile: parseServiceAccountFile
 }

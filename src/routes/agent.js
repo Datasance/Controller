@@ -17,6 +17,7 @@ const ResponseDecorator = require('../decorators/response-decorator')
 const WebSocketServer = require('../websocket/server')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const TransactionDecorator = require('../decorators/transaction-decorator')
 
 module.exports = [
   {
@@ -712,9 +713,16 @@ module.exports = [
           return
         }
 
-        // Initialize WebSocket connection for agent
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentConnection in handleAgentConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
         const wsServer = WebSocketServer.getInstance()
-        await wsServer.handleConnection(ws, req)
+        const microserviceUuid = req.params.microserviceUuid
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentConnection(ws, req, token, microserviceUuid, transaction)
+        })()
       } catch (error) {
         logger.error('Error in agent WebSocket connection:' + JSON.stringify({
           error: error.message,
@@ -755,9 +763,17 @@ module.exports = [
           return
         }
 
-        // Initialize WebSocket connection for agent microservice logs
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentLogsConnection in handleAgentLogsConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
         const wsServer = WebSocketServer.getInstance()
-        await wsServer.handleConnection(ws, req)
+        const microserviceUuid = req.params.microserviceUuid
+        const sessionId = req.params.sessionId
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentLogsConnection(ws, req, token, microserviceUuid, null, sessionId, transaction)
+        })()
       } catch (error) {
         logger.error('Error in agent microservice logs WebSocket connection:' + JSON.stringify({
           error: error.message,
@@ -799,9 +815,17 @@ module.exports = [
           return
         }
 
-        // Initialize WebSocket connection for agent fog logs
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentLogsConnection in handleAgentLogsConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
         const wsServer = WebSocketServer.getInstance()
-        await wsServer.handleConnection(ws, req)
+        const iofogUuid = req.params.iofogUuid
+        const sessionId = req.params.sessionId
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentLogsConnection(ws, req, token, null, iofogUuid, sessionId, transaction)
+        })()
       } catch (error) {
         logger.error('Error in agent fog logs WebSocket connection:' + JSON.stringify({
           error: error.message,

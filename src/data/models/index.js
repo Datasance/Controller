@@ -68,10 +68,30 @@ db.initDB = async (isStart) => {
       await databaseProvider.runSeederPostgres(databaseProvider.sequelize)
     }
 
+    // Initialize RBAC cache version if it doesn't exist
+    try {
+      const RbacCacheVersionManager = require('../managers/rbac-cache-version-manager')
+      const fakeTransaction = { fakeTransaction: true }
+      await RbacCacheVersionManager.initializeVersion(fakeTransaction)
+      logger.info('RBAC cache version initialized')
+    } catch (error) {
+      logger.warn(`Failed to initialize RBAC cache version: ${error.message}. Continuing...`)
+    }
+
     // Configure system images
     const fogTypes = await db.FogType.findAll({})
     await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('systemImages.router', {}))
     await configureImage(db, constants.DEBUG_CATALOG_NAME, fogTypes, config.get('systemImages.debug', {}))
+
+    // Initialize controller UUID
+    try {
+      const ClusterControllerService = require('../../services/cluster-controller-service')
+      const fakeTransaction = { fakeTransaction: true }
+      await ClusterControllerService.initializeControllerUuid(fakeTransaction)
+      logger.info('Controller UUID initialized')
+    } catch (error) {
+      logger.warn(`Failed to initialize controller UUID: ${error.message}. Continuing...`)
+    }
   }
 }
 

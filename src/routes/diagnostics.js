@@ -16,7 +16,7 @@ const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const fs = require('fs')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -37,15 +37,15 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const createMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
           DiagnosticController.createMicroserviceImageSnapshotEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await createMicroserviceImageSnapshotEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -72,15 +72,15 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const getMicroserviceImageSnapshotEndPoint = ResponseDecorator.handleErrors(
           DiagnosticController.getMicroserviceImageSnapshotEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await getMicroserviceImageSnapshotEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         if (responseObject.code !== successCode) {
           res
             .status(responseObject.code)
@@ -120,15 +120,15 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const changeMicroserviceStraceStateEndPoint = ResponseDecorator.handleErrors(
           DiagnosticController.changeMicroserviceStraceStateEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await changeMicroserviceStraceStateEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -155,15 +155,15 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const getMicroserviceStraceDataEndPoint = ResponseDecorator.handleErrors(
           DiagnosticController.getMicroserviceStraceDataEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await getMicroserviceStraceDataEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -198,8 +198,8 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const postMicroserviceStraceDataToFtpEndPoint = ResponseDecorator.handleErrors(
           DiagnosticController.postMicroserviceStraceDataToFtpEndPoint,
           successCode,

@@ -3,7 +3,7 @@ const CertificateController = require('../controllers/certificate-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -28,10 +28,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createCAEndpoint = ResponseDecorator.handleErrors(CertificateController.createCAEndpoint, successCode, errorCodes)
         const responseObject = await createCAEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -58,10 +58,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getCAEndpoint = ResponseDecorator.handleErrors(CertificateController.getCAEndpoint, successCode, errorCodes)
         const responseObject = await getCAEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -84,10 +84,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listCAEndpoint = ResponseDecorator.handleErrors(CertificateController.listCAEndpoint, successCode, errorCodes)
         const responseObject = await listCAEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -114,10 +114,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteCAEndpoint = ResponseDecorator.handleErrors(CertificateController.deleteCAEndpoint, successCode, errorCodes)
         const responseObject = await deleteCAEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -152,10 +152,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.createCertificateEndpoint, successCode, errorCodes)
         const responseObject = await createCertificateEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -182,10 +182,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listExpiringCertificatesEndpoint = ResponseDecorator.handleErrors(CertificateController.listExpiringCertificatesEndpoint, successCode, errorCodes)
         const responseObject = await listExpiringCertificatesEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -212,10 +212,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.getCertificateEndpoint, successCode, errorCodes)
         const responseObject = await getCertificateEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -238,10 +238,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listCertificatesEndpoint = ResponseDecorator.handleErrors(CertificateController.listCertificatesEndpoint, successCode, errorCodes)
         const responseObject = await listCertificatesEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -268,10 +268,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.deleteCertificateEndpoint, successCode, errorCodes)
         const responseObject = await deleteCertificateEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -302,10 +302,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const renewCertificateEndpoint = ResponseDecorator.handleErrors(CertificateController.renewCertificateEndpoint, successCode, errorCodes)
         const responseObject = await renewCertificateEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -341,7 +341,7 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createCertificateFromYamlEndpoint = ResponseDecorator.handleErrors(CertificateController.createCertificateFromYamlEndpoint, successCode, errorCodes)
         const responseObject = await createCertificateFromYamlEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

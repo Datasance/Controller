@@ -1,6 +1,7 @@
 module.exports = {
   // Application Configuration
-  'APP_NAME': 'app.name',
+  'CONTROLLER_NAME': 'app.name',
+  'CONTROLLER_UUID': 'app.uuid',
   'CONTROL_PLANE': 'app.controlPlane',
   'CONTROLLER_NAMESPACE': 'app.namespace',
 
@@ -44,6 +45,9 @@ module.exports = {
   'EVENT_CLEANUP_INTERVAL': 'settings.eventCleanupInterval',
   'EVENT_AUDIT_ENABLED': 'settings.eventAuditEnabled',
   'EVENT_CAPTURE_IP_ADDRESS': 'settings.eventCaptureIpAddress',
+  'CONTROLLER_HEARTBEAT_INTERVAL': 'settings.controllerHeartbeatInterval',
+  'CONTROLLER_INACTIVE_THRESHOLD': 'settings.controllerInactiveThreshold',
+  'CONTROLLER_CLEANUP_INTERVAL': 'settings.controllerCleanupInterval',
 
   // Database Configuration
   'DB_PROVIDER': 'database.provider',

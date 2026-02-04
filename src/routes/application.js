@@ -15,7 +15,7 @@ const ApplicationController = require('../controllers/application-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -34,10 +34,10 @@ module.exports = [
 
       const getApplicationsByUserEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsByUserEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await getApplicationsByUserEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -62,10 +62,10 @@ module.exports = [
 
       const getApplicationsBySystemEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationsBySystemEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await getApplicationsBySystemEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -95,10 +95,10 @@ module.exports = [
 
       const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await createApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -128,10 +128,10 @@ module.exports = [
 
       const createApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.createApplicationYAMLEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await createApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -160,10 +160,10 @@ module.exports = [
 
       const getApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.getApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await getApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -193,10 +193,10 @@ module.exports = [
 
       const getSystemApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.getSystemApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await getSystemApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -231,10 +231,10 @@ module.exports = [
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.patchApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -268,10 +268,10 @@ module.exports = [
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationYAMLEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -305,10 +305,10 @@ module.exports = [
 
       const updateApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.updateApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await updateApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -337,10 +337,10 @@ module.exports = [
 
       const deleteApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await deleteApplicationEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -369,8 +369,8 @@ module.exports = [
 
       const deleteSystemApplicationEndPoint = ResponseDecorator.handleErrors(ApplicationController.deleteSystemApplicationEndPoint, successCode, errorCodes)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await deleteSystemApplicationEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res

@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.5.10
+  version: 3.6.0
   title: Datasance PoT Controller
 paths:
   /status:
@@ -668,6 +668,131 @@ paths:
                 type: number
         "400":
           description: Bad Request
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /cluster/controllers:
+    get:
+      tags:
+        - Cluster
+      summary: Lists all cluster controllers
+      operationId: listClusterControllers
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterControllerListResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+  /cluster/controllers/{uuid}:
+    get:
+      tags:
+        - Cluster
+      summary: Gets a cluster controller details
+      operationId: getClusterController
+      parameters:
+        - in: path
+          name: uuid
+          description: Cluster controller UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterControllerResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - Cluster
+      summary: Updates a cluster controller
+      operationId: updateClusterController
+      parameters:
+        - in: path
+          name: uuid
+          description: Cluster controller UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClusterControllerUpdateRequest"
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterControllerResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Cluster
+      summary: Deletes a cluster controller
+      operationId: deleteClusterController
+      parameters:
+        - in: path
+          name: uuid
+          description: Cluster controller UUID
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
         "404":
           description: Not Found
         "500":
@@ -3182,6 +3307,38 @@ paths:
           description: Invalid Registry Id
         "500":
           description: Internal Server Error
+    get:
+      tags:
+        - Registries
+      summary: Gets a registry
+      operationId: getRegistry
+      parameters:
+        - in: path
+          name: id
+          description: Registry id
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistryResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Invalid Registry Id
+        "500":
+          description: Internal Server Error
   /user/login:
     post:
       tags:
@@ -5052,6 +5209,729 @@ paths:
           description: Not Authorized
         "500":
           description: Internal Server Error
+  /roles:
+    get:
+      tags:
+        - Roles
+      summary: Lists all roles
+      operationId: listRoles
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleListResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - Roles
+      summary: Creates a new role
+      operationId: createRole
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreateRequest"
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Role Already Exists
+        "500":
+          description: Internal Server Error
+  /roles/yaml:
+    post:
+      tags:
+        - Roles
+      summary: Create a role from YAML file
+      operationId: createRoleFromYAML
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: Role Already Exists
+        "500":
+          description: Internal Server Error
+  "/roles/{name}":
+    get:
+      tags:
+        - Roles
+      summary: Gets a role by name
+      operationId: getRole
+      parameters:
+        - in: path
+          name: name
+          description: Role name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Role Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - Roles
+      summary: Updates an existing role
+      operationId: updateRole
+      parameters:
+        - in: path
+          name: name
+          description: Role name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreateRequest"
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Role Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - Roles
+      summary: Deletes a role
+      operationId: deleteRole
+      parameters:
+        - in: path
+          name: name
+          description: Role name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: Role Not Found
+        "500":
+          description: Internal Server Error
+  "/roles/yaml/{name}":
+    patch:
+      tags:
+        - Roles
+      summary: Updates an existing role using YAML
+      operationId: updateRoleFromYAML
+      parameters:
+        - in: path
+          name: name
+          description: Role name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Role Not Found
+        "500":
+          description: Internal Server Error
+  /rolebindings:
+    get:
+      tags:
+        - RoleBindings
+      summary: Lists all role bindings
+      operationId: listRoleBindings
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingListResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - RoleBindings
+      summary: Creates a new role binding
+      operationId: createRoleBinding
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleBindingCreateRequest"
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: RoleBinding Already Exists
+        "500":
+          description: Internal Server Error
+  /rolebindings/yaml:
+    post:
+      tags:
+        - RoleBindings
+      summary: Create a role binding from YAML file
+      operationId: createRoleBindingFromYAML
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                rolebinding:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: RoleBinding Already Exists
+        "500":
+          description: Internal Server Error
+  "/rolebindings/{name}":
+    get:
+      tags:
+        - RoleBindings
+      summary: Gets a role binding by name
+      operationId: getRoleBinding
+      parameters:
+        - in: path
+          name: name
+          description: RoleBinding name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: RoleBinding Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - RoleBindings
+      summary: Updates an existing role binding
+      operationId: updateRoleBinding
+      parameters:
+        - in: path
+          name: name
+          description: RoleBinding name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleBindingCreateRequest"
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: RoleBinding Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - RoleBindings
+      summary: Deletes a role binding
+      operationId: deleteRoleBinding
+      parameters:
+        - in: path
+          name: name
+          description: RoleBinding name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: RoleBinding Not Found
+        "500":
+          description: Internal Server Error
+  "/rolebindings/yaml/{name}":
+    patch:
+      tags:
+        - RoleBindings
+      summary: Updates an existing role binding using YAML
+      operationId: updateRoleBindingFromYAML
+      parameters:
+        - in: path
+          name: name
+          description: RoleBinding name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                rolebinding:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleBindingResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: RoleBinding Not Found
+        "500":
+          description: Internal Server Error
+  /serviceaccounts:
+    get:
+      tags:
+        - ServiceAccounts
+      summary: Lists all service accounts
+      operationId: listServiceAccounts
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountListResponse"
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - ServiceAccounts
+      summary: Creates a new service account
+      operationId: createServiceAccount
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceAccountCreateRequest"
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: ServiceAccount Already Exists
+        "500":
+          description: Internal Server Error
+  /serviceaccounts/yaml:
+    post:
+      tags:
+        - ServiceAccounts
+      summary: Create a service account from YAML file
+      operationId: createServiceAccountFromYAML
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                serviceaccount:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "409":
+          description: ServiceAccount Already Exists
+        "500":
+          description: Internal Server Error
+  "/serviceaccounts/{name}":
+    get:
+      tags:
+        - ServiceAccounts
+      summary: Gets a service account by name
+      operationId: getServiceAccount
+      parameters:
+        - in: path
+          name: name
+          description: ServiceAccount name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: ServiceAccount Not Found
+        "500":
+          description: Internal Server Error
+    patch:
+      tags:
+        - ServiceAccounts
+      summary: Updates an existing service account
+      operationId: updateServiceAccount
+      parameters:
+        - in: path
+          name: name
+          description: ServiceAccount name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServiceAccountCreateRequest"
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: ServiceAccount Not Found
+        "500":
+          description: Internal Server Error
+    delete:
+      tags:
+        - ServiceAccounts
+      summary: Deletes a service account
+      operationId: deleteServiceAccount
+      parameters:
+        - in: path
+          name: name
+          description: ServiceAccount name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+        "401":
+          description: Not Authorized
+        "404":
+          description: ServiceAccount Not Found
+        "500":
+          description: Internal Server Error
+  "/serviceaccounts/yaml/{name}":
+    patch:
+      tags:
+        - ServiceAccounts
+      summary: Updates an existing service account using YAML
+      operationId: updateServiceAccountFromYAML
+      parameters:
+        - in: path
+          name: name
+          description: ServiceAccount name
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                serviceaccount:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Success
+          headers:
+            X-Timestamp:
+              description: FogController server timestamp
+              schema:
+                type: number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAccountResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: ServiceAccount Not Found
+        "500":
+          description: Internal Server Error
 tags:
   - name: Controller
     description: Manage your controller
@@ -5091,6 +5971,12 @@ tags:
     description: Manage your config maps
   - name: Events
     description: Manage audit events
+  - name: Roles
+    description: Manage RBAC roles
+  - name: RoleBindings
+    description: Manage RBAC role bindings
+  - name: ServiceAccounts
+    description: Manage RBAC service accounts
 servers:
   - url: http://localhost:51121/api/v3
 components:
@@ -6728,6 +7614,12 @@ components:
           type: array
           items:
             type: string
+        serviceAccount:
+          type: object
+          properties:
+            roleRef:
+              $ref: "#/components/schemas/RoleRef"
+          additionalProperties: false
     UpdateMicroserviceRequest:
       type: object
       required:
@@ -6793,6 +7685,12 @@ components:
           type: array
           items:
             type: string
+        serviceAccount:
+          type: object
+          properties:
+            roleRef:
+              $ref: "#/components/schemas/RoleRef"
+          additionalProperties: false
     IOFogNodeTunnelStatusInfoResponse:
       type: object
       properties:
@@ -7431,3 +8329,254 @@ components:
           minItems: 1
       required:
         - fogUuids
+    RbacRule:
+      type: object
+      properties:
+        apiGroups:
+          type: array
+          items:
+            type: string
+        resources:
+          type: array
+          items:
+            type: string
+        verbs:
+          type: array
+          items:
+            type: string
+        resourceNames:
+          type: array
+          items:
+            type: string
+          nullable: true
+      required:
+        - apiGroups
+        - resources
+        - verbs
+    RoleRef:
+      type: object
+      required:
+        - kind
+        - name
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        apiGroup:
+          type: string
+    Subject:
+      type: object
+      required:
+        - kind
+        - name
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        apiGroup:
+          type: string
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RbacRule"
+      required:
+        - name
+        - apiVersion
+        - kind
+        - rules
+    RoleCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RbacRule"
+      required:
+        - name
+        - rules
+    RoleResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/RbacRule"
+      required:
+        - name
+        - apiVersion
+        - kind
+        - rules
+    RoleListResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/RoleResponse"
+    RoleBinding:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+      required:
+        - name
+        - apiVersion
+        - kind
+        - roleRef
+        - subjects
+    RoleBindingCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+      required:
+        - name
+        - roleRef
+        - subjects
+    RoleBindingResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+        subjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Subject"
+      required:
+        - name
+        - apiVersion
+        - kind
+        - roleRef
+        - subjects
+    RoleBindingListResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/RoleBindingResponse"
+    ServiceAccount:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+      required:
+        - name
+        - roleRef
+    ServiceAccountCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+      required:
+        - name
+        - roleRef
+    ServiceAccountResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        roleRef:
+          $ref: "#/components/schemas/RoleRef"
+      required:
+        - name
+        - roleRef
+    ServiceAccountListResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ServiceAccountResponse"
+    ClusterControllerResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+        host:
+          type: string
+          nullable: true
+        processId:
+          type: integer
+          nullable: true
+        lastHeartbeat:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - uuid
+        - isActive
+    ClusterControllerListResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ClusterControllerResponse"
+    ClusterControllerUpdateRequest:
+      type: object
+      properties:
+        host:
+          type: string
+      additionalProperties: false

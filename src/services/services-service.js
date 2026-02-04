@@ -53,45 +53,57 @@ async function _setTags (serviceModel, tagsArray, transaction) {
 }
 
 async function handleServiceDistribution (serviceTags, transaction) {
+  const tags = Array.isArray(serviceTags) ? serviceTags : (serviceTags ? [].concat(serviceTags) : [])
+  logger.debug('handleServiceDistribution: entry', { serviceTagsType: typeof serviceTags, isArray: Array.isArray(serviceTags), tagsLength: tags.length })
+
   // Always find fog nodes with 'all' tag
-  const allTaggedFogNodes = await FogManager.findAllWithTags({
+  const allTaggedFogNodesRaw = await FogManager.findAllWithTags({
     '$tags.value$': `${SERVICE_ANNOTATION_TAG}: all`
   }, transaction)
+  const allTaggedFogNodes = Array.isArray(allTaggedFogNodesRaw) ? allTaggedFogNodesRaw : []
+  logger.debug('handleServiceDistribution: allTaggedFogNodes', { length: allTaggedFogNodes.length })
 
   // If serviceTags is null or empty, return only fog nodes with 'all' tag
-  if (!serviceTags || serviceTags.length === 0) {
-    const uuids = allTaggedFogNodes.map(fog => fog.uuid)
+  if (!tags.length) {
+    const uuids = Array.from(allTaggedFogNodes).map(fog => fog.uuid)
+    logger.debug('handleServiceDistribution: early return (no tags)', { uuidsCount: uuids.length })
     return uuids
   }
 
   // Filter tags that don't contain ':' or '='
-  const filteredServiceTags = serviceTags
+  const filteredServiceTags = tags
     .filter(tag => tag != null)
     .map(tag => String(tag))
     .filter(tag => !tag.includes(':') && !tag.includes('='))
     .filter(tag => tag.length > 0)
 
   if (filteredServiceTags.length === 0) {
-    const uuids = allTaggedFogNodes.map(fog => fog.uuid)
+    const uuids = Array.from(allTaggedFogNodes).map(fog => fog.uuid)
+    logger.debug('handleServiceDistribution: early return (filtered empty)', { uuidsCount: uuids.length })
     return uuids
   }
 
   // Find fog nodes for each filtered tag
   const specificTaggedFogNodes = new Set()
   for (const tag of filteredServiceTags) {
-    const fogNodes = await FogManager.findAllWithTags({
+    const fogNodesRaw = await FogManager.findAllWithTags({
       '$tags.value$': `${SERVICE_ANNOTATION_TAG}: ${tag}`
     }, transaction)
+    const fogNodes = Array.isArray(fogNodesRaw) ? fogNodesRaw : []
     fogNodes.forEach(fog => specificTaggedFogNodes.add(fog.uuid))
   }
 
-  // Get all tag fog node UUIDs
-  const allTagUuids = allTaggedFogNodes.map(fog => fog.uuid)
+  // Get all tag fog node UUIDs (force real array for spread)
+  const allTagUuids = Array.from(allTaggedFogNodes).map(fog => fog.uuid)
+  const allTagUuidsArr = Array.from(allTagUuids)
+  const specificArr = Array.from(specificTaggedFogNodes)
+  logger.debug('handleServiceDistribution: before Set', { allTagUuidsLength: allTagUuidsArr.length, specificSize: specificArr.length })
 
   // Combine both sets of fog nodes and remove duplicates
-  const allFogUuids = new Set([...allTagUuids, ...Array.from(specificTaggedFogNodes)])
-
-  return Array.from(allFogUuids)
+  const allFogUuids = new Set([...allTagUuidsArr, ...specificArr])
+  const result = Array.from(allFogUuids)
+  logger.debug('handleServiceDistribution: exit', { resultCount: result.length })
+  return result
 }
 
 async function checkKubernetesEnvironment () {
@@ -262,7 +274,7 @@ async function _determineConnectorHost (serviceConfig, transaction) {
       } else {
         return `iofog_${serviceConfig.resource}`
       }
-    case 'agent':
+    case 'agent': // TODO: find agent extract router config mode from agent router mode.
       return 'iofog'
     case 'k8s':
     case 'external':
@@ -650,6 +662,7 @@ async function _updateTcpConnector (serviceConfig, transaction) {
 
 // Helper function to delete tcpConnector from router config
 async function _deleteTcpConnector (serviceName, transaction) {
+  logger.debug('_deleteTcpConnector: start', { serviceName })
   const isK8s = await checkKubernetesEnvironment()
   const connectorName = `${serviceName}-connector`
 
@@ -658,6 +671,7 @@ async function _deleteTcpConnector (serviceName, transaction) {
   if (!service) {
     throw new Errors.NotFoundError(`Service not found: ${serviceName}`)
   }
+  logger.debug('_deleteTcpConnector: service', { type: service.type, resource: service.resource, defaultBridge: service.defaultBridge })
 
   const isDefaultRouter = service.defaultBridge === 'default-router'
   let microserviceSource = null
@@ -673,6 +687,7 @@ async function _deleteTcpConnector (serviceName, transaction) {
   }
 
   if (isDefaultRouter && (!microserviceSource || !fogSource)) {
+    logger.debug('_deleteTcpConnector: updating default router config')
     if (isK8s) {
       // Update K8s router config
       const configMap = await K8sClient.getConfigMap(K8S_ROUTER_CONFIG_MAP)
@@ -703,6 +718,8 @@ async function _deleteTcpConnector (serviceName, transaction) {
 
       await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
     }
+    logger.debug('_deleteTcpConnector: done (default router updated)')
+    return
   }
 
   let fogNodeUuid = null
@@ -715,6 +732,7 @@ async function _deleteTcpConnector (serviceName, transaction) {
   if (fogSource) {
     fogNodeUuid = fogSource.uuid
   }
+  logger.debug('_deleteTcpConnector: fogNodeUuid for non-default', { fogNodeUuid })
   const routerMicroservice = await _getRouterMicroservice(fogNodeUuid, transaction)
   const currentConfig = JSON.parse(routerMicroservice.config || '{}')
 
@@ -722,11 +740,14 @@ async function _deleteTcpConnector (serviceName, transaction) {
     delete currentConfig.bridges.tcpConnectors[connectorName]
   }
 
+  logger.debug('_deleteTcpConnector: updating router config', { fogNodeUuid })
   await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
+  logger.debug('_deleteTcpConnector: done')
 }
 
 // Helper function to delete tcpListener from router config
 async function _deleteTcpListener (serviceName, transaction) {
+  logger.debug('_deleteTcpListener: start', { serviceName })
   const isK8s = await checkKubernetesEnvironment()
   const listenerName = `${serviceName}-listener`
 
@@ -751,6 +772,7 @@ async function _deleteTcpListener (serviceName, transaction) {
   if (!service) {
     throw new Errors.NotFoundError(`Service not found: ${serviceName}`)
   }
+  logger.debug('_deleteTcpListener: service', { type: service.type, hasTags: !!service.tags, tagsIsArray: Array.isArray(service.tags) })
 
   let microserviceSource = null
   if (service.type === 'microservice') {
@@ -758,8 +780,10 @@ async function _deleteTcpListener (serviceName, transaction) {
   }
   // Handle distributed router microservice cases
   // Get list of fog nodes that need this listener removed
-  const serviceTags = service.tags.map(tag => tag.value)
+  const serviceTags = (service.tags && Array.isArray(service.tags)) ? service.tags.map(tag => tag.value) : []
+  logger.debug('_deleteTcpListener: calling handleServiceDistribution', { serviceTagsLength: serviceTags.length, serviceTagsSample: serviceTags.slice(0, 3) })
   const fogNodeUuids = await handleServiceDistribution(serviceTags, transaction)
+  logger.debug('_deleteTcpListener: handleServiceDistribution returned', { fogNodeUuidsLength: fogNodeUuids ? fogNodeUuids.length : 'null/undefined', isArray: Array.isArray(fogNodeUuids) })
 
   if (microserviceSource) {
     if (!fogNodeUuids.includes(microserviceSource.iofogUuid)) {
@@ -787,7 +811,9 @@ async function _deleteTcpListener (serviceName, transaction) {
   // }
 
   // Remove listener from each router microservice
-  for (const fogNodeUuid of fogNodeUuids) {
+  const fogList = Array.isArray(fogNodeUuids) ? fogNodeUuids : []
+  logger.debug('_deleteTcpListener: iterating router configs', { count: fogList.length })
+  for (const fogNodeUuid of fogList) {
     try {
       const routerMicroservice = await _getRouterMicroservice(fogNodeUuid, transaction)
       const currentConfig = JSON.parse(routerMicroservice.config || '{}')
@@ -797,11 +823,24 @@ async function _deleteTcpListener (serviceName, transaction) {
       await _updateRouterMicroserviceConfig(fogNodeUuid, currentConfig, transaction)
     } catch (err) {
       if (err instanceof Errors.NotFoundError) {
-        logger.info(`Router microservice not found for fogNodeUuid ${fogNodeUuid}, skipping.`)
+        logger.info('_deleteTcpListener: router microservice not found, skipping', { fogNodeUuid })
         continue
       }
+      logger.error('_deleteTcpListener: error updating router config', { fogNodeUuid, message: err.message })
       throw err
     }
+  }
+  logger.debug('_deleteTcpListener: done')
+}
+
+// Common labels for Kubernetes services created by the controller
+function _getK8sServiceLabels () {
+  return {
+    'app.kubernetes.io/name': 'pot',
+    'app.kubernetes.io/component': 'controller',
+    'app.kubernetes.io/managed-by': 'controller',
+    'datasance.com/component': 'router',
+    'app.kubernetes.io/instance': process.env.CONTROLLER_NAME || config.get('app.name')
   }
 }
 
@@ -813,6 +852,7 @@ async function _createK8sService (serviceConfig, transaction) {
     kind: 'Service',
     metadata: {
       name: serviceConfig.name,
+      labels: _getK8sServiceLabels(),
       annotations: normalizedTags.reduce((acc, tag) => {
         const [key, value] = tag.split(':')
         acc[key] = (value || '').trim()
@@ -861,6 +901,7 @@ async function _updateK8sService (serviceConfig, transaction) {
     const normalizedTags = serviceConfig.tags.map(tag => tag.includes(':') ? tag : `${tag}:`)
     const patchData = {
       metadata: {
+        labels: _getK8sServiceLabels(),
         annotations: normalizedTags.reduce((acc, tag) => {
           const [key, value] = tag.split(':')
           acc[key] = (value || '').trim()
@@ -1138,36 +1179,46 @@ async function updateServiceEndpoint (serviceName, serviceData, transaction) {
 
 // Delete service endpoint
 async function deleteServiceEndpoint (serviceName, transaction) {
+  logger.debug('deleteServiceEndpoint: start', { serviceName })
   // Get existing service
   const existingService = await ServiceManager.findOne({ name: serviceName }, transaction)
   if (!existingService) {
     throw new Errors.NotFoundError(`Service with name ${serviceName} not found`)
   }
+  logger.debug('deleteServiceEndpoint: existingService', { type: existingService.type, defaultBridge: existingService.defaultBridge })
 
   const isK8s = await checkKubernetesEnvironment()
 
   try {
     // Delete TCP connector
+    logger.debug('deleteServiceEndpoint: deleting TCP connector')
     await _deleteTcpConnector(serviceName, transaction)
+    logger.debug('deleteServiceEndpoint: TCP connector deleted')
 
     // Delete TCP listener
+    logger.debug('deleteServiceEndpoint: deleting TCP listener')
     await _deleteTcpListener(serviceName, transaction)
+    logger.debug('deleteServiceEndpoint: TCP listener deleted')
 
     // Delete K8s service if needed
     if (isK8s && existingService.type !== 'k8s') {
+      logger.debug('deleteServiceEndpoint: deleting K8s service')
       await _deleteK8sService(serviceName)
+      logger.debug('deleteServiceEndpoint: K8s service deleted')
     }
 
     // Finally delete the service from database
+    logger.debug('deleteServiceEndpoint: deleting service from DB')
     await ServiceManager.delete({ name: serviceName }, transaction)
+    logger.debug('deleteServiceEndpoint: done')
 
     return { message: `Service ${serviceName} deleted successfully` }
   } catch (error) {
-    logger.error('Error deleting service:', {
-      error: error.message,
+    logger.error('deleteServiceEndpoint: error', {
+      serviceName,
+      message: error.message,
       stack: error.stack,
-      serviceName: serviceName,
-      serviceType: existingService.type
+      constructorName: error.constructor && error.constructor.name
     })
 
     // Wrap the error in a proper error type if it's not already

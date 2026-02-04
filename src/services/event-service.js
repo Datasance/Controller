@@ -48,6 +48,7 @@ function extractResourceType (path) {
     { pattern: /^\/api\/v3\/applicationTemplates/, type: 'applicationTemplate' },
     { pattern: /^\/api\/v3\/catalog/, type: 'catalog' },
     { pattern: /^\/api\/v3\/controller/, type: 'controller' },
+    { pattern: /^\/api\/v3\/cluster/, type: 'cluster' },
     { pattern: /^\/api\/v3\/users/, type: 'user' },
     { pattern: /^\/api\/v3\/capabilities/, type: 'capabilities' },
     { pattern: /^\/api\/v3\/events/, type: 'event' }

@@ -48,6 +48,7 @@ const SecretManager = require('../data/managers/secret-manager')
 const ConfigMapManager = require('../data/managers/config-map-manager')
 const MicroserviceLogStatusManager = require('../data/managers/microservice-log-status-manager')
 const FogLogStatusManager = require('../data/managers/fog-log-status-manager')
+const RbacRoleManager = require('../data/managers/rbac-role-manager')
 
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
@@ -58,6 +59,8 @@ for (const key of CHANGE_TRACKING_KEYS) {
 
 const agentProvision = async function (provisionData, transaction) {
   await Validator.validate(provisionData, Validator.schemas.agentProvision)
+
+  const namespace = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace', 'datasance')
 
   const provision = await FogProvisionKeyManager.findOne({
     provisionKey: provisionData.key
@@ -104,7 +107,8 @@ const agentProvision = async function (provisionData, transaction) {
 
   return {
     uuid: fog.uuid,
-    privateKey: keyPair.privateKey
+    privateKey: keyPair.privateKey,
+    namespace: namespace
   }
 }
 
@@ -300,7 +304,7 @@ const updateAgentStatus = async function (agentStatus, fog, transaction) {
 
   if (agentStatus.warningMessage.includes('HW signature changed') || agentStatus.warningMessage.includes('HW signature mismatch')) {
     fogStatus.securityStatus = 'WARNING'
-    fogStatus.securityViolationInfo = 'HW signature mismatch'
+    fogStatus.securityViolationInfo = 'Auto deprovisioned by Agent. HW signature mismatch'
   } else {
     fogStatus.securityStatus = 'OK'
     fogStatus.securityViolationInfo = 'No violation'
@@ -343,6 +347,37 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
 
 const _mapExtraHost = function (extraHost) {
   return `${extraHost.name}:${extraHost.value}`
+}
+
+/**
+ * Resolve service account rules from roleRef
+ * @param {Object} serviceAccount - Service account object (from relationship or lookup)
+ * @param {Object} transaction - Database transaction
+ * @returns {Object|null} Service account with resolved rules or null if not found
+ */
+async function _resolveServiceAccountRules (serviceAccount, transaction) {
+  try {
+    // If serviceAccount is already loaded from relationship, use it
+    // Otherwise, it might be null/undefined
+    if (!serviceAccount || !serviceAccount.roleRef) {
+      return null
+    }
+
+    // Get role from roleRef (check system roles first, then database)
+    const role = await RbacRoleManager.getRoleWithRules(serviceAccount.roleRef.name, transaction)
+    if (!role) {
+      return null
+    }
+
+    return {
+      name: serviceAccount.name,
+      roleRef: serviceAccount.roleRef,
+      rules: role.rules
+    }
+  } catch (error) {
+    // If service account doesn't exist or error, return null
+    return null
+  }
 }
 
 const getAgentMicroservices = async function (fog, transaction) {
@@ -447,8 +482,21 @@ const getAgentMicroservices = async function (fog, transaction) {
       schedule: microservice.schedule
     }
 
-    response.push(responseMicroservice)
+    // Resolve service account with rules from relationship
+    const serviceAccountData = await _resolveServiceAccountRules(microservice.serviceAccount, transaction)
+    if (serviceAccountData) {
+      responseMicroservice.serviceAccount = {
+        name: serviceAccountData.name,
+        roleRef: serviceAccountData.roleRef,
+        rules: serviceAccountData.rules
+      }
+    } else {
+      // If service account doesn't exist, create default one or leave null
+      // For now, we'll leave it null - the agent should handle this gracefully
+      responseMicroservice.serviceAccount = null
+    }
 
+    response.push(responseMicroservice)
     await MicroserviceManager.update({
       uuid: microservice.uuid
     }, {

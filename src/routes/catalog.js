@@ -15,7 +15,7 @@ const CatalogController = require('../controllers/catalog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -38,10 +38,10 @@ module.exports = [
         errorCodes
       )
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await listCatalogItemsEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -79,10 +79,10 @@ module.exports = [
         errorCodes
       )
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await createCatalogItemEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -115,10 +115,10 @@ module.exports = [
         errorCodes
       )
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await listCatalogItemEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -160,10 +160,10 @@ module.exports = [
         errorCodes
       )
 
-      // Add keycloak.protect() middleware to protect the route for SRE and Developer
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE and Developer
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await updateCatalogItemEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -196,8 +196,8 @@ module.exports = [
         errorCodes
       )
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const responseObject = await deleteCatalogItemEndPoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username
         res

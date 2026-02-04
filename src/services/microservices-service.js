@@ -41,6 +41,8 @@ const ServiceServices = require('./services-service')
 const ConfigMapManager = require('../data/managers/config-map-manager')
 const SecretManager = require('../data/managers/secret-manager')
 const VolumeMountService = require('./volume-mount-service')
+const RbacServiceAccountManager = require('../data/managers/rbac-service-account-manager')
+const RbacRoleManager = require('../data/managers/rbac-role-manager')
 
 const Op = require('sequelize').Op
 const FogManager = require('../data/managers/iofog-manager')
@@ -76,6 +78,64 @@ async function _setSubTags (microserviceModel, tagsArray, transaction) {
       tags.push(tagModel)
     }
     await microserviceModel.setSubTags(tags)
+  }
+}
+
+/**
+ * Create or update service account for a microservice
+ * @param {string} microserviceName - Name of the microservice (used as service account name)
+ * @param {string|null|undefined} roleRefName - Name of the role to reference (defaults to 'microservice' if not provided)
+ * @param {Object} transaction - Database transaction
+ * @returns {Object} Service account object
+ */
+async function _createOrUpdateServiceAccountForMicroservice (microserviceName, roleRefName, transaction) {
+  // Default to 'microservice' role if not provided, null, undefined, or empty string
+  const roleName = (roleRefName && typeof roleRefName === 'string' && roleRefName.trim() !== '') ? roleRefName : 'microservice'
+
+  // Validate role exists (check system roles first, then database)
+  const role = await RbacRoleManager.getRoleWithRules(roleName, transaction)
+  if (!role) {
+    throw new Errors.ValidationError(`Referenced role '${roleName}' does not exist`)
+  }
+
+  // Prepare roleRef object
+  const roleRef = {
+    kind: 'Role',
+    name: roleName
+  }
+
+  // Check if service account already exists
+  const existingServiceAccount = await RbacServiceAccountManager.findOne({ name: microserviceName }, transaction)
+
+  if (existingServiceAccount) {
+    // Update existing service account
+    const updated = await RbacServiceAccountManager.updateServiceAccount(microserviceName, { roleRef }, transaction)
+    return updated
+  } else {
+    // Create new service account
+    const created = await RbacServiceAccountManager.createServiceAccount({
+      name: microserviceName,
+      roleRef
+    }, transaction)
+    return created
+  }
+}
+
+/**
+ * Delete service account for a microservice
+ * @param {string} microserviceName - Name of the microservice (used as service account name)
+ * @param {Object} transaction - Database transaction
+ */
+async function _deleteServiceAccountForMicroservice (microserviceName, transaction) {
+  try {
+    await RbacServiceAccountManager.deleteServiceAccount(microserviceName, transaction)
+  } catch (error) {
+    // Gracefully handle not found errors (service account might not exist)
+    if (error.name !== 'NotFoundError') {
+      throw error
+    }
+    // Log but don't fail if service account doesn't exist
+    logger.warn(`Service account '${microserviceName}' not found during microservice deletion, continuing...`)
   }
 }
 
@@ -441,6 +501,26 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
 
   await _createMicroserviceStatus(microservice, transaction)
   await _createMicroserviceExecStatus(microservice, transaction)
+
+  // Create service account for microservice (always create, use default 'microservice' role if not specified)
+  let roleRefName = null
+  if (microserviceData.serviceAccount &&
+      microserviceData.serviceAccount.roleRef &&
+      microserviceData.serviceAccount.roleRef.name) {
+    roleRefName = microserviceData.serviceAccount.roleRef.name
+  }
+  try {
+    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microservice.name, roleRefName, transaction)
+    // Update microservice with service account ID
+    await MicroserviceManager.update(
+      { uuid: microservice.uuid },
+      { serviceAccountId: serviceAccount.id },
+      transaction
+    )
+  } catch (error) {
+    logger.error(`Failed to create service account for microservice ${microservice.name}:`, error.message)
+    throw error
+  }
 
   const res = {
     uuid: microservice.uuid,
@@ -858,6 +938,35 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     }, microserviceStatus, transaction)
   }
 
+  // Always ensure service account exists for microservice
+  // If serviceAccount field is provided, use it; otherwise ensure default service account exists
+  const microserviceName = updatedMicroservice.name || microservice.name
+  let roleRefName = null
+
+  if (microserviceData.serviceAccount !== undefined) {
+    // Handle null, empty object, or valid roleRef
+    if (microserviceData.serviceAccount &&
+        microserviceData.serviceAccount.roleRef &&
+        microserviceData.serviceAccount.roleRef.name) {
+      roleRefName = microserviceData.serviceAccount.roleRef.name
+    }
+    // If serviceAccount is null or empty object, roleRefName will be null and default to 'microservice' role
+  }
+  // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
+
+  try {
+    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
+    // Update microservice with service account ID
+    await MicroserviceManager.update(
+      { uuid: updatedMicroservice.uuid },
+      { serviceAccountId: serviceAccount.id },
+      transaction
+    )
+  } catch (error) {
+    logger.error(`Failed to update service account for microservice ${microserviceName}:`, error.message)
+    throw error
+  }
+
   if (changeTrackingEnabled) {
     await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
     await ChangeTrackingService.update(updatedMicroservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
@@ -1149,6 +1258,35 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     }, microserviceStatus, transaction)
   }
 
+  // Always ensure service account exists for microservice
+  // If serviceAccount field is provided, use it; otherwise ensure default service account exists
+  const microserviceName = updatedMicroservice.name || microservice.name
+  let roleRefName = null
+
+  if (microserviceData.serviceAccount !== undefined) {
+    // Handle null, empty object, or valid roleRef
+    if (microserviceData.serviceAccount &&
+        microserviceData.serviceAccount.roleRef &&
+        microserviceData.serviceAccount.roleRef.name) {
+      roleRefName = microserviceData.serviceAccount.roleRef.name
+    }
+    // If serviceAccount is null or empty object, roleRefName will be null and default to 'microservice' role
+  }
+  // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
+
+  try {
+    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
+    // Update microservice with service account ID
+    await MicroserviceManager.update(
+      { uuid: updatedMicroservice.uuid },
+      { serviceAccountId: serviceAccount.id },
+      transaction
+    )
+  } catch (error) {
+    logger.error(`Failed to update service account for system microservice ${microserviceName}:`, error.message)
+    throw error
+  }
+
   if (changeTrackingEnabled) {
     await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
     await ChangeTrackingService.update(updatedMicroservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
@@ -1389,6 +1527,10 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
     logger.info(`Deleting service ${existingService.name}`)
     await ServiceServices.deleteServiceEndpoint(existingService.name, transaction)
   }
+
+  // Delete service account for microservice
+  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
+
   await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   await _updateChangeTracking(false, microservice.iofogUuid, transaction)
 }
@@ -2297,6 +2439,9 @@ async function deleteMicroserviceWithRoutesAndPortMappings (microservice, transa
   }
 
   await MicroservicePortService.deletePortMappings(microservice, transaction)
+
+  // Delete service account for microservice (safety net in case it wasn't deleted earlier)
+  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
 
   await MicroserviceManager.delete({
     uuid: microservice.uuid

@@ -881,3 +881,79 @@ CREATE INDEX idx_fog_log_status_session_id ON "FogLogStatuses" (session_id);
 ALTER TABLE "ChangeTrackings" ADD COLUMN microservice_logs BOOLEAN DEFAULT false;
 ALTER TABLE "ChangeTrackings" ADD COLUMN fog_logs BOOLEAN DEFAULT false;
 
+CREATE TABLE IF NOT EXISTS "RbacRoles" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    kind TEXT DEFAULT 'Role',
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE TABLE IF NOT EXISTS "RbacRoleRules" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    role_id INT NOT NULL,
+    api_groups TEXT NOT NULL,
+    resources TEXT NOT NULL,
+    verbs TEXT NOT NULL,
+    resource_names TEXT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (role_id) REFERENCES "RbacRoles" (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "RbacRoleBindings" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    kind TEXT DEFAULT 'RoleBinding',
+    role_ref TEXT NOT NULL,
+    subjects TEXT NOT NULL,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE TABLE IF NOT EXISTS "RbacServiceAccounts" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL,
+    role_ref TEXT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE INDEX idx_rbac_role_rules_role_id ON "RbacRoleRules" (role_id);
+CREATE INDEX idx_rbac_roles_name ON "RbacRoles" (name);
+CREATE INDEX idx_rbac_role_bindings_name ON "RbacRoleBindings" (name);
+CREATE INDEX idx_rbac_service_accounts_name ON "RbacServiceAccounts" (name);
+
+CREATE TABLE IF NOT EXISTS "RbacCacheVersion" (
+    id INT PRIMARY KEY DEFAULT 1,
+    version BIGINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    CONSTRAINT single_row CHECK (id = 1)
+);
+
+ALTER TABLE "Microservices" ADD COLUMN service_account_id INT;
+CREATE INDEX idx_microservices_service_account_id ON "Microservices" (service_account_id);
+ALTER TABLE "Microservices" ADD CONSTRAINT fk_microservices_service_account_id FOREIGN KEY (service_account_id) REFERENCES "RbacServiceAccounts" (id);
+
+ALTER TABLE "RbacRoleBindings" ADD COLUMN role_id INT;
+CREATE INDEX idx_rbac_role_bindings_role_id ON "RbacRoleBindings" (role_id);
+ALTER TABLE "RbacRoleBindings" ADD CONSTRAINT fk_rbac_role_bindings_role_id FOREIGN KEY (role_id) REFERENCES "RbacRoles" (id);
+
+ALTER TABLE "RbacServiceAccounts" ADD COLUMN role_id INT;
+CREATE INDEX idx_rbac_service_accounts_role_id ON "RbacServiceAccounts" (role_id);
+ALTER TABLE "RbacServiceAccounts" ADD CONSTRAINT fk_rbac_service_accounts_role_id FOREIGN KEY (role_id) REFERENCES "RbacRoles" (id);
+
+CREATE TABLE IF NOT EXISTS "ClusterControllers" (
+    uuid VARCHAR(36) PRIMARY KEY NOT NULL,
+    host VARCHAR(255),
+    process_id INT,
+    last_heartbeat TIMESTAMP(0),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE INDEX idx_cluster_controllers_uuid ON "ClusterControllers" (uuid);
+CREATE INDEX idx_cluster_controllers_host ON "ClusterControllers" (host);
+CREATE INDEX idx_cluster_controllers_active ON "ClusterControllers" (is_active, last_heartbeat);

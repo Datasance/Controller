@@ -33,6 +33,7 @@ const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
 const MicroserviceExecStatus = models.MicroserviceExecStatus
 const MicroserviceHealthCheck = models.MicroserviceHealthCheck
+const RbacServiceAccount = models.RbacServiceAccount
 const Op = require('sequelize').Op
 
 const microserviceExcludedFields = [
@@ -154,6 +155,11 @@ class MicroserviceManager extends BaseManager {
           as: 'healthCheck',
           required: false,
           attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: where,
@@ -266,6 +272,11 @@ class MicroserviceManager extends BaseManager {
           as: 'healthCheck',
           required: false,
           attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: {
@@ -390,6 +401,11 @@ class MicroserviceManager extends BaseManager {
           as: 'healthCheck',
           required: false,
           attributes: ['test', 'interval', 'timeout', 'startPeriod', 'startInterval', 'retries']
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: where,
@@ -481,6 +497,11 @@ class MicroserviceManager extends BaseManager {
           as: 'subTags',
           attributes: ['value'],
           through: { attributes: [] }
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: where,
@@ -510,6 +531,11 @@ class MicroserviceManager extends BaseManager {
           as: 'subTags',
           attributes: ['value'],
           through: { attributes: [] }
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: where,
@@ -540,6 +566,11 @@ class MicroserviceManager extends BaseManager {
           as: 'subTags',
           attributes: ['value'],
           through: { attributes: [] }
+        },
+        {
+          model: RbacServiceAccount,
+          as: 'serviceAccount',
+          required: false
         }
       ],
       where: where,

@@ -15,7 +15,7 @@ const ConfigController = require('../controllers/config-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -32,11 +32,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const getConfigEndpoint = ResponseDecorator.handleErrors(ConfigController.listConfigEndpoint, successCode, errorCodes)
         const responseObject = await getConfigEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -63,11 +63,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const getConfigEndpoint = ResponseDecorator.handleErrors(ConfigController.getConfigEndpoint, successCode, errorCodes)
         const responseObject = await getConfigEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -95,8 +95,8 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         const upsertConfigElementEndpoint = ResponseDecorator.handleErrors(ConfigController.upsertConfigElementEndpoint, successCode, errorCodes)
         const responseObject = await upsertConfigElementEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

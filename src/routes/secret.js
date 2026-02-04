@@ -16,7 +16,7 @@ const SecretController = require('../controllers/secret-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -41,10 +41,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createSecretEndpoint = ResponseDecorator.handleErrors(SecretController.createSecretEndpoint, successCode, errorCodes)
         const responseObject = await createSecretEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -76,10 +76,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createSecretFromYamlEndpoint = ResponseDecorator.handleErrors(SecretController.createSecretFromYamlEndpoint, successCode, errorCodes)
         const responseObject = await createSecretFromYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -110,10 +110,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateSecretEndpoint = ResponseDecorator.handleErrors(SecretController.updateSecretEndpoint, successCode, errorCodes)
         const responseObject = await updateSecretEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -145,10 +145,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateSecretFromYamlEndpoint = ResponseDecorator.handleErrors(SecretController.updateSecretFromYamlEndpoint, successCode, errorCodes)
         const responseObject = await updateSecretFromYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -175,10 +175,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getSecretEndpoint = ResponseDecorator.handleErrors(SecretController.getSecretEndpoint, successCode, errorCodes)
         const responseObject = await getSecretEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -201,10 +201,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listSecretsEndpoint = ResponseDecorator.handleErrors(SecretController.listSecretsEndpoint, successCode, errorCodes)
         const responseObject = await listSecretsEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -231,7 +231,7 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteSecretEndpoint = ResponseDecorator.handleErrors(SecretController.deleteSecretEndpoint, successCode, errorCodes)
         const responseObject = await deleteSecretEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

@@ -158,9 +158,8 @@ initialize().then(() => {
       jobs.forEach((job) => job.run())
     })
 
-    // Initialize WebSocket server
-    const wsConfig = config.get('server.webSocket')
-    const wsServer = new WebSocketServer(wsConfig)
+    // Initialize WebSocket server (use singleton to ensure routes are available)
+    const wsServer = WebSocketServer.getInstance()
     wsServer.initialize(apiServer)
     logger.info(`==> 🌎 Webscoker API server listening on port ${ports.api}. Open up ws://localhost:${ports.api}/.`)
     registerServers(apiServer, viewerServer)
@@ -193,9 +192,8 @@ initialize().then(() => {
         jobs.forEach((job) => job.run())
       })
 
-      // Initialize WebSocket server with SSL
-      const wsConfig = config.get('server.webSocket')
-      const wsServer = new WebSocketServer(wsConfig)
+      // Initialize WebSocket server with SSL (use singleton to ensure routes are available)
+      const wsServer = WebSocketServer.getInstance()
       wsServer.initialize(apiServer)
       logger.info(`==> 🌎 WSS API server listening on port ${ports.api}. Open up wss://localhost:${ports.api}/.`)
 

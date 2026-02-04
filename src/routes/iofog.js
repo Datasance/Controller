@@ -15,7 +15,7 @@ const FogController = require('../controllers/iofog-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -36,11 +36,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE, Developer, and Viewer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE, Developer, and Viewer roles
+      await rbacMiddleware.protect()(req, res, async () => {
         const getFogList = ResponseDecorator.handleErrors(FogController.getFogListEndPoint, successCode, errCodes)
         const responseObject = await getFogList(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -69,10 +69,10 @@ module.exports = [
       ]
 
       // Protect the route with SRE access control
-      await keycloak.protect('SRE')(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createFog = ResponseDecorator.handleErrors(FogController.createFogEndPoint, successCode, errCodes)
         const responseObject = await createFog(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -105,10 +105,10 @@ module.exports = [
       ]
 
       // Protect the route with SRE access control
-      await keycloak.protect('SRE')(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateFog = ResponseDecorator.handleErrors(FogController.updateFogEndPoint, successCode, errCodes)
         const responseObject = await updateFog(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -136,10 +136,10 @@ module.exports = [
       ]
 
       // Protect the route with SRE access control
-      await keycloak.protect('SRE')(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteFog = ResponseDecorator.handleErrors(FogController.deleteFogEndPoint, successCode, errCodes)
         const responseObject = await deleteFog(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -167,10 +167,10 @@ module.exports = [
       ]
 
       // Protect the route with SRE, Developer, and Viewer access control
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getFog = ResponseDecorator.handleErrors(FogController.getFogEndPoint, successCode, errCodes)
         const responseObject = await getFog(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -197,11 +197,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const generateFogProvisioningKey = ResponseDecorator.handleErrors(FogController.generateProvisioningKeyEndPoint,
           successCode, errCodes)
         const responseObject = await generateFogProvisioningKey(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -232,11 +232,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const setFogVersionCommand = ResponseDecorator.handleErrors(FogController.setFogVersionCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogVersionCommand(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -267,11 +267,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const setFogRebootCommand = ResponseDecorator.handleErrors(FogController.setFogRebootCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogRebootCommand(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -298,11 +298,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getHalHardwareInfo = ResponseDecorator.handleErrors(FogController.getHalHardwareInfoEndPoint,
           successCode, errCodes)
         const responseObject = await getHalHardwareInfo(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -329,10 +329,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getHalUsbInfo = ResponseDecorator.handleErrors(FogController.getHalUsbInfoEndPoint, successCode, errCodes)
         const responseObject = await getHalUsbInfo(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -363,11 +363,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const setFogPruneCommand = ResponseDecorator.handleErrors(FogController.setFogPruneCommandEndPoint,
           successCode, errCodes)
         const responseObject = await setFogPruneCommand(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -398,11 +398,11 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const enableNodeExecEndPoint = ResponseDecorator.handleErrors(FogController.enableNodeExecEndPoint,
           successCode, errCodes)
         const responseObject = await enableNodeExecEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -433,7 +433,7 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const disableNodeExecEndPoint = ResponseDecorator.handleErrors(FogController.disableNodeExecEndPoint,
           successCode, errCodes)
         const responseObject = await disableNodeExecEndPoint(req)
@@ -449,27 +449,35 @@ module.exports = [
   {
     method: 'ws',
     path: '/api/v3/iofog/:uuid/logs',
-    middleware: async (ws, req) => {
+    middleware: rbacMiddleware.protectWebSocket(async (ws, req) => {
       const WebSocketServer = require('../websocket/server')
+      const TransactionDecorator = require('../decorators/transaction-decorator')
       logger.apiReq(req)
       try {
+        // RBAC already passed, token already extracted by protectWebSocket
+        // Set flag to indicate RBAC authorization is complete
+        req._rbacAuthorized = true
+
+        // Extract token from headers (set by protectWebSocket)
         const token = req.headers.authorization
         if (!token) {
           logger.error('WebSocket connection failed: Missing authentication token')
           try {
             ws.close(1008, 'Missing authentication token')
           } catch (error) {
-            logger.error('Error closing WebSocket:' + JSON.stringify({
-              error: error.message,
-              originalError: 'Missing authentication token'
-            }))
+            logger.error('Error closing WebSocket:', error.message)
           }
           return
         }
 
-        // Initialize WebSocket connection for fog logs
+        // Call handler directly with extracted parameters
         const wsServer = WebSocketServer.getInstance()
-        await wsServer.handleConnection(ws, req)
+        const microserviceUuid = null
+        const fogUuid = req.params.uuid
+        const expectSystem = false
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleUserLogsConnection(ws, req, token, microserviceUuid, fogUuid, expectSystem, transaction)
+        })()
       } catch (error) {
         logger.error('Error in fog logs WebSocket connection:' + JSON.stringify({
           error: error.message,
@@ -479,7 +487,7 @@ module.exports = [
         }))
         try {
           if (ws.readyState === ws.OPEN) {
-            ws.close(1008, error.message || 'Authentication failed')
+            ws.close(1008, error.message || 'Connection failed')
           }
         } catch (closeError) {
           logger.error('Error closing fog logs WebSocket:' + JSON.stringify({
@@ -488,6 +496,6 @@ module.exports = [
           }))
         }
       }
-    }
+    })
   }
 ]
