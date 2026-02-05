@@ -19,7 +19,7 @@ const yaml = require('js-yaml')
 class Config {
   constructor () {
     this.envMapping = require('./env-mapping')
-    this.configPath = process.env.CONFIG_PATH || path.join(__dirname, 'controller.yaml')
+    this.configPath = process.env.CONFIG_PATH || path.join(__dirname, 'config.yaml')
     this.config = null
     this.load()
   }

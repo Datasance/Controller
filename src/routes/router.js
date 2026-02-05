@@ -15,7 +15,7 @@ const Router = require('../controllers/router-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -37,14 +37,14 @@ module.exports = [
       ]
 
       // Protecting for SRE, Developer, and Viewer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getRouterEndpoint = ResponseDecorator.handleErrors(
           Router.getRouterEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await getRouterEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -73,7 +73,7 @@ module.exports = [
       ]
 
       // Protecting for SRE role
-      await keycloak.protect('SRE')(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const upsertDefaultRouter = ResponseDecorator.handleErrors(
           Router.upsertDefaultRouter,
           successCode,

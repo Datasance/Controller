@@ -16,7 +16,7 @@ const EventController = require('../controllers/event-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -38,10 +38,10 @@ module.exports = [
       ]
 
       // Protected with Keycloak (SRE role only)
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listEventsEndpoint = ResponseDecorator.handleErrors(EventController.listEventsEndpoint, successCode, errorCodes)
         const responseObject = await listEventsEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -73,7 +73,7 @@ module.exports = [
       ]
 
       // Protected with Keycloak (SRE role only)
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteOldEventsEndpoint = ResponseDecorator.handleErrors(EventController.deleteOldEventsEndpoint, successCode, errorCodes)
         const responseObject = await deleteOldEventsEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

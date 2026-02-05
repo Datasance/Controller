@@ -15,7 +15,7 @@ const TunnelController = require('../controllers/tunnel-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -41,14 +41,14 @@ module.exports = [
       ]
 
       // Protecting for SRE and Developer roles
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const tunnelEndPoint = ResponseDecorator.handleErrors(
           TunnelController.manageTunnelEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await tunnelEndPoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -76,7 +76,7 @@ module.exports = [
       ]
 
       // Protecting for SRE and Developer roles
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const tunnelEndPoint = ResponseDecorator.handleErrors(
           TunnelController.getTunnelEndPoint,
           successCode,

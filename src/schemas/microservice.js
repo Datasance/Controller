@@ -82,6 +82,21 @@ const microserviceCreate = {
     'healthCheck': {
       'type': 'object',
       'properties': { '$ref': '/microserviceHealthCheck' }
+    },
+    'serviceAccount': {
+      'type': 'object',
+      'properties': {
+        'roleRef': {
+          'type': 'object',
+          'properties': {
+            'kind': { 'type': 'string' },
+            'name': { 'type': 'string' },
+            'apiGroup': { 'type': 'string' }
+          },
+          'required': ['kind', 'name']
+        }
+      },
+      'additionalProperties': false
     }
   },
   'required': ['name'],
@@ -156,6 +171,21 @@ const microserviceUpdate = {
     'healthCheck': {
       'type': 'object',
       'properties': { '$ref': '/microserviceHealthCheck' }
+    },
+    'serviceAccount': {
+      'type': 'object',
+      'properties': {
+        'roleRef': {
+          'type': 'object',
+          'properties': {
+            'kind': { 'type': 'string' },
+            'name': { 'type': 'string' },
+            'apiGroup': { 'type': 'string' }
+          },
+          'required': ['kind', 'name']
+        }
+      },
+      'additionalProperties': false
     }
   },
   'additionalProperties': true
@@ -238,7 +268,7 @@ const volumeMappings = {
     'hostDestination': { 'type': 'string' },
     'containerDestination': { 'type': 'string' },
     'accessMode': { 'type': 'string' },
-    'type': { 'enum': ['volume', 'bind'] }
+    'type': { 'enum': ['volume', 'bind', 'volumeMount'] }
   },
   'required': ['hostDestination', 'containerDestination', 'accessMode'],
   'additionalProperties': true

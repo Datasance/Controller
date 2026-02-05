@@ -34,11 +34,22 @@ async function createConfigMapEndpoint (configMapData, transaction) {
     throw new Errors.ConflictError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_ALREADY_EXISTS, configMapData.name))
   }
 
-  const configMap = await ConfigMapManager.createConfigMap(configMapData.name, configMapData.immutable, configMapData.data, transaction)
+  // Extract useVault, default to true if not provided (backward compatible)
+  const useVault = configMapData.useVault !== undefined ? configMapData.useVault : true
+
+  const configMap = await ConfigMapManager.createConfigMap(
+    configMapData.name,
+    configMapData.immutable,
+    configMapData.data,
+    useVault,
+    transaction
+  )
+
   return {
     id: configMap.id,
     name: configMap.name,
     immutable: configMap.immutable,
+    useVault: configMap.useVault,
     created_at: configMap.created_at,
     updated_at: configMap.updated_at
   }
@@ -59,12 +70,25 @@ async function updateConfigMapEndpoint (configMapName, configMapData, transactio
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.CONFIGMAP_IMMUTABLE, configMapName))
   }
 
-  const configMap = await ConfigMapManager.updateConfigMap(configMapName, configMapData.immutable, configMapData.data, transaction)
+  // Extract useVault if provided, otherwise keep existing value (null = don't change)
+  const useVault = configMapData.useVault !== undefined ? configMapData.useVault : null
+
+  const configMap = await ConfigMapManager.updateConfigMap(
+    configMapName,
+    configMapData.immutable,
+    configMapData.data,
+    useVault,
+    transaction
+  )
+
   await _updateChangeTrackingForFogs(configMapName, transaction)
   await _updateMicroservicesUsingConfigMap(configMapName, transaction)
+
   return {
     id: configMap.id,
     name: configMap.name,
+    immutable: configMap.immutable,
+    useVault: configMap.useVault,
     created_at: configMap.created_at,
     updated_at: configMap.updated_at
   }
@@ -81,6 +105,7 @@ async function getConfigMapEndpoint (configMapName, transaction) {
     name: configMap.name,
     data: configMap.data,
     immutable: configMap.immutable,
+    useVault: configMap.useVault,
     created_at: configMap.created_at,
     updated_at: configMap.updated_at
   }
@@ -93,6 +118,7 @@ async function listConfigMapsEndpoint (transaction) {
       id: configMap.id,
       name: configMap.name,
       immutable: configMap.immutable,
+      useVault: configMap.useVault,
       created_at: configMap.created_at,
       updated_at: configMap.updated_at
     }))
@@ -107,6 +133,7 @@ async function deleteConfigMapEndpoint (configMapName, transaction) {
 
   await ConfigMapManager.deleteConfigMap(configMapName, transaction)
   await _deleteVolumeMountsUsingConfigMap(configMapName, transaction)
+  // Vault deletion is handled by ConfigMapManager.deleteConfigMap()
   return {}
 }
 

@@ -17,6 +17,7 @@ const ResponseDecorator = require('../decorators/response-decorator')
 const WebSocketServer = require('../websocket/server')
 const Errors = require('../helpers/errors')
 const logger = require('../logger')
+const TransactionDecorator = require('../decorators/transaction-decorator')
 
 module.exports = [
   {
@@ -669,6 +670,30 @@ module.exports = [
     }
   },
   {
+    method: 'get',
+    path: '/api/v3/agent/logs/sessions',
+    middleware: async (req, res) => {
+      logger.apiReq(req)
+      const successCode = constants.HTTP_CODE_SUCCESS
+      const errorCodes = [
+        {
+          code: constants.HTTP_CODE_UNAUTHORIZED,
+          errors: [Errors.AuthenticationError]
+        }
+      ]
+
+      const getAgentLogSessionsEndPoint = ResponseDecorator.handleErrors(AgentController.getAgentLogSessionsEndPoint,
+        successCode, errorCodes)
+      const responseObject = await getAgentLogSessionsEndPoint(req)
+
+      res
+        .status(responseObject.code)
+        .send(responseObject.body)
+
+      logger.apiRes({ req: req, res: res, responseObject: responseObject })
+    }
+  },
+  {
     method: 'ws',
     path: '/api/v3/agent/exec/:microserviceUuid',
     middleware: async (ws, req) => {
@@ -688,9 +713,16 @@ module.exports = [
           return
         }
 
-        // Initialize WebSocket connection for agent
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentConnection in handleAgentConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
         const wsServer = WebSocketServer.getInstance()
-        await wsServer.handleConnection(ws, req)
+        const microserviceUuid = req.params.microserviceUuid
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentConnection(ws, req, token, microserviceUuid, transaction)
+        })()
       } catch (error) {
         logger.error('Error in agent WebSocket connection:' + JSON.stringify({
           error: error.message,
@@ -704,6 +736,110 @@ module.exports = [
           }
         } catch (closeError) {
           logger.error('Error closing agent WebSocket:' + JSON.stringify({
+            error: closeError.message,
+            originalError: error.message
+          }))
+        }
+      }
+    }
+  },
+  {
+    method: 'ws',
+    path: '/api/v3/agent/logs/microservice/:microserviceUuid/:sessionId',
+    middleware: async (ws, req) => {
+      logger.apiReq(req)
+      try {
+        const token = req.headers.authorization
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token')
+          try {
+            ws.close(1008, 'Missing authentication token')
+          } catch (error) {
+            logger.error('Error closing WebSocket:' + JSON.stringify({
+              error: error.message,
+              originalError: 'Missing authentication token'
+            }))
+          }
+          return
+        }
+
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentLogsConnection in handleAgentLogsConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
+        const wsServer = WebSocketServer.getInstance()
+        const microserviceUuid = req.params.microserviceUuid
+        const sessionId = req.params.sessionId
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentLogsConnection(ws, req, token, microserviceUuid, null, sessionId, transaction)
+        })()
+      } catch (error) {
+        logger.error('Error in agent microservice logs WebSocket connection:' + JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          url: req.url,
+          microserviceUuid: req.params.microserviceUuid,
+          sessionId: req.params.sessionId
+        }))
+        try {
+          if (ws.readyState === ws.OPEN) {
+            ws.close(1008, error.message || 'Authentication failed')
+          }
+        } catch (closeError) {
+          logger.error('Error closing agent microservice logs WebSocket:' + JSON.stringify({
+            error: closeError.message,
+            originalError: error.message
+          }))
+        }
+      }
+    }
+  },
+  {
+    method: 'ws',
+    path: '/api/v3/agent/logs/iofog/:iofogUuid/:sessionId',
+    middleware: async (ws, req) => {
+      logger.apiReq(req)
+      try {
+        const token = req.headers.authorization
+        if (!token) {
+          logger.error('WebSocket connection failed: Missing authentication token')
+          try {
+            ws.close(1008, 'Missing authentication token')
+          } catch (error) {
+            logger.error('Error closing WebSocket:' + JSON.stringify({
+              error: error.message,
+              originalError: 'Missing authentication token'
+            }))
+          }
+          return
+        }
+
+        // Set flag to bypass route matching
+        // Token validation will be done by validateAgentLogsConnection in handleAgentLogsConnection
+        req._rbacAuthorized = true
+
+        // Call handler directly (it will validate the token)
+        const wsServer = WebSocketServer.getInstance()
+        const iofogUuid = req.params.iofogUuid
+        const sessionId = req.params.sessionId
+        await TransactionDecorator.generateTransaction(async (transaction) => {
+          await wsServer.handleAgentLogsConnection(ws, req, token, null, iofogUuid, sessionId, transaction)
+        })()
+      } catch (error) {
+        logger.error('Error in agent fog logs WebSocket connection:' + JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          url: req.url,
+          iofogUuid: req.params.iofogUuid,
+          sessionId: req.params.sessionId
+        }))
+        try {
+          if (ws.readyState === ws.OPEN) {
+            ws.close(1008, error.message || 'Authentication failed')
+          }
+        } catch (closeError) {
+          logger.error('Error closing agent fog logs WebSocket:' + JSON.stringify({
             error: closeError.message,
             originalError: error.message
           }))

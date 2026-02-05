@@ -80,6 +80,9 @@ module.exports = {
   USER_ALREADY_ACTIVATED: 'User is already activated.',
   USER_NOT_ACTIVATED_YET: 'User is not activated yet.',
   REGISTRY_IS_SYSTEM: 'Registry is system and can\'t be updated or deleted',
+  INVALID_CLUSTER_CONTROLLER_UUID: 'Invalid cluster controller UUID \'{}\'',
+  CLUSTER_CONTROLLER_NOT_FOUND: 'Cluster controller not found',
+  CLUSTER_CONTROLLER_REGISTRATION_FAILED: 'Cluster controller registration failed',
   REGISTRY_IS_IN_USE: 'Registry is in use by microservices and can\'t be deleted',
   CLI: {
     INVALID_PORT_MAPPING: 'Port mapping parsing error. Please provide valid port mapping.',
@@ -144,5 +147,6 @@ module.exports = {
   CONFIGMAP_KEY_NOT_FOUND_IN_VOLUME_MOUNT: 'Configmap key {} not found in configmap {} in volume mount {}',
   CONFIGMAP_IMMUTABLE: 'Configmap {} is immutable and cannot be updated. If you want to update it, please delete it and create a new configmap.',
   VOLUME_MOUNT_NOT_FOUND: 'Volume mount with name {} not found',
-  INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING: 'Invalid volume mount reference for volume mapping: {}'
+  INVALID_VOLUME_MOUNT_REFERENCE_FOR_VOLUME_MAPPING: 'Invalid volume mount reference for volume mapping: {}',
+  SECRET_TYPE_MISMATCH: 'Secret type mismatch. Secret {} is of type {} but trying to update with type {}'
 }

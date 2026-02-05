@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.5.11",
+  "version": "3.6.0",
   "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -55,7 +55,11 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@datasance/ecn-viewer": "1.2.6",
+    "@aws-sdk/client-secrets-manager": "^3.981.0",
+    "@azure/keyvault-secrets": "^4.10.0",
+    "@azure/identity": "^4.13.0",
+    "@datasance/ecn-viewer": "1.3.0",
+    "@google-cloud/secret-manager": "^6.1.1",
     "@kubernetes/client-node": "^0.22.3",
     "@msgpack/msgpack": "^3.1.2",
     "@opentelemetry/api": "^1.9.0",
@@ -66,7 +70,7 @@
     "@opentelemetry/sdk-node": "^0.200.0",
     "axios": "1.12.2",
     "bignumber.js": "^9.3.0",
-    "body-parser": "^1.20.3",
+    "body-parser": "^1.20.4",
     "command-line-args": "5.2.1",
     "command-line-usage": "7.0.3",
     "concurrent-queue": "7.0.2",
@@ -75,7 +79,7 @@
     "daemonize2": "0.4.2",
     "dotenv": "^16.5.0",
     "ejs": "3.1.10",
-    "express": "4.21.2",
+    "express": "4.22.1",
     "express-session": "1.18.2",
     "formidable": "3.5.4",
     "ftp": "0.3.10",
@@ -95,7 +99,7 @@
     "pino": "9.13.1",
     "pino-std-serializers": "7.0.0",
     "portscanner": "2.2.0",
-    "qs": "6.12.1",
+    "qs": "6.14.1",
     "rhea": "^3.0.4",
     "sequelize": "6.37.7",
     "sqlite3": "^5.1.7",
@@ -145,6 +149,8 @@
     },
     "sequelize": {
       "validator": "^13.15.22"
-    }
+    },
+    "tar": "^7.5.7",
+    "lodash": "^4.17.23"
   }
 }

@@ -15,7 +15,7 @@ const EdgeResourceController = require('../controllers/edge-resource-controller'
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -32,11 +32,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getEdgeResourcesEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.listEdgeResourcesEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourcesEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -63,11 +63,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourceEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -94,11 +94,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getEdgeResourceAllVersionsEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.getEdgeResourceAllVersionsEndpoint, successCode, errorCodes)
         const responseObject = await getEdgeResourceAllVersionsEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -130,11 +130,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.updateEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await updateEdgeResourceEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -165,11 +165,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.deleteEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await deleteEdgeResourceEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -197,11 +197,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const createEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.createEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await createEdgeResourceEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -228,11 +228,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const linkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.linkEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await linkEdgeResourceEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -259,8 +259,8 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const unlinkEdgeResourceEndpoint = ResponseDecorator.handleErrors(EdgeResourceController.unlinkEdgeResourceEndpoint, successCode, errorCodes)
         const responseObject = await unlinkEdgeResourceEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

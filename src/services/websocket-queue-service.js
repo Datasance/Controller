@@ -35,6 +35,7 @@ function getBufferFromBody (body) {
 class WebSocketQueueService {
   constructor () {
     this.execBridges = new Map()
+    this.logBridges = new Map() // New: for log sessions
   }
 
   async enableForSession (session, cleanupCallback) {
@@ -385,6 +386,245 @@ class WebSocketQueueService {
         })
       }
     }
+  }
+
+  // ========== Log Session Queue Methods ==========
+
+  // Enable queue bridge for log session (unidirectional: agent → user, one-to-one)
+  // Following exec session pattern: Use queues for ALL scenarios
+  // Each sessionId has its own queues (one-to-one, like exec sessions)
+  async enableForLogSession (session, cleanupCallback) {
+    const sessionId = session.sessionId
+    if (!sessionId) {
+      logger.warn('[AMQP][QUEUE] Missing sessionId for log session, skipping queue bridge enablement')
+      return false
+    }
+
+    const bridge = this.logBridges.get(sessionId) || {
+      sessionId,
+      agentSender: null,
+      agentReceiver: null,
+      userReceiver: null, // Single user receiver (one-to-one)
+      userSender: null, // User queue sender
+      cleanupCallback: null
+    }
+
+    if (cleanupCallback) {
+      bridge.cleanupCallback = cleanupCallback
+    }
+
+    // Agent side: single receiver (agent receives from queue)
+    if (session.agent) {
+      await this._ensureLogAgentReceiver(bridge, session.agent, session)
+    }
+
+    // User side: single receiver (one-to-one, like exec sessions)
+    if (session.user) {
+      await this._ensureLogUserReceiver(bridge, session.user, session)
+    }
+
+    this.logBridges.set(sessionId, bridge)
+    return true
+  }
+
+  shouldUseQueueForLogs (sessionId) {
+    return this.logBridges.has(sessionId)
+  }
+
+  // Forward to user via queue (one-to-one, like exec sessions)
+  // Note: Exec sessions use queues for BOTH single and multi-replica
+  // We follow the same pattern for consistency
+  // Buffer is already MessagePack encoded from agent
+  async publishLogToUser (sessionId, buffer, options = {}) {
+    const bridge = this.logBridges.get(sessionId)
+    if (!bridge) {
+      throw new Error(`Log bridge missing for sessionId=${sessionId}`)
+    }
+
+    // Ensure user queue sender exists
+    if (!bridge.userSender) {
+      const userQueueName = `logs-user-${sessionId}`
+      const connection = await RouterConnectionService.getConnection()
+      const sender = await new Promise((resolve, reject) => {
+        const link = connection.open_sender({
+          target: {
+            address: userQueueName,
+            durable: 0,
+            expiry_policy: 'link-detach'
+          },
+          autosettle: true
+        })
+
+        link.once('sender_open', () => resolve(link))
+        link.once('sender_close', reject)
+        link.once('error', reject)
+      })
+      bridge.userSender = { sender }
+    }
+
+    // Buffer is already MessagePack encoded, send as binary
+    const message = {
+      body: buffer, // MessagePack encoded buffer
+      content_type: 'application/octet-stream',
+      application_properties: options.applicationProperties || {}
+    }
+
+    try {
+      bridge.userSender.sender.send(message)
+      logger.debug('[AMQP][QUEUE] Published log message to user queue', {
+        sessionId,
+        messageSize: buffer.length
+      })
+    } catch (error) {
+      logger.error('[AMQP][QUEUE] Failed to publish log message to user queue', {
+        sessionId,
+        error: error.message
+      })
+      throw error
+    }
+  }
+
+  // Setup receiver for agent queue (one-to-one per sessionId)
+  async _ensureLogAgentReceiver (bridge, agentWs, session) {
+    if (bridge.agentReceiver) {
+      bridge.agentReceiver.socket = agentWs
+      return
+    }
+
+    // Queue name per sessionId (one-to-one)
+    const queueName = `logs-agent-${session.sessionId}`
+    const connection = await RouterConnectionService.getConnection()
+
+    const receiver = await new Promise((resolve, reject) => {
+      const link = connection.open_receiver({
+        source: {
+          address: queueName,
+          durable: 0,
+          expiry_policy: 'link-detach'
+        },
+        credit_window: 50
+      })
+
+      link.once('receiver_open', () => resolve(link))
+      link.once('receiver_close', reject)
+      link.once('error', reject)
+    })
+
+    receiver.on('message', async (context) => {
+      const currentBridge = this.logBridges.get(session.sessionId)
+      const ws = currentBridge && currentBridge.agentReceiver ? currentBridge.agentReceiver.socket : null
+      const body = getBufferFromBody(context.message.body)
+
+      // Body is already MessagePack encoded from agent
+      // Forward directly to agent WebSocket (binary)
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(body, { binary: true })
+        context.delivery.accept()
+      } else {
+        context.delivery.release()
+      }
+    })
+
+    bridge.agentReceiver = { receiver, socket: agentWs }
+  }
+
+  // Setup sender for agent queue (one-to-one per sessionId)
+  async _ensureLogAgentSender (sessionId) {
+    const bridge = this.logBridges.get(sessionId)
+    if (!bridge) return null
+    if (bridge.agentSender) return bridge.agentSender
+
+    // Queue name per sessionId (one-to-one)
+    const queueName = `logs-agent-${sessionId}`
+    const connection = await RouterConnectionService.getConnection()
+
+    const sender = await new Promise((resolve, reject) => {
+      const link = connection.open_sender({
+        target: {
+          address: queueName,
+          durable: 0,
+          expiry_policy: 'link-detach'
+        },
+        autosettle: true
+      })
+
+      link.once('sender_open', () => resolve(link))
+      link.once('sender_close', reject)
+      link.once('error', reject)
+    })
+
+    bridge.agentSender = { sender }
+    return bridge.agentSender
+  }
+
+  // Setup receiver for user queue (one-to-one, like exec session pattern)
+  async _ensureLogUserReceiver (bridge, userWs, session) {
+    if (bridge.userReceiver) {
+      bridge.userReceiver.socket = userWs
+      return
+    }
+
+    // Queue name per sessionId (one-to-one)
+    const queueName = `logs-user-${session.sessionId}`
+    const connection = await RouterConnectionService.getConnection()
+
+    const receiver = await new Promise((resolve, reject) => {
+      const link = connection.open_receiver({
+        source: {
+          address: queueName,
+          durable: 0,
+          expiry_policy: 'link-detach'
+        },
+        credit_window: 50
+      })
+
+      link.once('receiver_open', () => resolve(link))
+      link.once('receiver_close', reject)
+      link.once('error', reject)
+    })
+
+    receiver.on('message', async (context) => {
+      const currentBridge = this.logBridges.get(session.sessionId)
+      const ws = currentBridge && currentBridge.userReceiver ? currentBridge.userReceiver.socket : null
+      const body = getBufferFromBody(context.message.body)
+
+      // Body is MessagePack encoded (from agent via controller)
+      // Forward directly to user WebSocket (binary)
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(body, { binary: true })
+        context.delivery.accept()
+      } else {
+        context.delivery.release()
+      }
+    })
+
+    bridge.userReceiver = { receiver, socket: userWs }
+  }
+
+  // Cleanup log session (one-to-one)
+  async cleanupLogSession (sessionId) {
+    const bridge = this.logBridges.get(sessionId)
+    if (!bridge) return
+
+    const closeLink = (link) => {
+      if (!link) return
+      try {
+        if (link.receiver) {
+          link.receiver.close()
+        } else if (link.sender) {
+          link.sender.close()
+        }
+      } catch (error) {
+        logger.debug('[AMQP][QUEUE] Failed to close log link during cleanup', { sessionId, error: error.message })
+      }
+    }
+
+    closeLink(bridge.agentReceiver)
+    closeLink(bridge.agentSender)
+    closeLink(bridge.userReceiver)
+    closeLink(bridge.userSender)
+
+    this.logBridges.delete(sessionId)
   }
 }
 

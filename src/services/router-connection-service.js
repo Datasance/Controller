@@ -153,7 +153,7 @@ class RouterConnectionService {
       let host = router.host && router.host.trim().length > 0 ? router.host.trim() : ''
 
       if (this._isKubernetes()) {
-        const namespace = process.env.CONTROLLER_NAMESPACE
+        const namespace = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace')
         if (namespace && namespace.trim().length > 0) {
           host = `${DEFAULT_ROUTER_SERVICE}.${namespace}.svc.cluster.local`
         } else if (!host) {

@@ -15,7 +15,7 @@ const VolumeMountController = require('../controllers/volume-mount-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -32,11 +32,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getVolumeMountsEndpoint = ResponseDecorator.handleErrors(VolumeMountController.listVolumeMountsEndpoint, successCode, errorCodes)
         const responseObject = await getVolumeMountsEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -63,11 +63,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.getVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await getVolumeMountEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -99,11 +99,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.updateVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await updateVolumeMountEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -134,11 +134,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.deleteVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await deleteVolumeMountEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -166,11 +166,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const createVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.createVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await createVolumeMountEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -198,11 +198,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const createVolumeMountYamlEndpoint = ResponseDecorator.handleErrors(VolumeMountController.createVolumeMountYamlEndpoint, successCode, errorCodes)
         const responseObject = await createVolumeMountYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -234,11 +234,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateVolumeMountYamlEndpoint = ResponseDecorator.handleErrors(VolumeMountController.updateVolumeMountYamlEndpoint, successCode, errorCodes)
         const responseObject = await updateVolumeMountYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -265,11 +265,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const getVolumeMountLinkEndpoint = ResponseDecorator.handleErrors(VolumeMountController.getVolumeMountLinkEndpoint, successCode, errorCodes)
         const responseObject = await getVolumeMountLinkEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -296,11 +296,11 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const linkVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.linkVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await linkVolumeMountEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -327,8 +327,8 @@ module.exports = [
         }
       ]
 
-      // Add keycloak.protect() middleware to protect the route for SRE role
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route for SRE role
+      await rbacMiddleware.protect()(req, res, async () => {
         const unlinkVolumeMountEndpoint = ResponseDecorator.handleErrors(VolumeMountController.unlinkVolumeMountEndpoint, successCode, errorCodes)
         const responseObject = await unlinkVolumeMountEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

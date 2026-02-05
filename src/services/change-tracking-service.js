@@ -89,6 +89,12 @@ const events = Object.freeze({
   },
   microserviceExecSessions: {
     execSessions: true
+  },
+  microserviceLogs: {
+    microserviceLogs: true
+  },
+  fogLogs: {
+    fogLogs: true
   }
 })
 

@@ -16,7 +16,7 @@ const ConfigMapController = require('../controllers/config-map-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -41,10 +41,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createConfigMapEndpoint = ResponseDecorator.handleErrors(ConfigMapController.createConfigMapEndpoint, successCode, errorCodes)
         const responseObject = await createConfigMapEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -76,10 +76,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createConfigMapFromYamlEndpoint = ResponseDecorator.handleErrors(ConfigMapController.createConfigMapFromYamlEndpoint, successCode, errorCodes)
         const responseObject = await createConfigMapFromYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -110,10 +110,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateConfigMapEndpoint = ResponseDecorator.handleErrors(ConfigMapController.updateConfigMapEndpoint, successCode, errorCodes)
         const responseObject = await updateConfigMapEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -145,10 +145,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateConfigMapFromYamlEndpoint = ResponseDecorator.handleErrors(ConfigMapController.updateConfigMapFromYamlEndpoint, successCode, errorCodes)
         const responseObject = await updateConfigMapFromYamlEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -175,10 +175,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getConfigMapEndpoint = ResponseDecorator.handleErrors(ConfigMapController.getConfigMapEndpoint, successCode, errorCodes)
         const responseObject = await getConfigMapEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -201,10 +201,10 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const listConfigMapsEndpoint = ResponseDecorator.handleErrors(ConfigMapController.listConfigMapsEndpoint, successCode, errorCodes)
         const responseObject = await listConfigMapsEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -231,7 +231,7 @@ module.exports = [
         }
       ]
 
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteConfigMapEndpoint = ResponseDecorator.handleErrors(ConfigMapController.deleteConfigMapEndpoint, successCode, errorCodes)
         const responseObject = await deleteConfigMapEndpoint(req)
         const user = req.kauth.grant.access_token.content.preferred_username

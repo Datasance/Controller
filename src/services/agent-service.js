@@ -46,15 +46,21 @@ const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
 const SecretManager = require('../data/managers/secret-manager')
 const ConfigMapManager = require('../data/managers/config-map-manager')
+const MicroserviceLogStatusManager = require('../data/managers/microservice-log-status-manager')
+const FogLogStatusManager = require('../data/managers/fog-log-status-manager')
+const RbacRoleManager = require('../data/managers/rbac-role-manager')
+
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
-const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions']
+const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions', 'microserviceLogs', 'fogLogs']
 for (const key of CHANGE_TRACKING_KEYS) {
   CHANGE_TRACKING_DEFAULT[key] = false
 }
 
 const agentProvision = async function (provisionData, transaction) {
   await Validator.validate(provisionData, Validator.schemas.agentProvision)
+
+  const namespace = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace', 'datasance')
 
   const provision = await FogProvisionKeyManager.findOne({
     provisionKey: provisionData.key
@@ -101,7 +107,8 @@ const agentProvision = async function (provisionData, transaction) {
 
   return {
     uuid: fog.uuid,
-    privateKey: keyPair.privateKey
+    privateKey: keyPair.privateKey,
+    namespace: namespace
   }
 }
 
@@ -121,6 +128,9 @@ const agentDeprovision = async function (deprovisionData, fog, transaction) {
   )
 
   await _invalidateFogNode(fog, transaction)
+
+  // Delete the public key
+  await FogKeyService.deletePublicKey(fog.uuid, transaction)
 }
 
 const _invalidateFogNode = async function (fog, transaction) {
@@ -294,7 +304,7 @@ const updateAgentStatus = async function (agentStatus, fog, transaction) {
 
   if (agentStatus.warningMessage.includes('HW signature changed') || agentStatus.warningMessage.includes('HW signature mismatch')) {
     fogStatus.securityStatus = 'WARNING'
-    fogStatus.securityViolationInfo = 'HW signature mismatch'
+    fogStatus.securityViolationInfo = 'Auto deprovisioned by Agent. HW signature mismatch'
   } else {
     fogStatus.securityStatus = 'OK'
     fogStatus.securityViolationInfo = 'No violation'
@@ -337,6 +347,37 @@ const _updateMicroserviceStatuses = async function (microserviceStatus, fog, tra
 
 const _mapExtraHost = function (extraHost) {
   return `${extraHost.name}:${extraHost.value}`
+}
+
+/**
+ * Resolve service account rules from roleRef
+ * @param {Object} serviceAccount - Service account object (from relationship or lookup)
+ * @param {Object} transaction - Database transaction
+ * @returns {Object|null} Service account with resolved rules or null if not found
+ */
+async function _resolveServiceAccountRules (serviceAccount, transaction) {
+  try {
+    // If serviceAccount is already loaded from relationship, use it
+    // Otherwise, it might be null/undefined
+    if (!serviceAccount || !serviceAccount.roleRef) {
+      return null
+    }
+
+    // Get role from roleRef (check system roles first, then database)
+    const role = await RbacRoleManager.getRoleWithRules(serviceAccount.roleRef.name, transaction)
+    if (!role) {
+      return null
+    }
+
+    return {
+      name: serviceAccount.name,
+      roleRef: serviceAccount.roleRef,
+      rules: role.rules
+    }
+  } catch (error) {
+    // If service account doesn't exist or error, return null
+    return null
+  }
 }
 
 const getAgentMicroservices = async function (fog, transaction) {
@@ -441,8 +482,21 @@ const getAgentMicroservices = async function (fog, transaction) {
       schedule: microservice.schedule
     }
 
-    response.push(responseMicroservice)
+    // Resolve service account with rules from relationship
+    const serviceAccountData = await _resolveServiceAccountRules(microservice.serviceAccount, transaction)
+    if (serviceAccountData) {
+      responseMicroservice.serviceAccount = {
+        name: serviceAccountData.name,
+        roleRef: serviceAccountData.roleRef,
+        rules: serviceAccountData.rules
+      }
+    } else {
+      // If service account doesn't exist, create default one or leave null
+      // For now, we'll leave it null - the agent should handle this gracefully
+      responseMicroservice.serviceAccount = null
+    }
 
+    response.push(responseMicroservice)
     await MicroserviceManager.update({
       uuid: microservice.uuid
     }, {
@@ -735,6 +789,61 @@ const getControllerCA = async function (fog, transaction) {
   throw new Errors.ValidationError('No valid SSL certificate configuration found')
 }
 
+// New endpoint: Get active log sessions for agent
+const getAgentLogSessions = async function (fog, transaction) {
+  const Op = require('sequelize').Op
+
+  // Get all microservices for this fog
+  const microservices = await MicroserviceManager.findAll(
+    { iofogUuid: fog.uuid },
+    transaction
+  )
+
+  const allSessions = []
+
+  // Get microservice log sessions
+  for (const ms of microservices) {
+    const sessions = await MicroserviceLogStatusManager.findAll(
+      {
+        microserviceUuid: ms.uuid,
+        status: { [Op.in]: ['PENDING', 'ACTIVE'] }
+      },
+      transaction
+    )
+
+    for (const session of sessions) {
+      allSessions.push({
+        microserviceUuid: ms.uuid,
+        sessionId: session.sessionId,
+        tailConfig: JSON.parse(session.tailConfig),
+        status: session.status,
+        agentConnected: session.agentConnected
+      })
+    }
+  }
+
+  // Get fog node log sessions
+  const fogSessions = await FogLogStatusManager.findAll(
+    {
+      iofogUuid: fog.uuid,
+      status: { [Op.in]: ['PENDING', 'ACTIVE'] }
+    },
+    transaction
+  )
+
+  for (const session of fogSessions) {
+    allSessions.push({
+      iofogUuid: fog.uuid,
+      sessionId: session.sessionId,
+      tailConfig: JSON.parse(session.tailConfig),
+      status: session.status,
+      agentConnected: session.agentConnected
+    })
+  }
+
+  return { logSessions: allSessions }
+}
+
 const getAgentLinkedVolumeMounts = async function (fog, transaction) {
   const volumeMounts = []
   const resourceAttributes = [
@@ -748,19 +857,22 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
   for (const resource of resources) {
     const resourceObject = resource.toJSON()
     let data = {}
+    let type = null
 
     if (resourceObject.configMapName) {
       // Handle ConfigMap
+      type = 'configMap'
       const configMap = await ConfigMapManager.getConfigMap(resourceObject.configMapName, transaction)
       if (configMap) {
         // For configmaps, we need to base64 encode all values
         data = Object.entries(configMap.data).reduce((acc, [key, value]) => {
-          acc[key] = Buffer.from(value).toString('base64')
+          acc[key] = Buffer.from(String(value)).toString('base64')
           return acc
         }, {})
       }
     } else if (resourceObject.secretName) {
       // Handle Secret
+      type = 'secret'
       const secret = await SecretManager.getSecret(resourceObject.secretName, transaction)
       if (secret) {
         if (secret.type === 'tls') {
@@ -769,7 +881,7 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
         } else {
           // For Opaque secrets, we need to base64 encode all values
           data = Object.entries(secret.data).reduce((acc, [key, value]) => {
-            acc[key] = Buffer.from(value).toString('base64')
+            acc[key] = Buffer.from(String(value)).toString('base64')
             return acc
           }, {})
         }
@@ -781,6 +893,7 @@ const getAgentLinkedVolumeMounts = async function (fog, transaction) {
       uuid: resourceObject.uuid,
       name: resourceObject.name,
       version: resourceObject.version,
+      type: type,
       data: data
     }
     volumeMounts.push(responseObject)
@@ -811,5 +924,6 @@ module.exports = {
   putImageSnapshot: TransactionDecorator.generateTransaction(putImageSnapshot),
   getAgentLinkedEdgeResources: TransactionDecorator.generateTransaction(getAgentLinkedEdgeResources),
   getAgentLinkedVolumeMounts: TransactionDecorator.generateTransaction(getAgentLinkedVolumeMounts),
-  getControllerCA: TransactionDecorator.generateTransaction(getControllerCA)
+  getControllerCA: TransactionDecorator.generateTransaction(getControllerCA),
+  getAgentLogSessions: TransactionDecorator.generateTransaction(getAgentLogSessions)
 }

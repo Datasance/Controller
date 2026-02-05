@@ -12,6 +12,7 @@
  */
 
 const RegistryManager = require('../data/managers/registry-manager')
+const SecretHelper = require('../helpers/secret-helper')
 const Validator = require('../schemas')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
@@ -22,6 +23,10 @@ const MicroserviceManager = require('../data/managers/microservice-manager')
 // const Sequelize = require('sequelize')
 // const Op = Sequelize.Op
 const AppHelper = require('../helpers/app-helper')
+
+function isPasswordEmpty (password) {
+  return password == null || (typeof password === 'string' && password.trim() === '')
+}
 
 const createRegistry = async function (registry, transaction) {
   await Validator.validate(registry, Validator.schemas.registryCreate)
@@ -37,6 +42,19 @@ const createRegistry = async function (registry, transaction) {
   registryCreate = AppHelper.deleteUndefinedFields(registryCreate)
 
   const createdRegistry = await RegistryManager.create(registryCreate, transaction)
+
+  if (!isPasswordEmpty(registryCreate.password)) {
+    const encryptedPassword = await SecretHelper.encryptSecret(
+      { value: registryCreate.password },
+      'registry-' + createdRegistry.id,
+      'registry'
+    )
+    await RegistryManager.update(
+      { id: createdRegistry.id },
+      { password: encryptedPassword },
+      transaction
+    )
+  }
 
   await _updateChangeTracking(transaction)
 
@@ -104,6 +122,10 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
 
   registryUpdate = AppHelper.deleteUndefinedFields(registryUpdate)
 
+  if (registryUpdate.password !== undefined && isPasswordEmpty(registryUpdate.password) && SecretHelper.isVaultReference(existingRegistry.password)) {
+    await SecretHelper.deleteSecret('registry-' + existingRegistry.id, 'registry')
+  }
+
   const where = isCLI
     ? {
       id: registryId
@@ -124,6 +146,15 @@ const updateRegistry = async function (registry, registryId, isCLI, transaction)
   await _updateChangeTracking(transaction)
 }
 
+const getRegistry = async function (registryId, isCLI, transaction) {
+  const id = parseInt(registryId, 10)
+  const registry = await RegistryManager.findOne({ id }, transaction)
+  if (!registry) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_REGISTRY_ID, registryId))
+  }
+  return registry
+}
+
 const _updateChangeTracking = async function (transaction) {
   const fogs = await FogManager.findAll({}, transaction)
   for (const fog of fogs) {
@@ -135,5 +166,6 @@ module.exports = {
   createRegistry: TransactionDecorator.generateTransaction(createRegistry),
   findRegistries: TransactionDecorator.generateTransaction(findRegistries),
   deleteRegistry: TransactionDecorator.generateTransaction(deleteRegistry),
-  updateRegistry: TransactionDecorator.generateTransaction(updateRegistry)
+  updateRegistry: TransactionDecorator.generateTransaction(updateRegistry),
+  getRegistry: TransactionDecorator.generateTransaction(getRegistry)
 }

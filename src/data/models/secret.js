@@ -32,7 +32,15 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: '{}',
       get () {
         const rawValue = this.getDataValue('data')
-        return rawValue ? JSON.parse(rawValue) : {}
+        if (!rawValue) return {}
+        // If value is a vault reference, keep raw so helper can resolve
+        if (SecretHelper.isVaultReference(rawValue)) return rawValue
+        try {
+          return JSON.parse(rawValue)
+        } catch (err) {
+          // Fallback: return raw when legacy data is not valid JSON
+          return rawValue
+        }
       },
       set (value) {
         this.setDataValue('data', JSON.stringify(value))
@@ -53,7 +61,8 @@ module.exports = (sequelize, DataTypes) => {
         if (secret.changed('data')) {
           const encryptedData = await SecretHelper.encryptSecret(
             secret.data,
-            secret.name
+            secret.name,
+            secret.type
           )
           secret.data = encryptedData
         }
@@ -63,7 +72,8 @@ module.exports = (sequelize, DataTypes) => {
           try {
             const decryptedData = await SecretHelper.decryptSecret(
               secret.data,
-              secret.name
+              secret.name,
+              secret.type
             )
             secret.data = decryptedData
           } catch (error) {

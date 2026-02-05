@@ -11,7 +11,7 @@
  *
  */
 const logger = require('../logger')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -20,8 +20,8 @@ module.exports = [
     middleware: async (req, res) => {
       logger.apiReq(req)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         res.sendStatus(204)
       })
     }
@@ -32,8 +32,8 @@ module.exports = [
     middleware: async (req, res) => {
       logger.apiReq(req)
 
-      // Add keycloak.protect() middleware to protect the route
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      // Add rbacMiddleware.protect middleware to protect the route
+      await rbacMiddleware.protect()(req, res, async () => {
         res.sendStatus(204)
       })
     }

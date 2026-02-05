@@ -22,6 +22,10 @@ const getRegistriesEndPoint = async function (req) {
   return RegistryService.findRegistries(false)
 }
 
+const getRegistryEndPoint = async function (req) {
+  const registryId = req.params.id
+  return RegistryService.getRegistry(registryId, false)
+}
 const deleteRegistryEndPoint = async function (req) {
   const deleteRegistry = {
     id: parseInt(req.params.id)
@@ -38,6 +42,7 @@ const updateRegistryEndPoint = async function (req) {
 module.exports = {
   createRegistryEndPoint: (createRegistryEndPoint),
   getRegistriesEndPoint: (getRegistriesEndPoint),
+  getRegistryEndPoint: (getRegistryEndPoint),
   deleteRegistryEndPoint: (deleteRegistryEndPoint),
   updateRegistryEndPoint: (updateRegistryEndPoint)
 }

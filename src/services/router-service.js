@@ -32,9 +32,18 @@ const constants = require('../helpers/constants')
 const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
 const SecretManager = require('../data/managers/secret-manager')
 const FogManager = require('../data/managers/iofog-manager')
+const config = require('../config')
+const VolumeMountService = require('./volume-mount-service')
+const VolumeMappingManager = require('../data/managers/volume-mapping-manager')
 
 const SITE_CONFIG_VERSION = 'pot'
-const SITE_CONFIG_NAMESPACE = 'datasance'
+const SITE_CONFIG_NAMESPACE = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace')
+const SSL_PROFILE_PATH = '/etc/skupper-router-certs'
+const SYSTEM_DEFAULT_CA_PATH = '/etc/pki/tls/certs/ca-bundle.crt'
+
+function _sslProfileCertPath (profileName, filename) {
+  return `${SSL_PROFILE_PATH}/${profileName}/${filename}`
+}
 
 async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog, defaultRouter, transaction) {
   if (!upstreamRouterIds) {
@@ -114,6 +123,7 @@ async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) 
     await _createRouterPorts(routerMicroservice.uuid, fogData.edgeRouterPort, transaction)
     await _createRouterPorts(routerMicroservice.uuid, fogData.interRouterPort, transaction)
   }
+  await _ensureRouterSslVolumeMountsAndMappings(uuid, routerMicroservice.uuid, transaction, false)
 
   return router
 }
@@ -240,6 +250,9 @@ async function updateConfig (routerID, containerEngine, transaction) {
     newConfig.connectors[connectorConfig.name] = connectorConfig
   }
 
+  await _ensureRouterSslVolumeMountsAndMappings(router.iofogUuid, routerMicroservice.uuid, transaction, true)
+  await ChangeTrackingService.update(router.iofogUuid, ChangeTrackingService.events.microserviceConfig, transaction)
+
   // Check if configuration needs update
   if (JSON.stringify(currentConfig) !== JSON.stringify(newConfig)) {
     await MicroserviceManager.update(
@@ -338,7 +351,11 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
     env: [
       {
         key: 'QDROUTERD_CONF',
-        value: '/home/runner/skupper-router-certs/skrouterd.json'
+        value: '/tmp/skrouterd.json'
+      },
+      {
+        key: 'SSL_PROFILE_PATH',
+        value: SSL_PROFILE_PATH
       },
       {
         key: 'QDROUTERD_CONF_TYPE',
@@ -347,6 +364,10 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
       {
         key: 'SKUPPER_SITE_ID',
         value: uuid
+      },
+      {
+        key: 'SKUPPER_PLATFORM',
+        value: 'pot'
       }
     ]
   }
@@ -399,10 +420,6 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     platform = 'podman'
   }
 
-  let namespace = SITE_CONFIG_NAMESPACE
-  if (process.env.CONTROLLER_NAMESPACE) {
-    namespace = process.env.CONTROLLER_NAMESPACE
-  }
   const config = {
     addresses: {
       mc: {
@@ -429,45 +446,42 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     },
     siteConfig: {
       name: uuid,
-      namespace: namespace,
+      namespace: SITE_CONFIG_NAMESPACE,
       platform: platform,
       version: SITE_CONFIG_VERSION
     },
     sslProfiles: {}
   }
 
-  // Get SSL secrets for all profiles
+  // Add system-default SSL profile (CA bundle path on host)
+  config.sslProfiles['system-default'] = {
+    name: 'system-default',
+    caCertFile: SYSTEM_DEFAULT_CA_PATH
+  }
+
+  // Get SSL secrets for all profiles and add path-based sslProfiles (no base64)
   const siteServerSecret = await SecretManager.getSecret(`${uuid}-site-server`, transaction)
   const localServerSecret = await SecretManager.getSecret(`${uuid}-local-server`, transaction)
   const localAgentSecret = await SecretManager.getSecret(`${uuid}-local-agent`, transaction)
 
-  // Add SSL profiles
-  if (siteServerSecret) {
-    config.sslProfiles[`${uuid}-site-server`] = {
-      caCert: siteServerSecret.data['ca.crt'],
-      tlsCert: siteServerSecret.data['tls.crt'],
-      tlsKey: siteServerSecret.data['tls.key'],
-      name: `${uuid}-site-server`
+  function addSslProfileFromSecret (profileName, secret) {
+    if (!secret) return
+    const profile = { name: profileName }
+    if (secret.data && secret.data['ca.crt']) {
+      profile.caCertFile = _sslProfileCertPath(secret.name, 'ca.crt')
     }
+    if (secret.data && secret.data['tls.crt']) {
+      profile.certFile = _sslProfileCertPath(profileName, 'tls.crt')
+    }
+    if (secret.data && secret.data['tls.key']) {
+      profile.privateKeyFile = _sslProfileCertPath(profileName, 'tls.key')
+    }
+    config.sslProfiles[profileName] = profile
   }
 
-  if (localServerSecret) {
-    config.sslProfiles[`${uuid}-local-server`] = {
-      caCert: localServerSecret.data['ca.crt'],
-      tlsCert: localServerSecret.data['tls.crt'],
-      tlsKey: localServerSecret.data['tls.key'],
-      name: `${uuid}-local-server`
-    }
-  }
-
-  if (localAgentSecret) {
-    config.sslProfiles[`${uuid}-local-agent`] = {
-      caCert: localAgentSecret.data['ca.crt'],
-      tlsCert: localAgentSecret.data['tls.crt'],
-      tlsKey: localAgentSecret.data['tls.key'],
-      name: `${uuid}-local-agent`
-    }
-  }
+  addSslProfileFromSecret(`${uuid}-site-server`, siteServerSecret)
+  addSslProfileFromSecret(`${uuid}-local-server`, localServerSecret)
+  addSslProfileFromSecret(`${uuid}-local-agent`, localAgentSecret)
 
   // Add default AMQP listener (internal)
   config.listeners[`${uuid}-amqp`] = {
@@ -516,6 +530,70 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
   }
 
   return config
+}
+
+const ROUTER_SSL_PROFILE_NAMES = (uuid) => [
+  `${uuid}-site-server`,
+  `${uuid}-local-server`,
+  `${uuid}-local-agent`
+]
+
+async function _ensureRouterSslVolumeMountsAndMappings (iofogUuid, routerMicroserviceUuid, transaction, doCleanup = false) {
+  const profileNames = ROUTER_SSL_PROFILE_NAMES(iofogUuid)
+  const profileNamesWithSecret = new Set()
+
+  for (const name of profileNames) {
+    const secret = await SecretManager.getSecret(name, transaction)
+    if (!secret) continue
+
+    profileNamesWithSecret.add(name)
+
+    // Volume mount: get or create, then link to fog if not already linked
+    try {
+      await VolumeMountService.getVolumeMountEndpoint(name, transaction)
+    } catch (err) {
+      if (err.name !== 'NotFoundError') throw err
+      await VolumeMountService.createVolumeMountEndpoint({ name, secretName: name }, transaction)
+    }
+    const linkedFogUuids = await VolumeMountService.findVolumeMountedFogNodes(name, transaction)
+    if (!linkedFogUuids.includes(iofogUuid)) {
+      await VolumeMountService.linkVolumeMountEndpoint(name, [iofogUuid], transaction)
+    }
+
+    // Volume mapping: create if not exists
+    const containerDest = `${SSL_PROFILE_PATH}/${name}`
+    const existingMapping = await VolumeMappingManager.findOne({
+      microserviceUuid: routerMicroserviceUuid,
+      hostDestination: name,
+      containerDestination: containerDest,
+      type: 'volumeMount'
+    }, transaction)
+    if (!existingMapping) {
+      await VolumeMappingManager.create({
+        microserviceUuid: routerMicroserviceUuid,
+        hostDestination: name,
+        containerDestination: containerDest,
+        accessMode: 'ro',
+        type: 'volumeMount'
+      }, transaction)
+    }
+  }
+
+  // Cleanup: remove router SSL volume mappings whose profile no longer has a secret
+  if (doCleanup) {
+    const currentMappings = await VolumeMappingManager.findAll(
+      { microserviceUuid: routerMicroserviceUuid },
+      transaction
+    )
+    for (const mapping of currentMappings) {
+      const isRouterSsl = mapping.type === 'volumeMount' &&
+        mapping.containerDestination &&
+        mapping.containerDestination.startsWith(SSL_PROFILE_PATH)
+      if (isRouterSsl && mapping.hostDestination && !profileNamesWithSecret.has(mapping.hostDestination)) {
+        await VolumeMappingManager.delete({ id: mapping.id }, transaction)
+      }
+    }
+  }
 }
 
 async function getNetworkRouter (networkRouterId, transaction) {

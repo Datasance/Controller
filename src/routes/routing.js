@@ -15,7 +15,7 @@ const Routing = require('../controllers/routing-controller')
 const ResponseDecorator = require('../decorators/response-decorator')
 const logger = require('../logger')
 const Errors = require('../helpers/errors')
-const keycloak = require('../config/keycloak.js').initKeycloak()
+const rbacMiddleware = require('../lib/rbac/middleware')
 
 module.exports = [
   {
@@ -37,14 +37,14 @@ module.exports = [
       ]
 
       // Protecting for SRE , Developer and Viewer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getRouterEndpoint = ResponseDecorator.handleErrors(
           Routing.getRoutingsEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await getRouterEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -72,14 +72,14 @@ module.exports = [
       ]
 
       // Protecting for SRE, Developer, and Viewer roles
-      await keycloak.protect(['SRE', 'Developer', 'Viewer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const getRouterEndpoint = ResponseDecorator.handleErrors(
           Routing.getRoutingEndPoint,
           successCode,
           errorCodes
         )
         const responseObject = await getRouterEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -116,14 +116,14 @@ module.exports = [
       ]
 
       // Protecting for SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const createRoutingEndpoint = ResponseDecorator.handleErrors(
           Routing.createRoutingEndpoint,
           successCode,
           errorCodes
         )
         const responseObject = await createRoutingEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -156,14 +156,14 @@ module.exports = [
       ]
 
       // Protecting for SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const updateRoutingEndpoint = ResponseDecorator.handleErrors(
           Routing.updateRoutingEndpoint,
           successCode,
           errorCodes
         )
         const responseObject = await updateRoutingEndpoint(req)
-        const user = req.kauth.grant.access_token.content.preferred_username
+        const user = req.kauth && req.kauth.grant && req.kauth.grant.access_token ? req.kauth.grant.access_token.content.preferred_username : 'system'
         res
           .status(responseObject.code)
           .send(responseObject.body)
@@ -191,7 +191,7 @@ module.exports = [
       ]
 
       // Protecting for SRE and Developer roles
-      await keycloak.protect(['SRE', 'Developer'])(req, res, async () => {
+      await rbacMiddleware.protect()(req, res, async () => {
         const deleteRoutingEndpoint = ResponseDecorator.handleErrors(
           Routing.deleteRoutingEndpoint,
           successCode,

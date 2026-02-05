@@ -17,6 +17,7 @@ const TransactionDecorator = require('../decorators/transaction-decorator')
 const AppHelper = require('../helpers/app-helper')
 const FogManager = require('../data/managers/iofog-manager')
 const FogProvisionKeyManager = require('../data/managers/iofog-provision-key-manager')
+const FogKeyService = require('./iofog-key-service')
 const FogVersionCommandManager = require('../data/managers/iofog-version-command-manager')
 const ChangeTrackingService = require('./change-tracking-service')
 const Errors = require('../helpers/errors')
@@ -45,6 +46,9 @@ const logger = require('../logger')
 const ServiceManager = require('../data/managers/service-manager')
 const FogStates = require('../enums/fog-state')
 const SecretManager = require('../data/managers/secret-manager')
+const vaultManager = require('../vault/vault-manager')
+const SecretHelper = require('../helpers/secret-helper')
+const FogPublicKeyManager = require('../data/managers/iofog-public-key-manager')
 
 const SITE_CA_CERT = 'pot-site-ca'
 const DEFAULT_ROUTER_LOCAL_CA = 'default-router-local-ca'
@@ -1095,8 +1099,16 @@ async function _processDeleteCommand (fog, transaction) {
   for (const secretName of secretNames) {
     const secret = await SecretManager.findOne({ name: secretName }, transaction)
     if (secret) {
+      // Remove secret from external vault if configured
+      if (vaultManager.isEnabled()) {
+        await SecretHelper.deleteSecret(secretName, secret.type)
+      }
       await SecretManager.delete({ name: secretName }, transaction)
     }
+  }
+  const fogPublicKey = await FogPublicKeyManager.findByFogUuid(fog.uuid, transaction)
+  if (fogPublicKey) {
+    await FogKeyService.deletePublicKey(fog.uuid, transaction)
   }
   await FogManager.delete({ uuid: fog.uuid }, transaction)
 }
