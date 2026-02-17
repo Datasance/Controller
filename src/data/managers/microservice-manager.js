@@ -26,9 +26,7 @@ const StraceDiagnostics = models.StraceDiagnostics
 const CatalogItem = models.CatalogItem
 const CatalogItemImage = models.CatalogItemImage
 const Fog = models.Fog
-const Tags = models.Tags
 const Application = models.Application
-const Routing = models.Routing
 const Registry = models.Registry
 const MicroserviceStatus = models.MicroserviceStatus
 const MicroserviceExecStatus = models.MicroserviceExecStatus
@@ -139,18 +137,6 @@ class MicroserviceManager extends BaseManager {
           attributes: ['daemonStatus']
         },
         {
-          model: Routing,
-          as: 'routes',
-          required: false,
-          include: [{
-            model: Microservice,
-            as: 'destMicroservice',
-            attributes: ['uuid']
-          }],
-          attributes: { exclude: ['id', 'source_microservice_uuid',
-            'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
-        },
-        {
           model: MicroserviceHealthCheck,
           as: 'healthCheck',
           required: false,
@@ -254,18 +240,6 @@ class MicroserviceManager extends BaseManager {
           as: 'application',
           required: false,
           attributes: ['isActivated']
-        },
-        {
-          model: Tags,
-          as: 'pubTags',
-          attributes: ['value'],
-          through: { attributes: [] }
-        },
-        {
-          model: Tags,
-          as: 'subTags',
-          attributes: ['value'],
-          through: { attributes: [] }
         },
         {
           model: MicroserviceHealthCheck,
@@ -385,18 +359,6 @@ class MicroserviceManager extends BaseManager {
           attributes: ['daemonStatus']
         },
         {
-          model: Routing,
-          as: 'routes',
-          required: false,
-          include: [{
-            model: Microservice,
-            as: 'destMicroservice',
-            attributes: ['uuid']
-          }],
-          attributes: { exclude: ['id',
-            'sourceMicroserviceUuid', 'destMicroserviceUuid'] }
-        },
-        {
           model: MicroserviceHealthCheck,
           as: 'healthCheck',
           required: false,
@@ -487,18 +449,6 @@ class MicroserviceManager extends BaseManager {
     return Microservice.findOne({
       include: [
         {
-          model: Tags,
-          as: 'pubTags',
-          attributes: ['value'],
-          through: { attributes: [] }
-        },
-        {
-          model: Tags,
-          as: 'subTags',
-          attributes: ['value'],
-          through: { attributes: [] }
-        },
-        {
           model: RbacServiceAccount,
           as: 'serviceAccount',
           required: false
@@ -519,18 +469,6 @@ class MicroserviceManager extends BaseManager {
           as: 'application',
           required: true,
           where: { isSystem: false }
-        },
-        {
-          model: Tags,
-          as: 'pubTags',
-          attributes: ['value'],
-          through: { attributes: [] }
-        },
-        {
-          model: Tags,
-          as: 'subTags',
-          attributes: ['value'],
-          through: { attributes: [] }
         },
         {
           model: RbacServiceAccount,
@@ -554,18 +492,6 @@ class MicroserviceManager extends BaseManager {
           as: 'application',
           required: true,
           where: { isSystem: true }
-        },
-        {
-          model: Tags,
-          as: 'pubTags',
-          attributes: ['value'],
-          through: { attributes: [] }
-        },
-        {
-          model: Tags,
-          as: 'subTags',
-          attributes: ['value'],
-          through: { attributes: [] }
         },
         {
           model: RbacServiceAccount,

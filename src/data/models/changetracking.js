@@ -51,11 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       field: 'config',
       defaultValue: false
     },
-    routing: {
-      type: DataTypes.BOOLEAN,
-      field: 'routing',
-      defaultValue: false
-    },
     registries: {
       type: DataTypes.BOOLEAN,
       field: 'registries',

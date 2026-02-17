@@ -53,9 +53,6 @@ const JSON_SCHEMA_ADD = AppHelper.stringifyCliJsonSchema(
         publicMode: true
       }
     ],
-    routes: [
-      'string'
-    ],
     env: [
       {
         key: 'string',
@@ -265,21 +262,6 @@ class Microservice extends BaseCLIHandler {
         group: [constants.CMD_PORT_MAPPING_CREATE, constants.CMD_VOLUME_MAPPING_CREATE]
       },
       {
-        name: 'routes',
-        alias: 't',
-        type: String,
-        description: 'Microservice route(s) (receiving microservices)',
-        multiple: true,
-        group: [constants.CMD_ADD]
-      },
-      {
-        name: 'route',
-        alias: 'T',
-        type: String,
-        description: 'Microservice route (receiving microservices)',
-        group: [constants.CMD_ROUTE_CREATE, constants.CMD_ROUTE_REMOVE]
-      },
-      {
         name: 'internal-port',
         alias: 'b',
         type: CliDataTypes.Integer,
@@ -378,8 +360,6 @@ class Microservice extends BaseCLIHandler {
       [constants.CMD_REMOVE]: 'Delete a microservice.',
       [constants.CMD_LIST]: 'List all microservices.',
       [constants.CMD_INFO]: 'Get microservice settings.',
-      [constants.CMD_ROUTE_CREATE]: 'Create microservice route.',
-      [constants.CMD_ROUTE_REMOVE]: 'Remove microservice route.',
       [constants.CMD_PORT_MAPPING_CREATE]: 'Create microservice port mapping.',
       [constants.CMD_PORT_MAPPING_REMOVE]: 'Remove microservice port mapping.',
       [constants.CMD_PORT_MAPPING_LIST]: 'List microservice port mapping.',
@@ -412,12 +392,6 @@ class Microservice extends BaseCLIHandler {
           break
         case constants.CMD_INFO:
           await _executeCase(microserviceCommand, constants.CMD_INFO, _getMicroservice)
-          break
-        case constants.CMD_ROUTE_CREATE:
-          await _executeCase(microserviceCommand, constants.CMD_ROUTE_CREATE, _createRoute)
-          break
-        case constants.CMD_ROUTE_REMOVE:
-          await _executeCase(microserviceCommand, constants.CMD_ROUTE_REMOVE, _removeRoute)
           break
         case constants.CMD_PORT_MAPPING_CREATE:
           await _executeCase(microserviceCommand, constants.CMD_PORT_MAPPING_CREATE, _createPortMapping)
@@ -479,19 +453,7 @@ class Microservice extends BaseCLIHandler {
             example: '$ iofog-controller microservice add [other required options] --ports 80:8080:false 443:5443:false'
           },
           {
-            desc: '4. Add routes (ABC:DEF - source microservice uuid : dest microservice uuid)',
-            example: '$ iofog-controller microservice add [other required options] --routes ABC:DEF RFG:HJK'
-          },
-          {
-            desc: '5. Add route (ABC:DEF - source microservice uuid : dest microservice uuid)',
-            example: '$ iofog-controller microservice route-create --route ABC:DEF'
-          },
-          {
-            desc: '6. Delete route (ABC:DEF - source microservice uuid : dest microservice uuid)',
-            example: '$ iofog-controller microservice route-remove --route ABC:DEF'
-          },
-          {
-            desc: '7. Create port mapping (80:8080:false - internal port : external port : public mode, ABC - microservice)',
+            desc: '4. Create port mapping (80:8080:false - internal port : external port : public mode, ABC - microservice)',
             example: '$ iofog-controller microservice port-mapping-create --mapping 80:8080:false -i ABC'
           },
           {
@@ -518,34 +480,6 @@ async function _executeCase (commands, commandName, f) {
     await f(obj)
   } catch (error) {
     logger.error(error.message)
-  }
-}
-
-const _createRoute = async function (obj) {
-  try {
-    const arr = obj.route.split(':')
-    const sourceMicroserviceUuid = arr[0]
-    const destMicroserviceUuid = arr[1]
-    logger.cliReq('microservice route-create', { args: { source: sourceMicroserviceUuid, dest: destMicroserviceUuid } })
-    await MicroserviceService.createRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, true)
-    logger.cliRes(`Microservice route with source microservice ${sourceMicroserviceUuid} and dest microservice 
-                ${destMicroserviceUuid} has been created successfully.`)
-  } catch (e) {
-    logger.error(ErrorMessages.CLI.INVALID_ROUTE)
-  }
-}
-
-const _removeRoute = async function (obj) {
-  try {
-    const arr = obj.route.split(':')
-    const sourceMicroserviceUuid = arr[0]
-    const destMicroserviceUuid = arr[1]
-    logger.cliReq('microservice route-remove', { args: { source: sourceMicroserviceUuid, dest: destMicroserviceUuid } })
-    await MicroserviceService.deleteRouteEndPoint(sourceMicroserviceUuid, destMicroserviceUuid, true)
-    logger.cliRes('Microservice route with source microservice ' + sourceMicroserviceUuid +
-      ' and dest microservice ' + destMicroserviceUuid + 'has been removed successfully.')
-  } catch (e) {
-    logger.error(ErrorMessages.CLI.INVALID_ROUTE)
   }
 }
 
@@ -737,7 +671,6 @@ const _createMicroserviceObject = function (obj) {
     hostNetworkMode: obj.hostNetworkMode,
     isPrivileged: obj.isPrivileged,
     logSize: (obj.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
-    routes: obj.routes,
     cmd: obj.cmd,
     cdiDevices: obj.cdiDevices,
     capAdd: obj.capAdd,

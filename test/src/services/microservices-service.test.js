@@ -14,7 +14,6 @@ const CatalogItemImageManager = require('../../../src/data/managers/catalog-item
 const RouterManager = require('../../../src/data/managers/router-manager')
 const VolumeMappingManager = require('../../../src/data/managers/volume-mapping-manager')
 const MicroserviceStatusManager = require('../../../src/data/managers/microservice-status-manager')
-const RoutingManager = require('../../../src/data/managers/routing-manager')
 const MicroserviceExtraHostManager = require('../../../src/data/managers/microservice-extra-host-manager')
 const MicroserviceEnvManager = require('../../../src/data/managers/microservice-env-manager')
 const MicroserviceArgManager = require('../../../src/data/managers/microservice-arg-manager')
@@ -83,7 +82,6 @@ describe('Microservices Service', () => {
       images: [],
       logSize: NaN,
       ports: [],
-      routes: [],
       volumeMappings: [],
       flowId: application.id,
       applicationId: application.id,
@@ -100,7 +98,6 @@ describe('Microservices Service', () => {
     def('findMicroservicesResponse', () => Promise.resolve(response))
     def('findPortMappingsResponse', () => Promise.resolve([]))
     def('findVolumeMappingsResponse', () => Promise.resolve([]))
-    def('findRoutesResponse', () => Promise.resolve([]))
     def('findExtraHostsResponse', () => Promise.resolve([]))
     def('publicModeResponse', () => Promise.resolve([]))
     def('envResponse', () => Promise.resolve([]))
@@ -112,8 +109,6 @@ describe('Microservices Service', () => {
       $sandbox.stub(MicroserviceManager, 'findAllExcludeFields').returns($findMicroservicesResponse)
       $sandbox.stub(MicroservicePortManager, 'findAll').returns($findPortMappingsResponse)
       $sandbox.stub(VolumeMappingManager, 'findAll').returns($findVolumeMappingsResponse)
-      $sandbox.stub(RoutingManager, 'findAllPopulated').returns($findRoutesResponse)
-      $sandbox.stub(RoutingManager, 'findAll').returns($findRoutesResponse)
       $sandbox.stub(MicroserviceExtraHostManager, 'findAll').returns($findExtraHostsResponse)
       $sandbox.stub(MicroserviceEnvManager, 'findAllExcludeFields').returns($envResponse)
       $sandbox.stub(MicroserviceArgManager, 'findAllExcludeFields').returns($cmdResponse)
@@ -179,7 +174,6 @@ describe('Microservices Service', () => {
     def('findMicroserviceResponse', () => Promise.resolve(response))
     def('findPortMappingsResponse', () => Promise.resolve([]))
     def('findVolumeMappingsResponse', () => Promise.resolve([]))
-    def('findRoutesResponse', () => Promise.resolve([]))
     def('findExtraHostsResponse', () => Promise.resolve([]))
     def('publicModeResponse', () => Promise.resolve([]))
     def('envResponse', () => Promise.resolve([]))
@@ -191,8 +185,6 @@ describe('Microservices Service', () => {
       $sandbox.stub(MicroserviceManager, 'findOneExcludeFields').returns($findMicroserviceResponse)
       $sandbox.stub(MicroservicePortManager, 'findAll').returns($findPortMappingsResponse)
       $sandbox.stub(VolumeMappingManager, 'findAll').returns($findVolumeMappingsResponse)
-      $sandbox.stub(RoutingManager, 'findAllPopulated').returns($findRoutesResponse)
-      $sandbox.stub(RoutingManager, 'findAll').returns($findRoutesResponse)
       $sandbox.stub(MicroserviceExtraHostManager, 'findAll').returns($findExtraHostsResponse)
       $sandbox.stub(MicroserviceEnvManager, 'findAllExcludeFields').returns($envResponse)
       $sandbox.stub(MicroserviceArgManager, 'findAllExcludeFields').returns($cmdResponse)
@@ -309,7 +301,6 @@ describe('Microservices Service', () => {
           'external': 1,
         },
       ],
-      'routes': [],
       'logLimit': 1
     }
 
@@ -1241,7 +1232,6 @@ describe('Microservices Service', () => {
           def('deleteUndefinedFieldsResponse', () => newMicroservice)
           def('getNewAgentMicroserviceReponse', () => Promise.resolve([]))
           def('newAgentPublicPortsResponse', () => Promise.resolve([]))
-          def('findRoutesResponse', () => Promise.resolve([]))
           def('getPortsResponse', () => Promise.resolve([]))
           def('findFogResponse', () => Promise.resolve({ ...newFog, getMicroservice: () => $getNewAgentMicroserviceReponse }))
 
@@ -1604,12 +1594,10 @@ describe('Microservices Service', () => {
 
     def('subject', () => $subject.deleteMicroserviceEndPoint(microserviceUuid, microserviceData, user, isCLI, transaction))
     def('findMicroserviceResponse', () => Promise.resolve(microserviceData))
-    def('findRoutesResponse', () => Promise.resolve([]))
     def('findPortMappings', () => Promise.resolve([]))
   
     beforeEach(() => {
       $sandbox.stub(MicroserviceManager, 'findOneWithStatusAndCategory').returns($findMicroserviceResponse)
-      $sandbox.stub(RoutingManager, 'findAllPopulated').returns($findRoutesResponse)
       $sandbox.stub(MicroservicePortManager, 'findAll').returns($findPortMappings)
       $sandbox.stub(MicroserviceManager, 'delete')
       $sandbox.stub(ChangeTrackingService, 'update')
@@ -1649,54 +1637,6 @@ describe('Microservices Service', () => {
       })
     })
 
-    context('when there are routes', () => {
-      const app = {
-        id: 1, 
-        name: 'my-app'
-      }
-      const routes = [{
-        name: 'one',
-        id: 1,
-        sourceMicroserviceUuid: 'srcMsvcUUID1',
-        destMicroserviceUuid: 'destMsvcUUID1',
-        application: app
-      }, {
-        name: 'two',
-        id: 2,
-        sourceMicroserviceUuid: 'srcMsvcUUID2',
-        destMicroserviceUuid: 'destMsvcUUID2',
-        application: app
-      }]
-      def('findRoutesResponse', () => Promise.resolve(routes))
-
-      const routeAgentUuid = 'routeAgentUUID'
-
-      beforeEach(() => {
-        $sandbox.stub(RoutingManager, 'delete')
-        $sandbox.stub(ApplicationManager, 'findOne').returns(Promise.resolve(app))
-        const findOneStub = $sandbox.stub(RoutingManager, 'findOne')
-        for (const route of routes){
-          findOneStub.withArgs({applicationId: app.id, name: route.name}, transaction).returns(route)
-        }
-        const stub = $sandbox.stub(MicroserviceManager, 'findOne')
-        for(const route of routes) {
-          stub.withArgs({uuid: route.sourceMicroserviceUuid}).returns(Promise.resolve({iofogUuid: routeAgentUuid + route.sourceMicroserviceUuid}))
-          stub.withArgs({uuid: route.destMicroserviceUuid}).returns(Promise.resolve({iofogUuid: routeAgentUuid + route.destMicroserviceUuid}))
-        }
-      })
-
-      it('should delete routes', async () => {
-        await $subject
-
-        for(const route of routes) {
-          expect(RoutingManager.findOne).to.have.been.calledWith({applicationId: app.id, name: route.name}, transaction)
-          expect(RoutingManager.delete).to.have.been.calledWith({id: route.id}, transaction)
-          expect(ChangeTrackingService.update).to.have.been.calledWith(routeAgentUuid + route.sourceMicroserviceUuid, ChangeTrackingService.events.microserviceFull, transaction)
-          expect(ChangeTrackingService.update).to.have.been.calledWith(routeAgentUuid + route.destMicroserviceUuid, ChangeTrackingService.events.microserviceFull, transaction)
-        }
-      })
-    })
-    
     context('when there are ports', () => {
       const publicPort = {
         id: 1,
@@ -1782,7 +1722,6 @@ describe('Microservices Service', () => {
           'publicMode': false,
         },
       ],
-      'routes': [],
     }
     const newMicroservice = {
       uuid: microserviceUuid,

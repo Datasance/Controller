@@ -48,9 +48,6 @@ const microserviceCreate = {
     'extraHosts': {
       'type': 'array',
       'items': { '$ref': '/extraHosts' } },
-    'routes': {
-      'type': 'array',
-      'items': { 'type': 'string' } },
     'env': {
       'type': 'array',
       'items': { '$ref': '/env' } },
@@ -71,14 +68,7 @@ const microserviceCreate = {
     'runtime': { 'type': 'string' },
     'cpuSetCpus': { 'type': 'string' },
     'memoryLimit': { 'type': 'integer' },
-    'pubTags': {
-      'type': 'array',
-      'items': { 'type': 'string' }
-    },
-    'subTags': {
-      'type': 'array',
-      'items': { 'type': 'string' }
-    },
+    'natsConfig': { '$ref': '/microserviceNatsConfig' },
     'healthCheck': {
       'type': 'object',
       'properties': { '$ref': '/microserviceHealthCheck' }
@@ -160,14 +150,7 @@ const microserviceUpdate = {
     'runtime': { 'type': 'string' },
     'cpuSetCpus': { 'type': 'string' },
     'memoryLimit': { 'type': 'integer' },
-    'pubTags': {
-      'type': 'array',
-      'items': { 'type': 'string' }
-    },
-    'subTags': {
-      'type': 'array',
-      'items': { 'type': 'string' }
-    },
+    'natsConfig': { '$ref': '/microserviceNatsConfig' },
     'healthCheck': {
       'type': 'object',
       'properties': { '$ref': '/microserviceHealthCheck' }
@@ -292,7 +275,17 @@ const microserviceHealthCheck = {
   'required': ['test']
 }
 
+const microserviceNatsConfig = {
+  'id': '/microserviceNatsConfig',
+  'type': 'object',
+  'properties': {
+    'natsAccess': { 'type': 'boolean' },
+    'natsRule': { 'type': 'string', 'minLength': 1, 'maxLength': 255 }
+  },
+  'additionalProperties': false
+}
+
 module.exports = {
   mainSchemas: [microserviceCreate, microserviceUpdate, env, ports, extraHosts, portsCreate, microserviceDelete, volumeMappings, microserviceHealthCheck],
-  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate, microserviceHealthCheck]
+  innerSchemas: [volumeMappings, ports, env, extraHosts, microserviceCreate, microserviceHealthCheck, microserviceNatsConfig]
 }

@@ -1,6 +1,6 @@
 openapi : "3.0.0"
 info:
-  version: 3.6.0
+  version: 3.7.0
   title: Datasance PoT Controller
 paths:
   /status:
@@ -1772,6 +1772,37 @@ paths:
           description: Not Authorized
         "500":
           description: Internal Server Error
+    post:
+      tags:
+        - Microservices
+      summary: Creates a new microservice
+      operationId: createMicroservice
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewMicroserviceRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uuid:
+                    type: string
+                  name:
+                    type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "500":
+          description: Internal Server Error
   /microservices/yaml:
     post:
       tags:
@@ -1787,7 +1818,7 @@ paths:
             schema:
               type: object
               properties:
-                microsoervice:
+                microservice:
                   type: string
                   format: binary
       responses:
@@ -1904,68 +1935,6 @@ paths:
           description: Not Authorized
         "404":
           description: Invalid Registry Id
-        "500":
-          description: Internal Server Error
-  /microservices/pub/{tag}:
-    get:
-      tags:
-        - Microservices
-      summary: Get list of microservices with filtered pub tag
-      operationId: listMicroserviceInfoByPubTag
-      parameters:
-        - in: path
-          name: tag
-          description: Microservice Pub Tags
-          required: true
-          schema:
-            type: string
-      security:
-        - authToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetMicroservicesResponse"
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-  /microservices/sub/{tag}:
-    get:
-      tags:
-        - Microservices
-      summary: Get list of microservices with filtered sub tag
-      operationId: listMicroserviceInfoBySubTag
-      parameters:
-        - in: path
-          name: tag
-          description: Microservice Pub Tags
-          required: true
-          schema:
-            type: string
-      security:
-        - authToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GetMicroservicesResponse"
-        "401":
-          description: Not Authorized
         "500":
           description: Internal Server Error
   /microservices/system:
@@ -3432,167 +3401,6 @@ paths:
                 $ref: "#/components/schemas/UserProfileDetailsResponse"
         "401":
           description: Not Authorized
-        "500":
-          description: Internal Server Error
-  /routes:
-    get:
-      tags:
-        - Routing
-      summary: Get routes
-      operationId: getRoutes
-      security:
-        - authToken: []
-      responses:
-        "200":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RouteListResponse"
-        "401":
-          description: Not Authorized
-        "500":
-          description: Internal Server Error
-    post:
-      tags:
-        - Routing
-      summary: Creates a new route
-      operationId: createRoute
-      security:
-        - authToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewRouteRequest"
-        description: Route Info
-        required: true
-      responses:
-        "201":
-          description: Created
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "409":
-          description: Duplicate Name
-        "500":
-          description: Internal Server Error
-  "/routes/{name}":
-    get:
-      tags:
-        - Routing
-      summary: Gets a route info
-      operationId: getRoute
-      parameters:
-        - in: path
-          name: name
-          description: Route name
-          required: true
-          schema:
-            type: string
-      security:
-        - authToken: []
-      responses:
-        "200":
-          description: Route Info
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RouteResponse"
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Route Id
-        "500":
-          description: Internal Server Error
-    patch:
-      tags:
-        - Routing
-      summary: Updates a route
-      operationId: updateRoute
-      parameters:
-        - in: path
-          name: name
-          description: Route name
-          required: true
-          schema:
-            type: string
-      security:
-        - authToken: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateRouteRequest"
-        description: Route Info
-        required: true
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "400":
-          description: Bad Request
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Route Id
-        "409":
-          description: Duplicate Name
-        "500":
-          description: Internal Server Error
-    delete:
-      tags:
-        - Routing
-      summary: Deletes a route
-      operationId: deleteRoute
-      parameters:
-        - in: path
-          name: name
-          description: Route name
-          required: true
-          schema:
-            type: string
-      security:
-        - authToken: []
-      responses:
-        "204":
-          description: Success
-          headers:
-            X-Timestamp:
-              description: FogController server timestamp
-              schema:
-                type: number
-        "401":
-          description: Not Authorized
-        "404":
-          description: Invalid Route Id
         "500":
           description: Internal Server Error
   /edgeResources:
@@ -5932,6 +5740,653 @@ paths:
           description: ServiceAccount Not Found
         "500":
           description: Internal Server Error
+  /nats/operator:
+    get:
+      tags:
+        - NATS
+      summary: Gets current NATS operator metadata
+      operationId: getNatsOperator
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsOperatorResponse"
+        "401":
+          description: Not Authorized
+  /nats/operator/rotate:
+    post:
+      tags:
+        - NATS
+      summary: Rotates NATS operator keys and JWT
+      description: Schedules account/user re-sign and resolver reconciliation in background after operator rotation is accepted.
+      operationId: rotateNatsOperator
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsOperatorResponse"
+        "401":
+          description: Not Authorized
+  /nats/hub:
+    get:
+      tags:
+        - NATS
+      summary: Gets default NATS hub configuration
+      operationId: getNatsHub
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsHubResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+    put:
+      tags:
+        - NATS
+      summary: Creates or updates default NATS hub
+      operationId: upsertNatsHub
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsHubRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsHubResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+  /nats/users:
+    get:
+      tags:
+        - NATS
+      summary: Lists all NATS users across accounts
+      operationId: listAllNatsUsers
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAllUsersListResponse"
+        "401":
+          description: Not Authorized
+  /nats/accounts:
+    get:
+      tags:
+        - NATS
+      summary: Lists NATS accounts
+      operationId: listNatsAccounts
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAccountsListResponse"
+        "401":
+          description: Not Authorized
+  /nats/accounts/{appName}:
+    get:
+      tags:
+        - NATS
+      summary: Gets NATS account for application
+      operationId: getNatsAccountByApp
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAccountResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+    post:
+      tags:
+        - NATS
+      summary: Ensures NATS account for application
+      operationId: ensureNatsAccountByApp
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsAccountEnsureRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAccountResponse"
+        "400":
+          description: Bad Request (e.g. application already has NATS enabled or unknown rule name)
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/accounts/{appName}/users:
+    get:
+      tags:
+        - NATS
+      summary: Lists NATS users for application account
+      operationId: listNatsUsersByApp
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsUsersListResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+    post:
+      tags:
+        - NATS
+      summary: Creates NATS user for application account
+      operationId: createNatsUserByApp
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsUserCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsUserResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/accounts/{appName}/users/{userName}/creds:
+    get:
+      tags:
+        - NATS
+      summary: Gets NATS creds for specific account user
+      operationId: getNatsUserCreds
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsCredsResponse"
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/accounts/{appName}/users/{userName}:
+    delete:
+      tags:
+        - NATS
+      summary: Deletes NATS account user
+      operationId: deleteNatsUserByApp
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request (e.g. user linked to existing microservice)
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/accounts/{appName}/mqtt-bearer:
+    post:
+      tags:
+        - NATS
+      summary: Creates MQTT bearer NATS user JWT
+      operationId: createNatsMqttBearer
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsUserCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsUserResponse"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/accounts/{appName}/mqtt-bearer/{userName}:
+    delete:
+      tags:
+        - NATS
+      summary: Deletes MQTT bearer NATS user
+      operationId: deleteNatsMqttBearer
+      parameters:
+        - in: path
+          name: appName
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request (e.g. not a bearer user or user linked to microservice)
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/account-rules:
+    get:
+      tags:
+        - NATS
+      summary: Lists NATS account rules
+      operationId: listNatsAccountRules
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAccountRuleListResponse"
+        "401":
+          description: Not Authorized
+    post:
+      tags:
+        - NATS
+      summary: Creates NATS account rule
+      operationId: createNatsAccountRule
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsAccountRulePayload"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsAccountRulePayload"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+  /nats/account-rules/yaml:
+    post:
+      tags:
+        - NATS
+      summary: Creates NATS account rule from YAML
+      operationId: createNatsAccountRuleYaml
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                natsAccountRule:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+  /nats/account-rules/{ruleName}:
+    patch:
+      tags:
+        - NATS
+      summary: Updates NATS account rule
+      description: Returns updated rule immediately and schedules downstream account JWT reissue/reconciliation in background.
+      operationId: updateNatsAccountRule
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsAccountRulePayload"
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+    delete:
+      tags:
+        - NATS
+      summary: Deletes NATS account rule
+      description: Rebinds applications using this rule to default rule and schedules account JWT reissue/reconciliation in background.
+      operationId: deleteNatsAccountRule
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/account-rules/yaml/{ruleName}:
+    patch:
+      tags:
+        - NATS
+      summary: Updates NATS account rule from YAML
+      description: Returns updated rule immediately and schedules downstream account JWT reissue/reconciliation in background.
+      operationId: updateNatsAccountRuleYaml
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                natsAccountRule:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/user-rules:
+    get:
+      tags:
+        - NATS
+      summary: Lists NATS user rules
+      operationId: listNatsUserRules
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsUserRuleListResponse"
+        "401":
+          description: Not Authorized
+    post:
+      tags:
+        - NATS
+      summary: Creates NATS user rule
+      operationId: createNatsUserRule
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsUserRulePayload"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsUserRulePayload"
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+  /nats/user-rules/yaml:
+    post:
+      tags:
+        - NATS
+      summary: Creates NATS user rule from YAML
+      operationId: createNatsUserRuleYaml
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                natsUserRule:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+  /nats/user-rules/{ruleName}:
+    patch:
+      tags:
+        - NATS
+      summary: Updates NATS user rule
+      description: Returns updated rule immediately and schedules bound user JWT+creds reissue/reconciliation in background.
+      operationId: updateNatsUserRule
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NatsUserRulePayload"
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+    delete:
+      tags:
+        - NATS
+      summary: Deletes NATS user rule
+      description: Rebinds microservices using this rule to default rule and schedules user JWT+creds reissue/reconciliation in background.
+      operationId: deleteNatsUserRule
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
+  /nats/user-rules/yaml/{ruleName}:
+    patch:
+      tags:
+        - NATS
+      summary: Updates NATS user rule from YAML
+      description: Returns updated rule immediately and schedules bound user JWT+creds reissue/reconciliation in background.
+      operationId: updateNatsUserRuleYaml
+      parameters:
+        - in: path
+          name: ruleName
+          required: true
+          schema:
+            type: string
+      security:
+        - authToken: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                natsUserRule:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Updated
+        "400":
+          description: Bad Request
+        "401":
+          description: Not Authorized
+        "404":
+          description: Not Found
 tags:
   - name: Controller
     description: Manage your controller
@@ -5947,8 +6402,8 @@ tags:
     description: Manage your registries
   - name: Microservices
     description: Manage your microservices
-  - name: Routing
-    description: Manage your routes
+  - name: NATS
+    description: Manage NATS operator, hub, accounts, users, and rules
   - name: Edge Resource
     description: Manage your Edge Resources
   - name: Diagnostics
@@ -6317,25 +6772,10 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/PortMappingsRequest"
-              pubTags:
-                type: array
-                items:
-                  type: string
-              subTags:
-                type: array
-                items:
-                  type: string
-        routes:
-          type: array
-          items:
-            type: object
-            properties:
-              from:
-                type: string
-              to:
-                type: string
-              name:
-                type: string
+              natsConfig:
+                $ref: "#/components/schemas/NatsConfigObject"
+        natsConfig:
+          $ref: "#/components/schemas/NatsConfigObject"
     ApplicationCreateResponse:
       type: object
       properties:
@@ -6354,20 +6794,12 @@ components:
           type: string
         isActivated:
           type: boolean
+        natsConfig:
+          $ref: "#/components/schemas/NatsConfigObject"
         microservices:
           type: array
           items:
             $ref: "#/components/schemas/GetMicroservicesResponse"
-        routes:
-          type: array
-          items:
-            properties:
-              name:
-                type: string
-              from:
-                type: string
-              to:
-                type: string
     ApplicationListResponse:
       type: object
       properties:
@@ -6470,25 +6902,10 @@ components:
                     type: array
                     items:
                       $ref: "#/components/schemas/PortMappingsRequest"
-                  pubTags:
-                    type: array
-                    items:
-                      type: string
-                  subTags:
-                    type: array
-                    items:
-                      type: string
-            routes:
-              type: array
-              items:
-                type: object
-                properties:
-                  from:
-                    type: string
-                  to:
-                    type: string
-                  name:
-                    type: string
+                  natsConfig:
+                    $ref: "#/components/schemas/NatsConfigObject"
+            natsConfig:
+              $ref: "#/components/schemas/NatsConfigObject"
     ApplicationTemplateCreateResponse:
       type: object
       properties:
@@ -6519,16 +6936,8 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/GetMicroservicesResponse"
-            routes:
-              type: array
-              items:
-                properties:
-                  name:
-                    type: string
-                  from:
-                    type: string
-                  to:
-                    type: string
+            natsConfig:
+              $ref: "#/components/schemas/NatsConfigObject"
     ApplicationTemplateListResponse:
       type: object
       properties:
@@ -6711,6 +7120,26 @@ components:
           type: array
           items:
             type: string
+        natsMode:
+          type: string
+          enum:
+            - none
+            - leaf
+            - server
+        natsServerPort:
+          type: number
+        natsLeafPort:
+          type: number
+        natsClusterPort:
+          type: number
+        natsMqttPort:
+          type: number
+        natsHttpPort:
+          type: number
+        upstreamNatsServers:
+          type: array
+          items:
+            type: string
     UpdateIOFogNodeRequestBody:
       type: object
       properties:
@@ -6738,7 +7167,7 @@ components:
           default: 50
         diskDirectory:
           type: string
-          default: /var/lib/iofog
+          default: /var/lib/iofog-agent
         memoryLimit:
           type: number
           default: 4096
@@ -6802,6 +7231,26 @@ components:
           type: number
         edgeRouterPort:
           type: number
+        natsMode:
+          type: string
+          enum:
+            - none
+            - leaf
+            - server
+        natsServerPort:
+          type: number
+        natsLeafPort:
+          type: number
+        natsClusterPort:
+          type: number
+        natsMqttPort:
+          type: number
+        natsHttpPort:
+          type: number
+        upstreamNatsServers:
+          type: array
+          items:
+            type: string
         host:
           type: string
         tags:
@@ -6874,8 +7323,6 @@ components:
         microservicesList:
           type: boolean
         microservicesConfig:
-          type: boolean
-        routing:
           type: boolean
         registries:
           type: boolean
@@ -7530,6 +7977,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PortMappingsResponse"
+        natsAccess:
+          type: boolean
+        natsConfig:
+          $ref: "#/components/schemas/NatsConfigObject"
         status:
           type: object
           properties:
@@ -7566,6 +8017,11 @@ components:
                 type: string
         flowId:
           type: integer
+          deprecated: true
+        application:
+          oneOf:
+            - type: string
+            - type: integer
         iofogUuid:
           type: string
         agentName:
@@ -7606,14 +8062,8 @@ components:
           type: array
           items:
             type: string
-        pubTags:
-          type: array
-          items:
-            type: string
-        subTags:
-          type: array
-          items:
-            type: string
+        natsConfig:
+          $ref: "#/components/schemas/NatsConfigObject"
         serviceAccount:
           type: object
           properties:
@@ -7622,8 +8072,6 @@ components:
           additionalProperties: false
     UpdateMicroserviceRequest:
       type: object
-      required:
-        - name
       properties:
         name:
           type: string
@@ -7677,20 +8125,386 @@ components:
           type: array
           items:
             type: string
-        pubTags:
-          type: array
-          items:
-            type: string
-        subTags:
-          type: array
-          items:
-            type: string
+        natsConfig:
+          $ref: "#/components/schemas/NatsConfigObject"
         serviceAccount:
           type: object
           properties:
             roleRef:
               $ref: "#/components/schemas/RoleRef"
           additionalProperties: false
+    NatsConfigObject:
+      type: object
+      properties:
+        natsAccess:
+          type: boolean
+        natsRule:
+          type: string
+      additionalProperties: false
+    NatsHubRequest:
+      type: object
+      required:
+        - host
+      properties:
+        host:
+          type: string
+        serverPort:
+          type: integer
+        clusterPort:
+          type: integer
+        leafPort:
+          type: integer
+        mqttPort:
+          type: integer
+        httpPort:
+          type: integer
+    NatsHubResponse:
+      $ref: "#/components/schemas/NatsHubRequest"
+    NatsOperatorResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        publicKey:
+          type: string
+        jwt:
+          type: string
+    NatsAccountResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        publicKey:
+          type: string
+        jwt:
+          type: string
+        isSystem:
+          type: boolean
+        applicationId:
+          type: integer
+    NatsAccountsListResponse:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/NatsAccountResponse"
+    NatsUserCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        expiresIn:
+          type: string
+          pattern: "^[0-9]+[hdm]$"
+          example: "7d"
+        natsRule:
+          type: string
+    NatsUserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        publicKey:
+          type: string
+        jwt:
+          type: string
+        isBearer:
+          type: boolean
+    NatsUserWithContextResponse:
+      type: object
+      description: NATS user with account and application context (for list-all response)
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        publicKey:
+          type: string
+        jwt:
+          type: string
+        isBearer:
+          type: boolean
+        accountId:
+          type: integer
+        accountName:
+          type: string
+        applicationId:
+          type: integer
+        applicationName:
+          type: string
+        microserviceUuid:
+          type: string
+          format: uuid
+    NatsUsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/NatsUserResponse"
+    NatsAllUsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/NatsUserWithContextResponse"
+    NatsAccountEnsureRequest:
+      type: object
+      properties:
+        natsRule:
+          type: string
+          description: Account rule name (defaults to default-account if omitted)
+    NatsCredsResponse:
+      type: object
+      properties:
+        credsBase64:
+          type: string
+          description: NATS credentials file content encoded as base64
+    NatsAccountRulePayload:
+      type: object
+      description: NATS account rule (authorization policy for an account)
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        infoUrl:
+          type: string
+        maxConnections:
+          type: integer
+          minimum: -1
+        maxLeafNodeConnections:
+          type: integer
+          minimum: -1
+        maxData:
+          type: integer
+          minimum: -1
+        maxExports:
+          type: integer
+          minimum: -1
+        maxImports:
+          type: integer
+          minimum: -1
+        maxMsgPayload:
+          type: integer
+          minimum: -1
+        maxSubscriptions:
+          type: integer
+          minimum: -1
+        exportsAllowWildcards:
+          type: boolean
+        disallowBearer:
+          type: boolean
+        responsePermissions:
+          type: object
+          properties:
+            maxMsgs:
+              type: integer
+              minimum: 0
+            expires:
+              type: integer
+              minimum: 0
+        respMax:
+          type: integer
+          minimum: 0
+        respTtl:
+          type: integer
+          minimum: 0
+        imports:
+          type: array
+          description: Stream/service imports (NATS account policy)
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              subject:
+                type: string
+              type:
+                type: string
+                enum: [stream, service]
+              account:
+                type: string
+              token:
+                type: string
+              to:
+                type: string
+              local_subject:
+                type: string
+              share:
+                type: boolean
+        exports:
+          type: array
+          description: Stream/service exports (NATS account policy)
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              subject:
+                type: string
+              type:
+                type: string
+                enum: [stream, service]
+              description:
+                type: string
+              info_url:
+                type: string
+              token_req:
+                type: boolean
+              response_type:
+                type: string
+                enum: [Singleton, Stream, Chunked]
+              account_token_position:
+                type: integer
+        memStorage:
+          type: integer
+          minimum: -1
+          description: JetStream memory storage limit in bytes
+        diskStorage:
+          type: integer
+          minimum: -1
+          description: JetStream disk storage limit in bytes
+        streams:
+          type: integer
+          minimum: -1
+          description: JetStream max streams
+        consumer:
+          type: integer
+          minimum: -1
+          description: JetStream max consumers
+        maxAckPending:
+          type: integer
+          minimum: -1
+        memMaxStreamBytes:
+          type: integer
+          minimum: -1
+        diskMaxStreamBytes:
+          type: integer
+          minimum: -1
+        maxBytesRequired:
+          type: boolean
+        tieredLimits:
+          type: object
+          additionalProperties: true
+        pubAllow:
+          type: array
+          items:
+            type: string
+        pubDeny:
+          type: array
+          items:
+            type: string
+        subAllow:
+          type: array
+          items:
+            type: string
+        subDeny:
+          type: array
+          items:
+            type: string
+    NatsAccountRuleListResponse:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/NatsAccountRulePayload"
+    NatsUserRulePayload:
+      type: object
+      description: NATS user rule (authorization policy for a user)
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        maxSubscriptions:
+          type: integer
+          minimum: -1
+        maxPayload:
+          type: integer
+          minimum: -1
+        maxData:
+          type: integer
+          minimum: -1
+        bearerToken:
+          type: boolean
+        proxyRequired:
+          type: boolean
+        allowedConnectionTypes:
+          type: array
+          items:
+            type: string
+            enum:
+              - STANDARD
+              - WEBSOCKET
+              - LEAFNODE
+              - LEAFNODE_WS
+              - MQTT
+              - MQTT_WS
+              - IN_PROCESS
+        src:
+          type: array
+          items:
+            type: string
+          description: Allowed client connection source IP/CIDR
+        times:
+          type: array
+          items:
+            type: object
+            properties:
+              start:
+                type: string
+              end:
+                type: string
+          description: Allowed time windows for connections
+        timesLocation:
+          type: string
+        respMax:
+          type: integer
+          minimum: 0
+        respTtl:
+          type: integer
+          minimum: 0
+        pubAllow:
+          type: array
+          items:
+            type: string
+        pubDeny:
+          type: array
+          items:
+            type: string
+        subAllow:
+          type: array
+          items:
+            type: string
+        subDeny:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+    NatsUserRuleListResponse:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/NatsUserRulePayload"
     IOFogNodeTunnelStatusInfoResponse:
       type: object
       properties:
@@ -7819,46 +8633,6 @@ components:
           type: string
         data:
           type: object
-    RouteListResponse:
-      type: object
-      properties:
-        routes:
-          type: array
-          items:
-            $ref: "#/components/schemas/RouteResponse"
-    RouteResponse:
-      type: object
-      properties:
-        id:
-          type: number
-        name:
-          type: string
-        sourceMicroserviceUuid:
-          type: string
-        destMicroserviceUuid:
-          type: string
-    NewRouteRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        sourceMicroserviceUuid:
-          type: string
-        destMicroserviceUuid:
-          type: string
-      required:
-        - name
-        - sourceMicroserviceUuid
-        - destMicroserviceUuid
-    UpdateRouteRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        sourceMicroserviceUuid:
-          type: string
-        destMicroserviceUuid:
-          type: string
     SecretCreate:
       type: object
       required:

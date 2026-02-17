@@ -92,11 +92,11 @@ CREATE TABLE IF NOT EXISTS Fogs (
     network_interface VARCHAR(36) DEFAULT 'dynamic',
     docker_url VARCHAR(255) DEFAULT 'unix:///var/run/docker.sock',
     disk_limit FLOAT DEFAULT 50,
-    disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog/',
+    disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog-agent/',
     memory_limit FLOAT DEFAULT 4096,
     cpu_limit FLOAT DEFAULT 80,
     log_limit FLOAT DEFAULT 10,
-    log_directory VARCHAR(255) DEFAULT '/var/log/iofog/',
+    log_directory VARCHAR(255) DEFAULT '/var/log/iofog-agent/',
     bluetooth BOOLEAN DEFAULT FALSE,
     hal BOOLEAN DEFAULT FALSE,
     log_file_count BIGINT DEFAULT 10,
@@ -130,7 +130,6 @@ CREATE TABLE IF NOT EXISTS ChangeTrackings (
     version BOOLEAN DEFAULT false,
     microservice_list BOOLEAN DEFAULT false,
     config BOOLEAN DEFAULT false,
-    routing BOOLEAN DEFAULT false,
     registries BOOLEAN DEFAULT false,
     tunnel BOOLEAN DEFAULT false,
     diagnostics BOOLEAN DEFAULT false,
@@ -389,21 +388,6 @@ CREATE TABLE IF NOT EXISTS CatalogItemOutputTypes (
 
 CREATE INDEX idx_catalog_item_output_type_catalog_item_id ON CatalogItemOutputTypes (catalog_item_id);
 
-
-CREATE TABLE IF NOT EXISTS Routings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    name TEXT NOT NULL,
-    source_microservice_uuid VARCHAR(36),
-    dest_microservice_uuid VARCHAR(36),
-    application_id INT,
-    FOREIGN KEY (source_microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
-    FOREIGN KEY (dest_microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
-    FOREIGN KEY (application_id) REFERENCES Flows (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_routing_sourceMicroserviceUuid ON Routings (source_microservice_uuid);
-CREATE INDEX idx_routing_destMicroserviceUuid ON Routings (dest_microservice_uuid);
-CREATE INDEX idx_routing_applicationId ON Routings (application_id);
 
 CREATE TABLE IF NOT EXISTS Routers (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -941,3 +925,160 @@ CREATE TABLE IF NOT EXISTS ClusterControllers (
 CREATE INDEX idx_cluster_controllers_uuid ON ClusterControllers (uuid);
 CREATE INDEX idx_cluster_controllers_host ON ClusterControllers (host);
 CREATE INDEX idx_cluster_controllers_active ON ClusterControllers (is_active, last_heartbeat);
+
+ALTER TABLE Fogs ADD COLUMN nats_id INT;
+
+CREATE TABLE IF NOT EXISTS NatsOperators (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    seed_secret_name TEXT NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS NatsAccounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    seed_secret_name TEXT NOT NULL,
+    is_system BOOLEAN DEFAULT false,
+    is_leaf_system BOOLEAN DEFAULT false,
+    operator_id INTEGER NOT NULL,
+    application_id INTEGER,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (operator_id) REFERENCES NatsOperators (id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES Flows (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS NatsUsers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    creds_secret_name TEXT NOT NULL,
+    is_bearer BOOLEAN DEFAULT false,
+    account_id INTEGER NOT NULL,
+    microservice_uuid VARCHAR(36),
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (account_id) REFERENCES NatsAccounts (id) ON DELETE CASCADE,
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS NatsInstances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    iofog_uuid VARCHAR(36) NOT NULL,
+    is_leaf BOOLEAN DEFAULT true,
+    is_hub BOOLEAN DEFAULT false,
+    host TEXT,
+    server_port INTEGER,
+    leaf_port INTEGER,
+    cluster_port INTEGER,
+    mqtt_port INTEGER,
+    http_port INTEGER,
+    configmap_name TEXT,
+    jwt_dir_mount_name TEXT,
+    cert_secret_name TEXT,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (iofog_uuid) REFERENCES Fogs (uuid) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS NatsConnections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    source_nats INTEGER NOT NULL,
+    dest_nats INTEGER NOT NULL,
+    created_at DATETIME,
+    updated_at DATETIME,
+    FOREIGN KEY (source_nats) REFERENCES NatsInstances (id) ON DELETE CASCADE,
+    FOREIGN KEY (dest_nats) REFERENCES NatsInstances (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS NatsAccountRules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    info_url TEXT,
+    max_connections INTEGER,
+    max_leaf_node_connections INTEGER,
+    max_data BIGINT,
+    max_exports INTEGER,
+    max_imports INTEGER,
+    max_msg_payload INTEGER,
+    max_subscriptions INTEGER,
+    exports_allow_wildcards BOOLEAN DEFAULT true,
+    disallow_bearer BOOLEAN,
+    response_permissions TEXT,
+    resp_max INTEGER,
+    resp_ttl BIGINT,
+    imports TEXT,
+    exports TEXT,
+    mem_storage BIGINT,
+    disk_storage BIGINT,
+    streams INTEGER,
+    consumer INTEGER,
+    max_ack_pending INTEGER,
+    mem_max_stream_bytes BIGINT,
+    disk_max_stream_bytes BIGINT,
+    max_bytes_required BOOLEAN,
+    tiered_limits TEXT,
+    pub_allow TEXT,
+    pub_deny TEXT,
+    sub_allow TEXT,
+    sub_deny TEXT,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS NatsUserRules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    max_subscriptions INTEGER,
+    max_payload INTEGER,
+    max_data BIGINT,
+    bearer_token BOOLEAN DEFAULT false,
+    proxy_required BOOLEAN,
+    allowed_connection_types TEXT,
+    src TEXT,
+    times TEXT,
+    times_location TEXT,
+    resp_max INTEGER,
+    resp_ttl BIGINT,
+    pub_allow TEXT,
+    pub_deny TEXT,
+    sub_allow TEXT,
+    sub_deny TEXT,
+    tags TEXT,
+    created_at DATETIME,
+    updated_at DATETIME
+);
+
+CREATE UNIQUE INDEX idx_nats_accounts_application_id_unique ON NatsAccounts (application_id) WHERE application_id IS NOT NULL;
+CREATE INDEX idx_nats_accounts_application_id ON NatsAccounts (application_id);
+CREATE UNIQUE INDEX idx_nats_users_account_id_name ON NatsUsers (account_id, name);
+CREATE INDEX idx_nats_users_account_id ON NatsUsers (account_id);
+CREATE INDEX idx_nats_users_microservice_uuid ON NatsUsers (microservice_uuid);
+CREATE UNIQUE INDEX idx_nats_instances_iofog_uuid_unique ON NatsInstances (iofog_uuid);
+CREATE INDEX idx_nats_instances_iofog_uuid ON NatsInstances (iofog_uuid);
+CREATE UNIQUE INDEX idx_nats_connections_source_dest_unique ON NatsConnections (source_nats, dest_nats);
+CREATE INDEX idx_nats_connections_source_nats ON NatsConnections (source_nats);
+CREATE INDEX idx_nats_connections_dest_nats ON NatsConnections (dest_nats);
+CREATE INDEX idx_nats_account_rules_name ON NatsAccountRules (name);
+CREATE INDEX idx_nats_user_rules_name ON NatsUserRules (name);
+
+ALTER TABLE Flows ADD COLUMN nats_access BOOLEAN DEFAULT false;
+ALTER TABLE Flows ADD COLUMN nats_rule_id INTEGER;
+ALTER TABLE Microservices ADD COLUMN nats_rule_id INTEGER;
+ALTER TABLE Microservices ADD COLUMN nats_access BOOLEAN DEFAULT false;
+ALTER TABLE Microservices ADD COLUMN nats_account_id INTEGER;
+ALTER TABLE Microservices ADD COLUMN nats_user_id INTEGER;
+ALTER TABLE Microservices ADD COLUMN nats_creds_secret_name TEXT;
+CREATE INDEX idx_flows_nats_rule_id ON Flows (nats_rule_id);
+CREATE INDEX idx_microservices_nats_rule_id ON Microservices (nats_rule_id);
+CREATE INDEX idx_microservices_nats_account_id ON Microservices (nats_account_id);
+CREATE INDEX idx_microservices_nats_user_id ON Microservices (nats_user_id);

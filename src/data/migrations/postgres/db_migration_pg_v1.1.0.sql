@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS "Fogs" (
     network_interface VARCHAR(36) DEFAULT 'dynamic',
     docker_url VARCHAR(255) DEFAULT 'unix:///var/run/docker.sock',
     disk_limit DOUBLE PRECISION DEFAULT 50,
-    disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog/',
+    disk_directory VARCHAR(255) DEFAULT '/var/lib/iofog-agent/',
     memory_limit DOUBLE PRECISION DEFAULT 4096,
     cpu_limit DOUBLE PRECISION DEFAULT 80,
     log_limit DOUBLE PRECISION DEFAULT 10,
@@ -130,7 +130,6 @@ CREATE TABLE IF NOT EXISTS "ChangeTrackings" (
     version BOOLEAN DEFAULT false,
     microservice_list BOOLEAN DEFAULT false,
     config BOOLEAN DEFAULT false,
-    routing BOOLEAN DEFAULT false,
     registries BOOLEAN DEFAULT false,
     tunnel BOOLEAN DEFAULT false,
     diagnostics BOOLEAN DEFAULT false,
@@ -389,21 +388,6 @@ CREATE TABLE IF NOT EXISTS "CatalogItemOutputTypes" (
 
 CREATE INDEX idx_catalog_item_output_type_catalog_item_id ON "CatalogItemOutputTypes" (catalog_item_id);
 
-
-CREATE TABLE IF NOT EXISTS "Routings" (
-    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
-    source_microservice_uuid VARCHAR(36),
-    dest_microservice_uuid VARCHAR(36),
-    application_id INT,
-    FOREIGN KEY (source_microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
-    FOREIGN KEY (dest_microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE CASCADE,
-    FOREIGN KEY (application_id) REFERENCES "Flows" (id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_routing_sourceMicroserviceUuid ON "Routings" (source_microservice_uuid);
-CREATE INDEX idx_routing_destMicroserviceUuid ON "Routings" (dest_microservice_uuid);
-CREATE INDEX idx_routing_applicationId ON "Routings" (application_id);
 
 CREATE TABLE IF NOT EXISTS "Routers" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
@@ -957,3 +941,164 @@ CREATE TABLE IF NOT EXISTS "ClusterControllers" (
 CREATE INDEX idx_cluster_controllers_uuid ON "ClusterControllers" (uuid);
 CREATE INDEX idx_cluster_controllers_host ON "ClusterControllers" (host);
 CREATE INDEX idx_cluster_controllers_active ON "ClusterControllers" (is_active, last_heartbeat);
+
+ALTER TABLE "Fogs" ADD COLUMN nats_id INT;
+
+CREATE TABLE IF NOT EXISTS "NatsOperators" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    seed_secret_name TEXT NOT NULL,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE TABLE IF NOT EXISTS "NatsAccounts" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    seed_secret_name TEXT NOT NULL,
+    is_system BOOLEAN DEFAULT false,
+    is_leaf_system BOOLEAN DEFAULT false,
+    operator_id INT NOT NULL,
+    application_id INT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (operator_id) REFERENCES "NatsOperators" (id) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES "Flows" (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "NatsUsers" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    public_key TEXT NOT NULL,
+    jwt TEXT NOT NULL,
+    creds_secret_name TEXT NOT NULL,
+    is_bearer BOOLEAN DEFAULT false,
+    account_id INT NOT NULL,
+    microservice_uuid VARCHAR(36),
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (account_id) REFERENCES "NatsAccounts" (id) ON DELETE CASCADE,
+    FOREIGN KEY (microservice_uuid) REFERENCES "Microservices" (uuid) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS "NatsInstances" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    iofog_uuid VARCHAR(36) NOT NULL,
+    is_leaf BOOLEAN DEFAULT true,
+    is_hub BOOLEAN DEFAULT false,
+    host TEXT,
+    server_port INT,
+    leaf_port INT,
+    cluster_port INT,
+    mqtt_port INT,
+    http_port INT,
+    configmap_name TEXT,
+    jwt_dir_mount_name TEXT,
+    cert_secret_name TEXT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "NatsConnections" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    source_nats INT NOT NULL,
+    dest_nats INT NOT NULL,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0),
+    FOREIGN KEY (source_nats) REFERENCES "NatsInstances" (id) ON DELETE CASCADE,
+    FOREIGN KEY (dest_nats) REFERENCES "NatsInstances" (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "NatsAccountRules" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    info_url TEXT,
+    max_connections INT,
+    max_leaf_node_connections INT,
+    max_data BIGINT,
+    max_exports INT,
+    max_imports INT,
+    max_msg_payload INT,
+    max_subscriptions INT,
+    exports_allow_wildcards BOOLEAN DEFAULT true,
+    disallow_bearer BOOLEAN,
+    response_permissions TEXT,
+    resp_max INT,
+    resp_ttl BIGINT,
+    imports TEXT,
+    exports TEXT,
+    mem_storage BIGINT,
+    disk_storage BIGINT,
+    streams INT,
+    consumer INT,
+    max_ack_pending INT,
+    mem_max_stream_bytes BIGINT,
+    disk_max_stream_bytes BIGINT,
+    max_bytes_required BOOLEAN,
+    tiered_limits TEXT,
+    pub_allow TEXT,
+    pub_deny TEXT,
+    sub_allow TEXT,
+    sub_deny TEXT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE TABLE IF NOT EXISTS "NatsUserRules" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    name TEXT UNIQUE NOT NULL,
+    description TEXT,
+    max_subscriptions INT,
+    max_payload INT,
+    max_data BIGINT,
+    bearer_token BOOLEAN DEFAULT false,
+    proxy_required BOOLEAN,
+    allowed_connection_types TEXT,
+    src TEXT,
+    times TEXT,
+    times_location TEXT,
+    resp_max INT,
+    resp_ttl BIGINT,
+    pub_allow TEXT,
+    pub_deny TEXT,
+    sub_allow TEXT,
+    sub_deny TEXT,
+    tags TEXT,
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
+);
+
+CREATE UNIQUE INDEX idx_nats_accounts_application_id_unique ON "NatsAccounts" (application_id) WHERE application_id IS NOT NULL;
+CREATE INDEX idx_nats_accounts_application_id ON "NatsAccounts" (application_id);
+CREATE UNIQUE INDEX idx_nats_users_account_id_name ON "NatsUsers" (account_id, name);
+CREATE INDEX idx_nats_users_account_id ON "NatsUsers" (account_id);
+CREATE INDEX idx_nats_users_microservice_uuid ON "NatsUsers" (microservice_uuid);
+CREATE UNIQUE INDEX idx_nats_instances_iofog_uuid_unique ON "NatsInstances" (iofog_uuid);
+CREATE INDEX idx_nats_instances_iofog_uuid ON "NatsInstances" (iofog_uuid);
+CREATE UNIQUE INDEX idx_nats_connections_source_dest_unique ON "NatsConnections" (source_nats, dest_nats);
+CREATE INDEX idx_nats_connections_source_nats ON "NatsConnections" (source_nats);
+CREATE INDEX idx_nats_connections_dest_nats ON "NatsConnections" (dest_nats);
+CREATE INDEX idx_nats_account_rules_name ON "NatsAccountRules" (name);
+CREATE INDEX idx_nats_user_rules_name ON "NatsUserRules" (name);
+
+ALTER TABLE "Flows" ADD COLUMN nats_access BOOLEAN DEFAULT false;
+ALTER TABLE "Flows" ADD COLUMN nats_rule_id INT;
+ALTER TABLE "Microservices" ADD COLUMN nats_rule_id INT;
+ALTER TABLE "Microservices" ADD COLUMN nats_access BOOLEAN DEFAULT false;
+ALTER TABLE "Microservices" ADD COLUMN nats_account_id INT;
+ALTER TABLE "Microservices" ADD COLUMN nats_user_id INT;
+ALTER TABLE "Microservices" ADD COLUMN nats_creds_secret_name TEXT;
+CREATE INDEX idx_flows_nats_rule_id ON "Flows" (nats_rule_id);
+CREATE INDEX idx_microservices_nats_rule_id ON "Microservices" (nats_rule_id);
+CREATE INDEX idx_microservices_nats_account_id ON "Microservices" (nats_account_id);
+CREATE INDEX idx_microservices_nats_user_id ON "Microservices" (nats_user_id);
+ALTER TABLE "Flows" ADD CONSTRAINT fk_flows_nats_rule_id FOREIGN KEY (nats_rule_id) REFERENCES "NatsAccountRules" (id);
+ALTER TABLE "Microservices" ADD CONSTRAINT fk_microservices_nats_rule_id FOREIGN KEY (nats_rule_id) REFERENCES "NatsUserRules" (id);
+ALTER TABLE "Microservices" ADD CONSTRAINT fk_microservices_nats_account_id FOREIGN KEY (nats_account_id) REFERENCES "NatsAccounts" (id);
+ALTER TABLE "Microservices" ADD CONSTRAINT fk_microservices_nats_user_id FOREIGN KEY (nats_user_id) REFERENCES "NatsUsers" (id);

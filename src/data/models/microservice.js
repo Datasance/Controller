@@ -123,6 +123,31 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       field: 'service_account_id',
       allowNull: true
+    },
+    natsAccess: {
+      type: DataTypes.BOOLEAN,
+      field: 'nats_access',
+      defaultValue: false
+    },
+    natsAccountId: {
+      type: DataTypes.INTEGER,
+      field: 'nats_account_id',
+      allowNull: true
+    },
+    natsUserId: {
+      type: DataTypes.INTEGER,
+      field: 'nats_user_id',
+      allowNull: true
+    },
+    natsCredsSecretName: {
+      type: DataTypes.TEXT,
+      field: 'nats_creds_secret_name',
+      allowNull: true
+    },
+    natsRuleId: {
+      type: DataTypes.INTEGER,
+      field: 'nats_rule_id',
+      allowNull: true
     }
   }, {
     tableName: 'Microservices',
@@ -187,11 +212,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'strace'
     })
 
-    Microservice.hasMany(models.Routing, {
-      foreignKey: 'source_microservice_uuid',
-      as: 'routes'
-    })
-
     Microservice.hasOne(models.MicroserviceStatus, {
       foreignKey: 'microservice_uuid',
       as: 'microserviceStatus'
@@ -237,15 +257,37 @@ module.exports = (sequelize, DataTypes) => {
       as: 'extraHosts'
     })
 
-    Microservice.belongsToMany(models.Tags, { as: 'pubTags', through: 'MicroservicePubTags' })
-    Microservice.belongsToMany(models.Tags, { as: 'subTags', through: 'MicroserviceSubTags' })
-
     Microservice.belongsTo(models.RbacServiceAccount, {
       foreignKey: {
         name: 'serviceAccountId',
         field: 'service_account_id'
       },
       as: 'serviceAccount'
+    })
+
+    Microservice.belongsTo(models.NatsAccount, {
+      foreignKey: {
+        name: 'natsAccountId',
+        field: 'nats_account_id'
+      },
+      as: 'natsAccount'
+    })
+
+    Microservice.belongsTo(models.NatsUser, {
+      foreignKey: {
+        name: 'natsUserId',
+        field: 'nats_user_id'
+      },
+      as: 'natsUser'
+    })
+
+    Microservice.belongsTo(models.NatsUserRule, {
+      foreignKey: {
+        name: 'natsRuleId',
+        field: 'nats_rule_id'
+      },
+      as: 'natsRule',
+      onDelete: 'set null'
     })
   }
 

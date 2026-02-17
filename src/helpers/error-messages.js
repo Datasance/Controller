@@ -18,7 +18,6 @@ module.exports = {
   INVALID_CATALOG_ITEM_ID: 'Invalid catalog item id \'{}\'',
   INVALID_FLOW_ID: 'Invalid application id \'{}\'',
   INVALID_FLOW_NAME: 'Invalid application name \'{}\'',
-  INVALID_ROUTING_NAME: 'Invalid route name \'{}\'',
   INVALID_REGISTRY_ID: 'Invalid registry id \'{}\'',
   UNABLE_TO_CREATE_ACTIVATION_CODE: 'Unable to create activation code',
   UNABLE_TO_GET_ACTIVATION_CODE: 'Unable to create activation code',

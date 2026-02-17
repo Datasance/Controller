@@ -76,21 +76,35 @@ async function getConfigMap (configMapName) {
   }
 }
 
+function _jsonPointerEscape (key) {
+  return key.replace(/~/g, '~0').replace(/\//g, '~1')
+}
+
 async function patchConfigMap (configMapName, patchData) {
   logger.debug(`Patching ConfigMap: ${configMapName} in namespace: ${CONTROLLER_NAMESPACE}`)
   try {
     const api = await initializeK8sClient()
 
-    // Create JSON Patch operation with formatted JSON
-    const patch = [
-      {
-        op: 'replace',
-        path: '/data/skrouterd.json',
-        value: typeof patchData.data['skrouterd.json'] === 'string'
-          ? JSON.stringify(JSON.parse(patchData.data['skrouterd.json']), null, 2)
-          : JSON.stringify(patchData.data['skrouterd.json'], null, 2)
+    const data = patchData.data || {}
+    const patch = Object.entries(data).map(([key, value]) => {
+      const path = '/data/' + _jsonPointerEscape(key)
+      let strValue = typeof value === 'string' ? value : JSON.stringify(value)
+      if (key === 'skrouterd.json' && typeof value !== 'string') {
+        strValue = JSON.stringify(value, null, 2)
+      } else if (key === 'skrouterd.json' && typeof value === 'string') {
+        try {
+          strValue = JSON.stringify(JSON.parse(value), null, 2)
+        } catch (_) {
+          strValue = value
+        }
       }
-    ]
+      return { op: 'replace', path, value: strValue }
+    })
+
+    if (patch.length === 0) {
+      logger.warn('patchConfigMap called with no data keys')
+      return (await api.readNamespacedConfigMap(configMapName, CONTROLLER_NAMESPACE)).body
+    }
 
     const { body: configMap } = await api.patchNamespacedConfigMap(
       configMapName,

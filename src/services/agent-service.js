@@ -41,7 +41,7 @@ const USBInfoManager = require('../data/managers/usb-info-manager')
 const TunnelManager = require('../data/managers/tunnel-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceService = require('../services/microservices-service')
-const RouterManager = require('../data/managers/router-manager')
+const ApplicationManager = require('../data/managers/application-manager')
 const EdgeResourceService = require('./edge-resource-service')
 const constants = require('../helpers/constants')
 const SecretManager = require('../data/managers/secret-manager')
@@ -52,7 +52,7 @@ const RbacRoleManager = require('../data/managers/rbac-role-manager')
 
 const IncomingForm = formidable.IncomingForm
 const CHANGE_TRACKING_DEFAULT = {}
-const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'routing', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions', 'microserviceLogs', 'fogLogs']
+const CHANGE_TRACKING_KEYS = ['config', 'version', 'reboot', 'deleteNode', 'microserviceList', 'microserviceConfig', 'registries', 'tunnel', 'diagnostics', 'isImageSnapshot', 'prune', 'routerChanged', 'linkedEdgeResources', 'volumeMounts', 'execSessions', 'microserviceLogs', 'fogLogs']
 for (const key of CHANGE_TRACKING_KEYS) {
   CHANGE_TRACKING_DEFAULT[key] = false
 }
@@ -145,10 +145,6 @@ const _invalidateFogNode = async function (fog, transaction) {
 }
 
 const getAgentConfig = async function (fog, transaction) {
-  const router = fog.routerId ? await RouterManager.findOne({ id: fog.routerId }, transaction) : await fog.getRouter()
-  // Get local agent certificate from secrets
-  const localAgentSecret = await SecretManager.getSecret(`${fog.uuid}-local-agent`, transaction)
-
   const fogData = await FogManager.findOne({
     uuid: fog.uuid
   }, transaction)
@@ -175,12 +171,7 @@ const getAgentConfig = async function (fog, transaction) {
     logLevel: fogData.logLevel,
     availableDiskThreshold: fogData.availableDiskThreshold,
     dockerPruningFrequency: fogData.dockerPruningFrequency,
-    routerHost: router.host === fogData.host ? 'localhost' : router.host,
-    routerPort: router.messagingPort,
-    timeZone: fogData.timeZone,
-    caCert: localAgentSecret ? localAgentSecret.data['ca.crt'] : null,
-    tlsCert: localAgentSecret ? localAgentSecret.data['tls.crt'] : null,
-    tlsKey: localAgentSecret ? localAgentSecret.data['tls.key'] : null
+    timeZone: fogData.timeZone
   }
   return resp
 }
@@ -394,10 +385,13 @@ const getAgentMicroservices = async function (fog, transaction) {
       continue
     }
 
-    const routes = await MicroserviceService.getReceiverMicroservices(microservice, transaction)
-    const isConsumer = await MicroserviceService.isMicroserviceConsumer(microservice, transaction)
     const isRouter = await MicroserviceService.isMicroserviceRouter(microservice, transaction)
-
+    const isNats = await MicroserviceService.isMicroserviceNats(microservice, transaction)
+    const msvcApp = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+    if (!msvcApp) {
+      continue
+    }
+    const application = msvcApp.name
     const env = microservice.env && microservice.env.map((it) => {
       return {
         key: it.key,
@@ -448,6 +442,8 @@ const getAgentMicroservices = async function (fog, transaction) {
 
     const responseMicroservice = {
       uuid: microservice.uuid,
+      name: microservice.name,
+      application,
       imageId: imageId,
       config: microservice.config,
       annotations: microservice.annotations,
@@ -475,9 +471,8 @@ const getAgentMicroservices = async function (fog, transaction) {
       cdiDevices,
       capAdd,
       capDrop,
-      routes,
-      isConsumer,
       isRouter,
+      isNats,
       execEnabled: microservice.execEnabled,
       schedule: microservice.schedule
     }

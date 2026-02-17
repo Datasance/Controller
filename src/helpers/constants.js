@@ -35,8 +35,6 @@ module.exports = {
   CMD_CATALOG: 'catalog',
   CMD_FLOW: 'application',
   CMD_MICROSERVICE: 'microservice',
-  CMD_ROUTE_CREATE: 'route-create',
-  CMD_ROUTE_REMOVE: 'route-remove',
   CMD_PORT_MAPPING_CREATE: 'port-mapping-create',
   CMD_PORT_MAPPING_REMOVE: 'port-mapping-remove',
   CMD_PORT_MAPPING_LIST: 'port-mapping-list',
@@ -72,6 +70,7 @@ module.exports = {
   HTTP_CODE_INTERNAL_ERROR: 500,
 
   DEFAULT_ROUTER_NAME: 'default-router',
+  DEFAULT_NATS_HUB_NAME: 'default-nats-hub',
   DEFAULT_PROXY_HOST: 'default-proxy-host',
 
   RESERVED_PORTS: [54321, 54322],

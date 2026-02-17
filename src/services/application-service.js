@@ -19,14 +19,29 @@ const ChangeTrackingService = require('./change-tracking-service')
 const ErrorMessages = require('../helpers/error-messages')
 const Errors = require('../helpers/errors')
 const MicroserviceService = require('./microservices-service')
-const RoutingService = require('./routing-service')
 const ApplicationManager = require('../data/managers/application-manager')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const ApplicationTemplateService = require('./application-template-service')
 const Validator = require('../schemas')
 const remove = require('lodash/remove')
+const NatsAccountRuleManager = require('../data/managers/nats-account-rule-manager')
+const NatsAuthService = require('./nats-auth-service')
+const logger = require('../logger')
 
 const onlyUnique = (value, index, self) => self.indexOf(value) === index
+
+function _scheduleApplicationNatsOrchestration (applicationId, reason) {
+  setImmediate(async () => {
+    try {
+      logger.info(`Starting background app NATS orchestration for app ${applicationId}: ${reason}`)
+      await NatsAuthService.reissueAccountForApplication(applicationId)
+      await MicroserviceService.reconcileNatsForApplication(applicationId)
+      logger.info(`Completed background app NATS orchestration for app ${applicationId}: ${reason}`)
+    } catch (error) {
+      logger.error(`Background app NATS orchestration failed for app ${applicationId}: ${error.message}`)
+    }
+  })
+}
 
 const createApplicationEndPoint = async function (applicationData, isCLI, transaction) {
   // if template is provided, use template data
@@ -47,22 +62,18 @@ const createApplicationEndPoint = async function (applicationData, isCLI, transa
       application: applicationData.name
     }))
   }
-  if (applicationData.routes) {
-    applicationData.routes = applicationData.routes.map(r => ({
-      ...r,
-      name: r.name || `r-${r.from}-${r.to}`,
-      application: applicationData.name
-    }))
-  }
   await Validator.validate(applicationData, Validator.schemas.applicationCreate)
 
   await _checkForDuplicateName(applicationData.name, null, transaction)
+  const applicationNatsConfig = await _resolveApplicationNatsConfig(applicationData, transaction)
 
   const applicationToCreate = {
     name: applicationData.name,
     description: applicationData.description,
     isActivated: !!applicationData.isActivated,
-    isSystem: !!applicationData.isSystem
+    isSystem: !!applicationData.isSystem,
+    natsAccess: applicationNatsConfig.natsAccess,
+    natsRuleId: applicationNatsConfig.natsRuleId
   }
 
   const applicationDataCreate = AppHelper.deleteUndefinedFields(applicationToCreate)
@@ -76,10 +87,8 @@ const createApplicationEndPoint = async function (applicationData, isCLI, transa
       }
     }
 
-    if (applicationData.routes) {
-      for (const routeData of applicationData.routes) {
-        await RoutingService.createRouting(routeData, isCLI, transaction)
-      }
+    if (application.natsAccess) {
+      _scheduleApplicationNatsOrchestration(application.id, 'nats-access-created')
     }
 
     return {
@@ -130,23 +139,39 @@ const patchApplicationEndPoint = async function (applicationData, conditions, is
   if (!oldApplication) {
     throw new Errors.NotFoundError(ErrorMessages.INVALID_FLOW_ID)
   }
+  if (applicationData.name && applicationData.name !== oldApplication.name) {
+    throw new Errors.ValidationError('Application Resource Name is immutable')
+  }
   if (applicationData.name) {
     await _checkForDuplicateName(applicationData.name, oldApplication.id, transaction)
   }
+  const applicationNatsConfig = await _resolveApplicationNatsConfig(applicationData, transaction, oldApplication)
 
   const application = {
     name: applicationData.name || conditions.name,
     description: applicationData.description,
     isActivated: applicationData.isActivated,
-    isSystem: applicationData.isSystem
+    isSystem: applicationData.isSystem,
+    natsAccess: applicationNatsConfig.natsAccess,
+    natsRuleId: applicationNatsConfig.natsRuleId
   }
 
   const updateApplicationData = AppHelper.deleteUndefinedFields(application)
+  const natsRuleChanged = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsRuleId') &&
+    oldApplication.natsRuleId !== updateApplicationData.natsRuleId
+  const natsAccessDisabled = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsAccess') &&
+    updateApplicationData.natsAccess === false
+  const natsAccessEnabled = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsAccess') &&
+    updateApplicationData.natsAccess === true && !oldApplication.natsAccess
 
   const where = isCLI
     ? { id: oldApplication.id }
     : { id: oldApplication.id }
   await ApplicationManager.update(where, updateApplicationData, transaction)
+  if (natsRuleChanged || natsAccessDisabled || natsAccessEnabled) {
+    const reason = natsAccessDisabled ? 'nats-access-disabled' : natsAccessEnabled ? 'nats-access-enabled' : 'nats-rule-changed'
+    _scheduleApplicationNatsOrchestration(oldApplication.id, reason)
+  }
 
   if (oldApplication.isActivated !== applicationData.isActivated) {
     await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId(conditions, false, transaction)
@@ -172,13 +197,6 @@ const updateApplicationEndPoint = async function (applicationData, name, isCLI, 
       application: applicationData.name || name
     }))
   }
-  if (applicationData.routes) {
-    applicationData.routes = applicationData.routes.map(r => ({
-      ...r,
-      name: r.name || `r-${r.from}-${r.to}`,
-      application: applicationData.name || name
-    }))
-  }
 
   await Validator.validate(applicationData, Validator.schemas.applicationUpdate)
 
@@ -187,55 +205,70 @@ const updateApplicationEndPoint = async function (applicationData, name, isCLI, 
   if (!oldApplication) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, name))
   }
+  if (applicationData.name && applicationData.name !== oldApplication.name) {
+    throw new Errors.ValidationError('Application Resource Name is immutable')
+  }
   if (applicationData.name) {
     await _checkForDuplicateName(applicationData.name, oldApplication.id, transaction)
   }
+  const applicationNatsConfig = await _resolveApplicationNatsConfig(applicationData, transaction, oldApplication)
 
   const application = {
     name: applicationData.name || name,
     description: applicationData.description,
     isActivated: applicationData.isActivated,
-    isSystem: applicationData.isSystem
+    isSystem: applicationData.isSystem,
+    natsAccess: applicationNatsConfig.natsAccess,
+    natsRuleId: applicationNatsConfig.natsRuleId
   }
 
   const updateApplicationData = AppHelper.deleteUndefinedFields(application)
+  const natsRuleChanged = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsRuleId') &&
+    oldApplication.natsRuleId !== updateApplicationData.natsRuleId
+  const natsAccessDisabled = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsAccess') &&
+    updateApplicationData.natsAccess === false
+  const natsAccessEnabled = Object.prototype.hasOwnProperty.call(updateApplicationData, 'natsAccess') &&
+    updateApplicationData.natsAccess === true && !oldApplication.natsAccess
   const where = isCLI
     ? { id: oldApplication.id }
     : { id: oldApplication.id }
   await ApplicationManager.update(where, updateApplicationData, transaction)
+  if (natsRuleChanged || natsAccessDisabled || natsAccessEnabled) {
+    const reason = natsAccessDisabled ? 'nats-access-disabled' : natsAccessEnabled ? 'nats-access-enabled' : 'nats-rule-changed'
+    _scheduleApplicationNatsOrchestration(oldApplication.id, reason)
+  }
 
   if (applicationData.microservices) {
     await _updateMicroservices(application.name, applicationData.microservices, isCLI, transaction)
   }
-  if (applicationData.routes) {
-    await _updateRoutes(application.name, applicationData.routes, isCLI, transaction)
-  }
-
   if (oldApplication.isActivated !== applicationData.isActivated) {
     await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId({ name }, false, transaction)
   }
 }
 
-const _updateRoutes = async function (application, routes, isCLI, transaction) {
-  // Update routes
-  const updatedRoutes = [...routes]
-  const oldRoutes = await ApplicationManager.findApplicationRoutes({ name: application }, transaction)
-  if (!oldRoutes) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, application))
+async function _resolveApplicationNatsConfig (applicationData, transaction, existingApplication = null) {
+  if (Object.prototype.hasOwnProperty.call(applicationData, 'natsAccess')) {
+    throw new Errors.ValidationError('natsAccess must be provided under natsConfig.natsAccess')
   }
-  for (const oldRoute of oldRoutes) {
-    const removed = remove(updatedRoutes, (n) => oldRoute.name === n.name)
-    if (!removed.length) {
-      await RoutingService.deleteRouting(oldRoute.name, isCLI, transaction)
-    } else {
-      const updatedRoute = removed[0]
-      await RoutingService.updateRouting(application, updatedRoute.name, updatedRoute, isCLI, transaction)
+  if (!applicationData.natsConfig) {
+    return {
+      natsAccess: existingApplication ? existingApplication.natsAccess : undefined,
+      natsRuleId: existingApplication ? existingApplication.natsRuleId : undefined
     }
   }
-  // Create missing routes
-  for (const route of updatedRoutes) {
-    await RoutingService.createRouting(route, isCLI, transaction)
+  const natsAccess = applicationData.natsConfig.natsAccess
+  let natsRuleId = existingApplication ? existingApplication.natsRuleId : undefined
+  if (applicationData.natsConfig.natsRule) {
+    const rule = await NatsAccountRuleManager.findOne({ name: applicationData.natsConfig.natsRule }, transaction)
+    if (!rule) {
+      throw new Errors.ValidationError(`NATS account rule ${applicationData.natsConfig.natsRule} does not exist`)
+    }
+    natsRuleId = rule.id
   }
+  if (natsAccess === false) {
+    natsRuleId = null
+  }
+  return { natsAccess, natsRuleId }
 }
 
 const _updateMicroservices = async function (application, microservices, isCLI, transaction) {
@@ -274,7 +307,6 @@ const _updateMicroservices = async function (application, microservices, isCLI, 
     .filter(onlyUnique)
     .filter((val) => val !== null)
     .forEach(async (iofogUuid) => {
-      await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
       await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
     })
 
@@ -282,7 +314,6 @@ const _updateMicroservices = async function (application, microservices, isCLI, 
     .filter(onlyUnique)
     .filter((val) => val !== null)
     .forEach(async (iofogUuid) => {
-      await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
       await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
     })
 }
@@ -323,6 +354,18 @@ const getAllApplicationsEndPoint = async function (isCLI, transaction) {
 }
 
 async function _buildApplicationObject (application, transaction) {
+  // Resolve natsRuleId to rule name for API response
+  let ruleName = null
+  if (application.natsRuleId) {
+    const rule = await NatsAccountRuleManager.findOne({ id: application.natsRuleId }, transaction)
+    ruleName = rule ? rule.name : null
+  }
+  application.natsConfig = {
+    natsAccess: !!application.natsAccess,
+    natsRule: ruleName
+  }
+  delete application.natsRuleId
+
   if (!application.microservices) {
     return application
   }

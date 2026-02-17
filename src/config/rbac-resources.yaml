@@ -24,14 +24,6 @@ resources:
           PUT: [update]
           DELETE: [delete]
         resourceNameParam: uuid
-      - path: /api/v3/microservices/pub/:tag
-        methods:
-          GET: [get]
-        resourceNameParam: tag
-      - path: /api/v3/microservices/sub/:tag
-        methods:
-          GET: [get]
-        resourceNameParam: tag
       - path: /api/v3/microservices/:uuid/rebuild
         methods:
           PATCH: [patch]
@@ -45,11 +37,6 @@ resources:
           GET: [get]
           PATCH: [patch]
           DELETE: [delete]
-        resourceNameParam: uuid
-      - path: /api/v3/microservices/:uuid/routes/:receiverUuid
-        methods:
-          POST: [patch]
-          DELETE: [patch]
         resourceNameParam: uuid
       - path: /api/v3/microservices/:uuid/port-mapping
         methods:
@@ -270,21 +257,6 @@ resources:
           DELETE: [delete]
         resourceNameParam: uuid
 
-  # Routings
-  routings:
-    basePath: /api/v3/routes
-    routes:
-      - path: /api/v3/routes
-        methods:
-          GET: [list]
-          POST: [create]
-      - path: /api/v3/routes/:appName/:name
-        methods:
-          GET: [get]
-          PATCH: [patch]
-          DELETE: [delete]
-        resourceNameParam: name
-
   # Router
   router:
     basePath: /api/v3/router
@@ -293,6 +265,105 @@ resources:
         methods:
           GET: [get]
           PUT: [update]
+
+  # NATS (granular resources)
+  natsOperator:
+    basePath: /api/v3/nats
+    routes:
+      - path: /api/v3/nats/operator
+        methods:
+          GET: [get]
+      - path: /api/v3/nats/operator/rotate
+        methods:
+          POST: [update]
+
+  natsHub:
+    basePath: /api/v3/nats
+    routes:
+      - path: /api/v3/nats/hub
+        methods:
+          GET: [get]
+          PUT: [update]
+
+  natsAccounts:
+    basePath: /api/v3/nats
+    routes:
+      - path: /api/v3/nats/accounts
+        methods:
+          GET: [list]
+      - path: /api/v3/nats/accounts/:appName
+        methods:
+          GET: [get]
+          POST: [create]
+        resourceNameParam: appName
+
+  natsUsers:
+    basePath: /api/v3/nats
+    routes:
+      - path: /api/v3/nats/users
+        methods:
+          GET: [list]
+      - path: /api/v3/nats/accounts/:appName/users
+        methods:
+          GET: [list]
+          POST: [create]
+        resourceNameParam: appName
+      - path: /api/v3/nats/accounts/:appName/users/:userName
+        methods:
+          DELETE: [delete]
+        resourceNameParam: appName
+      - path: /api/v3/nats/accounts/:appName/users/:userName/creds
+        methods:
+          GET: [get]
+        resourceNameParam: appName
+      - path: /api/v3/nats/accounts/:appName/mqtt-bearer
+        methods:
+          POST: [create]
+        resourceNameParam: appName
+      - path: /api/v3/nats/accounts/:appName/mqtt-bearer/:userName
+        methods:
+          DELETE: [delete]
+        resourceNameParam: appName
+
+  natsAccountRules:
+    basePath: /api/v3/nats/account-rules
+    routes:
+      - path: /api/v3/nats/account-rules
+        methods:
+          GET: [list]
+          POST: [create]
+      - path: /api/v3/nats/account-rules/:ruleName
+        methods:
+          PATCH: [patch]
+          DELETE: [delete]
+        resourceNameParam: ruleName
+      - path: /api/v3/nats/account-rules/yaml
+        methods:
+          POST: [create]
+      - path: /api/v3/nats/account-rules/yaml/:ruleName
+        methods:
+          PATCH: [patch]
+        resourceNameParam: ruleName
+
+  natsUserRules:
+    basePath: /api/v3/nats/user-rules
+    routes:
+      - path: /api/v3/nats/user-rules
+        methods:
+          GET: [list]
+          POST: [create]
+      - path: /api/v3/nats/user-rules/:ruleName
+        methods:
+          PATCH: [patch]
+          DELETE: [delete]
+        resourceNameParam: ruleName
+      - path: /api/v3/nats/user-rules/yaml
+        methods:
+          POST: [create]
+      - path: /api/v3/nats/user-rules/yaml/:ruleName
+        methods:
+          PATCH: [patch]
+        resourceNameParam: ruleName
 
   # Services
   services:
@@ -541,6 +612,9 @@ resources:
         methods:
           HEAD: [get]
       - path: /api/v3/capabilities/applicationTemplates
+        methods:
+          HEAD: [get]
+      - path: /api/v3/capabilities/nats
         methods:
           HEAD: [get]
 

@@ -91,6 +91,11 @@ module.exports = {
   'ROUTER_IMAGE_2': 'systemImages.router.2',
   'DEBUG_IMAGE_1': 'systemImages.debug.1',
   'DEBUG_IMAGE_2': 'systemImages.debug.2',
+  'NATS_IMAGE_1': 'systemImages.nats.1',
+  'NATS_IMAGE_2': 'systemImages.nats.2',
+
+  // NATS Configuration
+  'NATS_ENABLED': 'nats.enabled',
 
   // Diagnostics Configuration
   'DIAGNOSTICS_DIRECTORY': 'diagnostics.directory',

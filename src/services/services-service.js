@@ -27,9 +27,13 @@ const FogManager = require('../data/managers/iofog-manager')
 const TagsManager = require('../data/managers/tags-manager')
 const ChangeTrackingService = require('./change-tracking-service')
 const ApplicationManager = require('../data/managers/application-manager')
+const {
+  ensureSystemApplication,
+  getSystemMicroserviceName
+} = require('../helpers/system-naming')
 // const { Op } = require('sequelize')
 
-const K8S_ROUTER_CONFIG_MAP = 'pot-router'
+const K8S_ROUTER_CONFIG_MAP = 'iofog-router'
 const SERVICE_ANNOTATION_TAG = 'service.datasance.com/tag'
 
 // Map service tags to string array
@@ -349,8 +353,16 @@ async function _buildTcpListener (serviceConfig, fogNodeUuid = null) {
 
 // Helper function to get router microservice by fog node UUID
 async function _getRouterMicroservice (fogNodeUuid, transaction) {
-  const routerName = `router-${fogNodeUuid.toLowerCase()}`
-  const routerMicroservice = await MicroserviceManager.findOne({ name: routerName }, transaction)
+  const fog = await FogManager.findOne({ uuid: fogNodeUuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogNodeUuid))
+  }
+  const application = await ensureSystemApplication(fog, transaction)
+  const routerName = getSystemMicroserviceName('router')
+  const routerMicroservice = await MicroserviceManager.findOne({
+    name: routerName,
+    applicationId: application.id
+  }, transaction)
   if (!routerMicroservice) {
     throw new Errors.NotFoundError(`Router microservice not found: ${routerName}`)
   }

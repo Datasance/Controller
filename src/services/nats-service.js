@@ -1,0 +1,1006 @@
+/*
+ *  *******************************************************************************
+ *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  *
+ *  * This program and the accompanying materials are made available under the
+ *  * terms of the Eclipse Public License v. 2.0 which is available at
+ *  * http://www.eclipse.org/legal/epl-2.0
+ *  *
+ *  * SPDX-License-Identifier: EPL-2.0
+ *  *******************************************************************************
+ *
+ */
+
+const fs = require('fs')
+const path = require('path')
+const crypto = require('crypto')
+const AppHelper = require('../helpers/app-helper')
+const Errors = require('../helpers/errors')
+const ErrorMessages = require('../helpers/error-messages')
+const ConfigMapManager = require('../data/managers/config-map-manager')
+const ConfigMapService = require('./config-map-service')
+const VolumeMappingManager = require('../data/managers/volume-mapping-manager')
+const MicroserviceManager = require('../data/managers/microservice-manager')
+const MicroserviceCapAddManager = require('../data/managers/microservice-cap-add-manager')
+const MicroserviceEnvManager = require('../data/managers/microservice-env-manager')
+const MicroserviceHealthCheckManager = require('../data/managers/microservice-healthcheck-manager')
+const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
+const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
+const MicroservicePortManager = require('../data/managers/microservice-port-manager')
+const VolumeMountService = require('./volume-mount-service')
+const CatalogService = require('./catalog-service')
+const CertificateService = require('./certificate-service')
+const SecretService = require('./secret-service')
+const NatsInstanceManager = require('../data/managers/nats-instance-manager')
+const NatsConnectionManager = require('../data/managers/nats-connection-manager')
+const NatsAccountManager = require('../data/managers/nats-account-manager')
+const NatsUserManager = require('../data/managers/nats-user-manager')
+const ApplicationManager = require('../data/managers/application-manager')
+const NatsAuthService = require('./nats-auth-service')
+const FogManager = require('../data/managers/iofog-manager')
+const config = require('../config')
+const Constants = require('../helpers/constants')
+const { ensureSystemApplication, getSystemMicroserviceName, slugifyName } = require('../helpers/system-naming')
+const TransactionDecorator = require('../decorators/transaction-decorator')
+const logger = require('../logger')
+const K8sClient = require('../utils/k8s-client')
+
+const NATS_SITE_CA = 'nats-site-ca'
+const NATS_CONFIG_DIR = '/etc/nats/config'
+const NATS_JWT_DIR = '/etc/nats/jwt'
+const NATS_CERTS_DIR = '/etc/nats/certs'
+const NATS_CREDS_DIR = '/etc/nats/creds'
+
+const DEFAULT_SERVER_PORT = 4222
+const DEFAULT_CLUSTER_PORT = 6222
+const DEFAULT_LEAF_PORT = 7422
+const DEFAULT_MQTT_PORT = 8883
+const DEFAULT_HTTP_PORT = 8222
+let natsReconcileRunning = false
+let natsReconcilePending = false
+let natsReconcileScheduled = false
+
+const _fogToken = (fog) => slugifyName((fog && fog.name) || (fog && fog.uuid) || 'fog')
+const natsLocalCaName = (fog) => `nats-local-ca-${_fogToken(fog)}`
+const natsLocalMQTTCertName = (fog) => `nats-mqtt-server-${_fogToken(fog)}`
+const natsServerCertName = (fog) => `nats-server-${_fogToken(fog)}`
+const natsServerConfigMap = (fog) => `nats-server-conf-${_fogToken(fog)}`
+const natsLeafConfigMap = (fog) => `nats-leaf-conf-${_fogToken(fog)}`
+const natsConfigMapName = (fog) => `nats-server-conf-${_fogToken(fog)}`
+const NATS_CONFIG_KEY = 'server.conf'
+const natsLeafCredsConfigMap = (fog) => `nats-leaf-creds-${_fogToken(fog)}`
+const natsJwtBundleConfigMap = (fog) => `nats-jwt-bundle-${_fogToken(fog)}`
+const natsJwtDirMount = (fog) => `nats-jwt-dir-${_fogToken(fog)}`
+const natsJetstreamKeySecretName = (fog) => `nats-jetstream-key-${_fogToken(fog)}`
+const K8S_NATS_SERVER_CONFIG_MAP = 'iofog-nats-config'
+const K8S_NATS_JWT_BUNDLE_CONFIG_MAP = 'iofog-nats-jwt-bundle'
+
+async function _getSysUserCredsSecretNameForFog (fog, isHub, transaction) {
+  const systemAccount = await NatsAccountManager.findOne({ isSystem: true }, transaction)
+  if (!systemAccount) return null
+  const sysUserName = NatsAuthService.sysUserNameForServer(isHub, fog)
+  const user = await NatsUserManager.findOne({ accountId: systemAccount.id, name: sysUserName }, transaction)
+  return user ? user.credsSecretName : null
+}
+
+function _isKubernetesControlPlane () {
+  const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')
+  return controlPlane && String(controlPlane).toLowerCase() === 'kubernetes'
+}
+
+const readTemplate = (fileName) => {
+  const filePath = path.join(__dirname, '..', 'templates', 'nats', fileName)
+  return fs.readFileSync(filePath, 'utf8')
+}
+
+const renderTemplate = (template, variables) => {
+  return Object.entries(variables).reduce((output, [key, value]) => {
+    if (value === undefined || value === null) {
+      return output
+    }
+    return output.split(`$${key}`).join(String(value))
+  }, template)
+}
+
+async function _ensureConfigMap (name, data, transaction) {
+  const existing = await ConfigMapManager.getConfigMap(name, transaction)
+  if (existing) {
+    return ConfigMapService.updateConfigMapEndpoint(name, { data, immutable: false }, transaction)
+  }
+  return ConfigMapService.createConfigMapEndpoint({ name, data, immutable: false, useVault: true }, transaction)
+}
+
+async function _ensureVolumeMount (name, opts, transaction) {
+  try {
+    await VolumeMountService.getVolumeMountEndpoint(name, transaction)
+  } catch (err) {
+    if (err.name !== 'NotFoundError') {
+      throw err
+    }
+    await VolumeMountService.createVolumeMountEndpoint({ name, ...opts }, transaction)
+  }
+}
+
+async function _ensureVolumeMapping (microserviceUuid, hostDestination, containerDestination, accessMode, type, transaction) {
+  const existing = await VolumeMappingManager.findOne({
+    microserviceUuid,
+    hostDestination,
+    containerDestination,
+    type
+  }, transaction)
+  if (!existing) {
+    await VolumeMappingManager.create({
+      microserviceUuid,
+      hostDestination,
+      containerDestination,
+      accessMode,
+      type
+    }, transaction)
+  }
+}
+
+async function _replaceMicroserviceEnv (microserviceUuid, env, transaction) {
+  await MicroserviceEnvManager.delete({ microserviceUuid }, transaction)
+  for (const entry of env) {
+    await MicroserviceEnvManager.create({
+      microserviceUuid,
+      key: entry.key,
+      value: entry.value,
+      valueFromSecret: entry.valueFromSecret,
+      valueFromConfigMap: entry.valueFromConfigMap
+    }, transaction)
+  }
+}
+
+async function _ensureNatsPorts (microserviceUuid, ports, transaction) {
+  const existing = await MicroservicePortManager.findAll({ microserviceUuid }, transaction)
+  for (const port of existing) {
+    await MicroservicePortManager.delete({ id: port.id }, transaction)
+  }
+  for (const port of ports) {
+    await MicroservicePortManager.create({
+      microserviceUuid,
+      portInternal: port,
+      portExternal: port
+    }, transaction)
+  }
+}
+
+async function _ensureNatsCertificates (fog, transaction) {
+  async function ensureCA (name, subject) {
+    try {
+      await CertificateService.getCAEndpoint(name, transaction)
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        throw err
+      }
+      await CertificateService.createCAEndpoint({
+        name,
+        subject: subject,
+        expiration: 60,
+        type: 'self-signed'
+      }, transaction)
+    }
+  }
+
+  async function ensureCert (name, subject, hosts, caName) {
+    try {
+      await CertificateService.getCertificateEndpoint(name, transaction)
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        throw err
+      }
+      await CertificateService.createCertificateEndpoint({
+        name,
+        subject: subject,
+        hosts: hosts.join(','),
+        ca: {
+          type: 'direct',
+          secretName: caName
+        },
+        expiration: 60
+      }, transaction)
+    }
+  }
+
+  await ensureCA(NATS_SITE_CA, NATS_SITE_CA)
+  await ensureCA(natsLocalCaName(fog), natsLocalCaName(fog))
+
+  const hosts = [fog.host, fog.ipAddress, fog.ipAddressExternal].filter(Boolean)
+  if (hosts.length === 0) {
+    hosts.push('localhost')
+  }
+  const serverCertName = natsServerCertName(fog)
+  const mqttCertName = natsLocalMQTTCertName(fog)
+
+  await ensureCert(serverCertName, serverCertName, hosts, NATS_SITE_CA)
+  await ensureCert(mqttCertName, mqttCertName, hosts, natsLocalCaName(fog))
+
+  return {
+    serverCertName,
+    mqttCertName
+  }
+}
+
+async function _buildJwtBundle (fog, forLeaf = false, transaction) {
+  const jwtBundle = {}
+  if (forLeaf) {
+    const leafSystemAccount = await NatsAuthService.ensureLeafSystemAccount(fog, transaction)
+    jwtBundle[`${leafSystemAccount.publicKey}.jwt`] = leafSystemAccount.jwt
+    const appIds = await _getLeafAppIds(fog, transaction)
+    for (const appId of appIds) {
+      const account = await NatsAuthService.ensureAccountForApplication(appId, transaction)
+      jwtBundle[`${account.publicKey}.jwt`] = account.jwt
+    }
+  } else {
+    await NatsAuthService.ensureSystemAccount(transaction)
+    const systemAccount = await NatsAccountManager.findOne({ isSystem: true }, transaction)
+    if (systemAccount) {
+      jwtBundle[`${systemAccount.publicKey}.jwt`] = systemAccount.jwt
+    }
+    const microservices = await MicroserviceManager.findAll({ iofogUuid: fog.uuid }, transaction)
+    const appIds = [...new Set(microservices.map(ms => ms.applicationId).filter(Boolean))]
+    for (const appId of appIds) {
+      const app = await ApplicationManager.findOne({ id: appId }, transaction)
+      if (!app || !app.natsAccess) continue
+      const account = await NatsAuthService.ensureAccountForApplication(appId, transaction)
+      jwtBundle[`${account.publicKey}.jwt`] = account.jwt
+    }
+  }
+  return jwtBundle
+}
+
+async function _getLeafAppIds (fog, transaction) {
+  const microservices = await MicroserviceManager.findAll({ iofogUuid: fog.uuid }, transaction)
+  const appIds = [...new Set(microservices.map(ms => ms.applicationId).filter(Boolean))]
+  const nonSystemAppIds = []
+  for (const appId of appIds) {
+    const app = await ApplicationManager.findOne({ id: appId }, transaction)
+    if (app && !app.isSystem) {
+      nonSystemAppIds.push(appId)
+    }
+  }
+  return nonSystemAppIds
+}
+
+async function _buildLeafCredsConfigMap (fog, natsInstance, transaction) {
+  const upstreamConnections = await NatsConnectionManager.findAllWithNats(
+    { sourceNats: natsInstance.id },
+    transaction
+  )
+  if (!upstreamConnections || upstreamConnections.length === 0) {
+    return
+  }
+
+  const appIds = await _getLeafAppIds(fog, transaction)
+  const credsData = {}
+  for (const appId of appIds) {
+    const account = await NatsAuthService.ensureAccountForApplication(appId, transaction)
+    const { user } = await NatsAuthService.ensureLeafUserForAccount(account.id, slugifyName(fog.name), transaction, fog.natsMicroserviceUuid || null)
+    try {
+      const secret = await SecretService.getSecretEndpoint(user.credsSecretName, transaction)
+      if (secret && secret.data) {
+        const credsKey = Object.keys(secret.data).find((k) => k.endsWith('.creds')) || `${slugifyName(account.name)}/${slugifyName(user.name)}.creds`
+        const content = secret.data[credsKey]
+        if (content) {
+          const value = typeof content === 'string' ? content : Buffer.from(content, 'base64').toString('utf8')
+          credsData[`${slugifyName(account.name)}/${slugifyName(user.name)}.creds`] = value
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'NotFoundError') {
+        throw err
+      }
+    }
+  }
+
+  const { account: leafSystemAccount, user: leafSystemUser } = await NatsAuthService.ensureLeafSystemAccountUser(fog, transaction)
+  try {
+    const secret = await SecretService.getSecretEndpoint(leafSystemUser.credsSecretName, transaction)
+    if (secret && secret.data) {
+      const credsKey = `${slugifyName(leafSystemAccount.name)}/${slugifyName(leafSystemUser.name)}.creds`
+      const content = secret.data[credsKey]
+      if (content) {
+        const value = typeof content === 'string' ? content : Buffer.from(content, 'base64').toString('utf8')
+        credsData[credsKey] = value
+      }
+    }
+  } catch (err) {
+    if (err.name !== 'NotFoundError') {
+      throw err
+    }
+  }
+
+  if (Object.keys(credsData).length === 0) {
+    return
+  }
+
+  const leafCredsMapName = natsLeafCredsConfigMap(fog)
+  const existing = await ConfigMapManager.getConfigMap(leafCredsMapName, transaction)
+  if (existing) {
+    await ConfigMapService.updateConfigMapEndpoint(leafCredsMapName, { data: credsData, immutable: false }, transaction)
+  } else {
+    await ConfigMapService.createConfigMapEndpoint({ name: leafCredsMapName, data: credsData, immutable: false, useVault: true }, transaction)
+  }
+
+  await _ensureVolumeMount(leafCredsMapName, { configMapName: leafCredsMapName }, transaction)
+  await VolumeMountService.linkVolumeMountEndpoint(leafCredsMapName, [fog.uuid], transaction)
+  await _ensureVolumeMapping(fog.natsMicroserviceUuid, leafCredsMapName, NATS_CREDS_DIR, 'ro', 'volumeMount', transaction)
+}
+
+async function _buildLeafRemotes (fog, natsInstance, transaction) {
+  await _buildLeafCredsConfigMap(fog, natsInstance, transaction)
+}
+
+/**
+ * Ensures leaf user and creds configmap for a fog that has a NATS leaf instance.
+ * Call after creating or updating a microservice with natsAccess so the leaf gets creds for that app.
+ * Uses the same transaction so the new/updated microservice is visible to _getLeafAppIds.
+ */
+async function ensureLeafCredsForFog (fogUuid, transaction) {
+  const fog = await FogManager.findOne({ uuid: fogUuid }, transaction)
+  if (!fog) {
+    return
+  }
+  const natsInstance = await NatsInstanceManager.findByFog(fog.uuid, transaction)
+  if (!natsInstance) {
+    return
+  }
+  const natsMicroservice = await MicroserviceManager.findOne({
+    iofogUuid: fog.uuid,
+    name: getSystemMicroserviceName('nats')
+  }, transaction)
+  if (natsMicroservice) {
+    fog.natsMicroserviceUuid = natsMicroservice.uuid
+  }
+  if (natsInstance.isLeaf) {
+    await _buildLeafRemotes(fog, natsInstance, transaction)
+  }
+  const jwtBundle = await _buildJwtBundle(fog, natsInstance.isLeaf, transaction)
+  await _ensureConfigMap(natsJwtBundleConfigMap(fog), jwtBundle, transaction)
+}
+
+async function _computeLeafRemotesForInstance (fog, natsInstance, transaction) {
+  const remotes = []
+  const upstreamConnections = await NatsConnectionManager.findAllWithNats(
+    { sourceNats: natsInstance.id },
+    transaction
+  )
+  if (!upstreamConnections || upstreamConnections.length === 0) {
+    return remotes
+  }
+  const appIds = await _getLeafAppIds(fog, transaction)
+  for (const appId of appIds) {
+    const account = await NatsAuthService.ensureAccountForApplication(appId, transaction)
+    for (const upstream of upstreamConnections) {
+      if (!upstream.dest || !upstream.dest.host) {
+        continue
+      }
+      const port = upstream.dest.leafPort || DEFAULT_LEAF_PORT
+      const leafUserName = `leaf-${slugifyName(fog.name)}`
+      remotes.push({
+        urls: [`nats://${upstream.dest.host}:${port}`],
+        account: account.publicKey,
+        credentials: `${NATS_CREDS_DIR}/${slugifyName(account.name)}/${slugifyName(leafUserName)}.creds`
+      })
+    }
+  }
+  return remotes
+}
+
+async function _computeClusterRoutesForInstance (natsInstance, transaction) {
+  if (natsInstance.isHub) {
+    const allServerInstances = await NatsInstanceManager.findAll({ isLeaf: false }, transaction)
+    const routes = []
+    for (const inst of allServerInstances || []) {
+      if (inst.id === natsInstance.id || !inst.host) {
+        continue
+      }
+      routes.push(`nats://${inst.host}:${inst.clusterPort || DEFAULT_CLUSTER_PORT}`)
+    }
+    return routes
+  }
+  const routes = []
+  const upstreamConnections = await NatsConnectionManager.findAllWithNats(
+    { sourceNats: natsInstance.id },
+    transaction
+  )
+  for (const upstream of upstreamConnections || []) {
+    if (!upstream.dest || !upstream.dest.host) {
+      continue
+    }
+    routes.push(`nats://${upstream.dest.host}:${upstream.dest.clusterPort || DEFAULT_CLUSTER_PORT}`)
+  }
+  return routes
+}
+
+async function _renderAndPersistNatsConfig (fog, natsInstance, certName, mqttCertName, configMapName, configKey, template, isHub, isServerMode, transaction) {
+  const systemAccount = isServerMode
+    ? await NatsAuthService.ensureSystemAccount(transaction)
+    : await NatsAuthService.ensureLeafSystemAccount(fog, transaction)
+  const operator = isHub ? await NatsAuthService.ensureOperator(transaction) : null
+  const clusterRoutes = isHub ? await _computeClusterRoutesForInstance(natsInstance, transaction) : []
+  if (isHub && clusterRoutes.length === 0) {
+    template = readTemplate('server-no-cluster.conf')
+  }
+  const leafRemotes = isHub ? [] : await _computeLeafRemotesForInstance(fog, natsInstance, transaction)
+  const jetstreamDomain = isHub
+    ? (process.env.CONTROLLER_NAMESPACE || config.get('app.namespace'))
+    : fog.name
+  const variables = {
+    OPERATOR_JWT: operator ? operator.jwt : undefined,
+    SYSTEM_ACCOUNT: systemAccount.publicKey,
+    NATS_CLUSTER_ROUTES: JSON.stringify(clusterRoutes),
+    NATS_LEAF_REMOTES: JSON.stringify(leafRemotes),
+    CONTROLLER_NAME: fog.name || fog.uuid,
+    JETSTREAM_DOMAIN: jetstreamDomain,
+    NATS_SERVER_PORT: natsInstance.serverPort,
+    NATS_LEAF_PORT: natsInstance.leafPort,
+    NATS_CLUSTER_PORT: natsInstance.clusterPort,
+    NATS_MQTT_PORT: natsInstance.mqttPort,
+    NATS_HTTP_PORT: natsInstance.httpPort,
+    NATS_SSL_DIR: NATS_CERTS_DIR,
+    NATS_CERT_NAME: certName,
+    NATS_MQTT_CERT_NAME: mqttCertName,
+    NATS_JWT_DIR: NATS_JWT_DIR
+  }
+  const renderedTemplate = renderTemplate(template, variables)
+  await _ensureConfigMap(configMapName, { [configKey]: renderedTemplate }, transaction)
+  return renderedTemplate
+}
+
+async function _ensureJetstreamKey (fog, transaction) {
+  const secretName = natsJetstreamKeySecretName(fog)
+  try {
+    const secret = await SecretService.getSecretEndpoint(secretName, transaction)
+    if (secret && secret.data && secret.data.jsk) {
+      return { secretName, jsk: secret.data.jsk }
+    }
+  } catch (error) {
+    if (error.name !== 'NotFoundError') {
+      throw error
+    }
+  }
+
+  const key = crypto.randomBytes(32).toString('base64')
+  await SecretService.createSecretEndpoint({
+    name: secretName,
+    type: 'Opaque',
+    data: { jsk: key }
+  }, transaction)
+  return { secretName, jsk: key }
+}
+
+async function _validateAndReturnUpstreamNats (upstreamNatsIds, isSystemFog, defaultHub, transaction) {
+  if (!upstreamNatsIds || upstreamNatsIds.length === 0) {
+    if (!defaultHub) {
+      if (isSystemFog) {
+        return []
+      }
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, Constants.DEFAULT_NATS_HUB_NAME))
+    }
+
+    const allSystemFogs = await FogManager.findAll({ isSystem: true }, transaction)
+    const systemFogNats = []
+    for (const systemFog of allSystemFogs) {
+      const systemFogNatsInstance = await NatsInstanceManager.findOne({
+        iofogUuid: systemFog.uuid,
+        isHub: true
+      }, transaction)
+      if (systemFogNatsInstance) {
+        systemFogNats.push(systemFogNatsInstance)
+      }
+    }
+
+    const combinedNats = [defaultHub]
+    for (const systemFogNatsInstance of systemFogNats) {
+      if (systemFogNatsInstance.id !== defaultHub.id) {
+        combinedNats.push(systemFogNatsInstance)
+      }
+    }
+
+    return combinedNats
+  }
+
+  const upstreamNats = []
+  for (const upstreamId of upstreamNatsIds) {
+    const upstreamNatsInstance = upstreamId === Constants.DEFAULT_NATS_HUB_NAME
+      ? defaultHub
+      : await NatsInstanceManager.findOne({ iofogUuid: upstreamId, isHub: true }, transaction)
+    if (!upstreamNatsInstance) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, upstreamId))
+    }
+    if (upstreamNatsInstance.isLeaf) {
+      throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_UPSTREAM_ROUTER, upstreamId))
+    }
+    upstreamNats.push(upstreamNatsInstance)
+  }
+  return upstreamNats
+}
+
+async function _ensureNatsMicroservice (fog, mode, transaction) {
+  const application = await ensureSystemApplication(fog, transaction)
+  const name = getSystemMicroserviceName('nats')
+  let microservice = await MicroserviceManager.findOne({
+    name,
+    applicationId: application.id
+  }, transaction)
+
+  if (!microservice) {
+    const catalog = await CatalogService.getNatsCatalogItem(transaction)
+    if (!catalog) {
+      throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_CATALOG_ITEM_ID, 'NATs'))
+    }
+    const data = {
+      uuid: AppHelper.generateUUID(),
+      name: name,
+      config: '{}',
+      catalogItemId: catalog.id,
+      iofogUuid: fog.uuid,
+      hostNetworkMode: false,
+      isPrivileged: false,
+      logSize: 1,
+      schedule: 1,
+      configLastUpdated: Date.now(),
+      applicationId: application.id
+    }
+    const capAddValues = [
+      { capAdd: 'NET_RAW' }
+    ]
+    microservice = await MicroserviceManager.create(data, transaction)
+    await MicroserviceStatusManager.create({ microserviceUuid: microservice.uuid }, transaction)
+    await MicroserviceExecStatusManager.create({ microserviceUuid: microservice.uuid }, transaction)
+    for (const capAdd of capAddValues) {
+      await MicroserviceCapAddManager.create({
+        microserviceUuid: data.uuid,
+        capAdd: capAdd.capAdd
+      }, transaction)
+    }
+    await _ensureVolumeMapping(microservice.uuid, `${fog.name}-nats-jetstream`, '/home/runner/data', 'rw', 'volume', transaction)
+  }
+
+  fog.natsMicroserviceUuid = microservice.uuid
+
+  const defaultHealthCheck = {
+    test: ['CMD-SHELL', "curl -f http://localhost:8222/healthz | grep -q 'status.*ok' || exit 1"],
+    interval: 30,
+    timeout: 10,
+    startPeriod: 60,
+    retries: 3
+  }
+  const existingHealthCheck = await MicroserviceHealthCheckManager.findOne(
+    { microserviceUuid: microservice.uuid },
+    transaction
+  )
+  const healthCheckData = {
+    microserviceUuid: microservice.uuid,
+    test: JSON.stringify(defaultHealthCheck.test),
+    interval: defaultHealthCheck.interval,
+    timeout: defaultHealthCheck.timeout,
+    startPeriod: defaultHealthCheck.startPeriod,
+    retries: defaultHealthCheck.retries
+  }
+  if (existingHealthCheck) {
+    await MicroserviceHealthCheckManager.update(
+      { microserviceUuid: microservice.uuid },
+      {
+        test: healthCheckData.test,
+        interval: healthCheckData.interval,
+        timeout: healthCheckData.timeout,
+        startPeriod: healthCheckData.startPeriod,
+        retries: healthCheckData.retries
+      },
+      transaction
+    )
+  } else {
+    await MicroserviceHealthCheckManager.create(healthCheckData, transaction)
+  }
+
+  return microservice
+}
+
+async function ensureNatsForFog (fog, natsConfig, transaction) {
+  const mode = (natsConfig && natsConfig.mode) || 'leaf'
+  if (mode === 'none') {
+    return null
+  }
+
+  const isHub = mode === 'server'
+  const isLeaf = !isHub
+  const serverPort = (natsConfig && natsConfig.serverPort) || DEFAULT_SERVER_PORT
+  const leafPort = (natsConfig && natsConfig.leafPort) || DEFAULT_LEAF_PORT
+  const clusterPort = (natsConfig && natsConfig.clusterPort) || DEFAULT_CLUSTER_PORT
+  const mqttPort = (natsConfig && natsConfig.mqttPort) || DEFAULT_MQTT_PORT
+  const httpPort = (natsConfig && natsConfig.httpPort) || DEFAULT_HTTP_PORT
+
+  const { serverCertName, mqttCertName } = await _ensureNatsCertificates(fog, transaction)
+  const configMapName = natsConfigMapName(fog)
+  const configKey = NATS_CONFIG_KEY
+  const template = isHub ? readTemplate('server.conf') : readTemplate('leaf.conf')
+  const certName = serverCertName
+
+  const jwtBundle = await _buildJwtBundle(fog, isLeaf, transaction)
+  await _ensureConfigMap(natsJwtBundleConfigMap(fog), jwtBundle, transaction)
+
+  const microservice = await _ensureNatsMicroservice(fog, mode, transaction)
+
+  const jetstreamKey = await _ensureJetstreamKey(fog, transaction)
+  const sysAccountName = isLeaf ? NatsAuthService.leafSystemAccountName(fog) : NatsAuthService.SYSTEM_ACCOUNT_NAME
+  const sysUserName = isLeaf ? NatsAuthService.leafSystemAccountUserName(fog) : NatsAuthService.sysUserNameForServer(isHub, fog)
+  const sysCredPath = `${NATS_CREDS_DIR}/${slugifyName(sysAccountName)}/${slugifyName(sysUserName)}.creds`
+  const env = [
+    { key: 'JETSTREAM_KEY', value: jetstreamKey.jsk, valueFromSecret: `${jetstreamKey.secretName}/jsk` },
+    { key: 'JETSTREAM_PREV_KEY', value: '' },
+    { key: 'NATS_JWT_DIR', value: NATS_JWT_DIR },
+    { key: 'NATS_CREDS_DIR', value: NATS_CREDS_DIR },
+    { key: 'NATS_SYS_USER_CRED_PATH', value: sysCredPath },
+    { key: 'NATS_SSL_DIR', value: NATS_CERTS_DIR },
+    { key: 'NATS_CERT_NAME', value: certName },
+    { key: 'NATS_MQTT_CERT_NAME', value: mqttCertName },
+    { key: 'NATS_CONF', value: `${NATS_CONFIG_DIR}/${configKey}` },
+    { key: 'NATS_SERVER_PORT', value: String(serverPort) },
+    { key: 'NATS_LEAF_PORT', value: String(leafPort) },
+    { key: 'NATS_CLUSTER_PORT', value: String(clusterPort) },
+    { key: 'NATS_MQTT_PORT', value: String(mqttPort) },
+    { key: 'NATS_HTTP_PORT', value: String(httpPort) },
+    { key: 'NATS_MONITOR_PORT', value: String(httpPort) },
+    { key: 'NATS_JETSTREAM_STORE_DIR', value: '/home/runner/data' }
+  ]
+
+  const instance = await NatsInstanceManager.findByFog(fog.uuid, transaction)
+  const instanceData = {
+    iofogUuid: fog.uuid,
+    isLeaf,
+    isHub,
+    host: fog.host,
+    serverPort,
+    leafPort,
+    clusterPort,
+    mqttPort,
+    httpPort,
+    configMapName: configMapName,
+    jwtDirMountName: natsJwtDirMount(fog),
+    certSecretName: certName
+  }
+  let savedInstance = instance
+  if (savedInstance) {
+    await NatsInstanceManager.update({ id: savedInstance.id }, instanceData, transaction)
+    savedInstance = await NatsInstanceManager.findOne({ id: savedInstance.id }, transaction)
+  } else {
+    savedInstance = await NatsInstanceManager.create(instanceData, transaction)
+  }
+
+  let upstreamIds = natsConfig && natsConfig.upstreamNatsServers
+  if (typeof upstreamIds === 'string') {
+    try {
+      upstreamIds = JSON.parse(upstreamIds)
+    } catch (error) {
+      upstreamIds = []
+    }
+  }
+  const defaultHub = await NatsInstanceManager.findOne({ isHub: true }, transaction)
+  const upstreamNats = await _validateAndReturnUpstreamNats(upstreamIds, fog.isSystem === true, defaultHub, transaction)
+
+  const existingConnections = await NatsConnectionManager.findAllWithNats(
+    { sourceNats: savedInstance.id },
+    transaction
+  )
+  const existingDestIds = new Set(existingConnections.map(conn => conn.dest && conn.dest.id).filter(Boolean))
+  const desiredDestIds = new Set(upstreamNats.map(node => node.id))
+  for (const connection of existingConnections) {
+    if (connection.dest && !desiredDestIds.has(connection.dest.id)) {
+      await NatsConnectionManager.delete({ id: connection.id }, transaction)
+    }
+  }
+  for (const upstream of upstreamNats) {
+    if (!existingDestIds.has(upstream.id)) {
+      await NatsConnectionManager.create({ sourceNats: savedInstance.id, destNats: upstream.id }, transaction)
+    }
+  }
+
+  const renderedTemplate = await _renderAndPersistNatsConfig(
+    fog,
+    savedInstance,
+    certName,
+    mqttCertName,
+    configMapName,
+    configKey,
+    template,
+    isHub,
+    !savedInstance.isLeaf,
+    transaction
+  )
+
+  if (isHub && _isKubernetesControlPlane() && renderedTemplate) {
+    try {
+      await K8sClient.patchConfigMap(K8S_NATS_SERVER_CONFIG_MAP, { data: { [configKey]: renderedTemplate } })
+      await K8sClient.patchConfigMap(K8S_NATS_JWT_BUNDLE_CONFIG_MAP, { data: jwtBundle })
+    } catch (err) {
+      logger.warn(`Failed to patch Kubernetes NATS ConfigMaps: ${err.message}`)
+    }
+  }
+
+  await _ensureVolumeMount(configMapName, { configMapName: configMapName }, transaction)
+  await _ensureVolumeMount(natsJwtDirMount(fog), { configMapName: natsJwtBundleConfigMap(fog) }, transaction)
+  await _ensureVolumeMount(certName, { secretName: certName }, transaction)
+  await _ensureVolumeMount(mqttCertName, { secretName: mqttCertName }, transaction)
+
+  await VolumeMountService.linkVolumeMountEndpoint(configMapName, [fog.uuid], transaction)
+  await VolumeMountService.linkVolumeMountEndpoint(natsJwtDirMount(fog), [fog.uuid], transaction)
+  await VolumeMountService.linkVolumeMountEndpoint(certName, [fog.uuid], transaction)
+  await VolumeMountService.linkVolumeMountEndpoint(mqttCertName, [fog.uuid], transaction)
+
+  await _ensureVolumeMapping(microservice.uuid, configMapName, NATS_CONFIG_DIR, 'ro', 'volumeMount', transaction)
+  await _ensureVolumeMapping(microservice.uuid, natsJwtDirMount(fog), NATS_JWT_DIR, 'rw', 'volumeMount', transaction)
+  await _ensureVolumeMapping(microservice.uuid, certName, `${NATS_CERTS_DIR}/${certName}`, 'ro', 'volumeMount', transaction)
+  await _ensureVolumeMapping(microservice.uuid, mqttCertName, `${NATS_CERTS_DIR}/${mqttCertName}`, 'ro', 'volumeMount', transaction)
+
+  if (isHub) {
+    const { user: hubSysUser } = await NatsAuthService.ensureSysUserForServer({ isHub: true }, transaction)
+    const credsSecretName = hubSysUser.credsSecretName
+    await _ensureVolumeMount(credsSecretName, { secretName: credsSecretName }, transaction)
+    await VolumeMountService.linkVolumeMountEndpoint(credsSecretName, [fog.uuid], transaction)
+    await _ensureVolumeMapping(microservice.uuid, credsSecretName, NATS_CREDS_DIR, 'ro', 'volumeMount', transaction)
+  } else if (!savedInstance.isLeaf) {
+    const { user: serverSysUser } = await NatsAuthService.ensureSysUserForServer({ isHub: false, fog }, transaction)
+    const credsSecretName = serverSysUser.credsSecretName
+    await _ensureVolumeMount(credsSecretName, { secretName: credsSecretName }, transaction)
+    await VolumeMountService.linkVolumeMountEndpoint(credsSecretName, [fog.uuid], transaction)
+    await _ensureVolumeMapping(microservice.uuid, credsSecretName, NATS_CREDS_DIR, 'ro', 'volumeMount', transaction)
+    await _buildLeafRemotes(fog, savedInstance, transaction)
+  } else {
+    const sysCredsSecretName = await _getSysUserCredsSecretNameForFog(fog, false, transaction)
+    if (sysCredsSecretName) {
+      await VolumeMappingManager.delete({
+        microserviceUuid: microservice.uuid,
+        hostDestination: sysCredsSecretName,
+        type: 'volumeMount'
+      }, transaction)
+      try {
+        await VolumeMountService.unlinkVolumeMountEndpoint(sysCredsSecretName, [fog.uuid], transaction)
+      } catch (err) {
+        if (err.name !== 'NotFoundError') {
+          throw err
+        }
+      }
+    }
+    await _buildLeafRemotes(fog, savedInstance, transaction)
+  }
+
+  await _replaceMicroserviceEnv(microservice.uuid, env, transaction)
+  await _ensureNatsPorts(microservice.uuid, [serverPort, clusterPort, leafPort, mqttPort, httpPort], transaction)
+
+  return microservice
+}
+
+async function cleanupNatsForFog (fog, transaction) {
+  const natsInstance = await NatsInstanceManager.findByFog(fog.uuid, transaction)
+  const mountNames = [
+    natsConfigMapName(fog),
+    natsJwtDirMount(fog),
+    natsLeafCredsConfigMap(fog),
+    natsServerCertName(fog),
+    natsLocalMQTTCertName(fog)
+  ]
+  if (natsInstance) {
+    const sysCredsSecretName = await _getSysUserCredsSecretNameForFog(fog, !!natsInstance.isHub, transaction)
+    if (sysCredsSecretName) {
+      mountNames.push(sysCredsSecretName)
+    }
+  }
+  const configMapNames = [
+    natsConfigMapName(fog),
+    natsJwtBundleConfigMap(fog),
+    natsLeafCredsConfigMap(fog),
+    natsServerConfigMap(fog),
+    natsLeafConfigMap(fog)
+  ]
+  const secretNames = [
+    natsServerCertName(fog),
+    natsLocalMQTTCertName(fog),
+    natsJetstreamKeySecretName(fog),
+    natsLocalCaName(fog)
+  ]
+
+  logger.info(`Cleaning up NATS artifacts for fog ${fog.uuid}`)
+  if (natsInstance) {
+    await NatsConnectionManager.delete({ sourceNats: natsInstance.id }, transaction)
+    await NatsConnectionManager.delete({ destNats: natsInstance.id }, transaction)
+    await NatsInstanceManager.delete({ id: natsInstance.id }, transaction)
+  }
+
+  const fogMicroservices = await MicroserviceManager.findAll({ iofogUuid: fog.uuid }, transaction)
+  for (const microservice of fogMicroservices) {
+    for (const mountName of mountNames) {
+      await VolumeMappingManager.delete({
+        microserviceUuid: microservice.uuid,
+        hostDestination: mountName,
+        type: 'volumeMount'
+      }, transaction)
+    }
+  }
+
+  for (const mountName of mountNames) {
+    try {
+      await VolumeMountService.unlinkVolumeMountEndpoint(mountName, [fog.uuid], transaction)
+    } catch (error) {
+      if (error.name !== 'NotFoundError') {
+        throw error
+      }
+    }
+
+    try {
+      const linkedFogs = await VolumeMountService.findVolumeMountedFogNodes(mountName, transaction)
+      if (!linkedFogs || linkedFogs.length === 0) {
+        await VolumeMountService.deleteVolumeMountEndpoint(mountName, transaction)
+      }
+    } catch (error) {
+      if (error.name !== 'NotFoundError') {
+        throw error
+      }
+    }
+  }
+
+  for (const configMapName of configMapNames) {
+    try {
+      await ConfigMapService.deleteConfigMapEndpoint(configMapName, transaction)
+    } catch (error) {
+      if (error.name !== 'NotFoundError') {
+        throw error
+      }
+    }
+  }
+
+  for (const secretName of secretNames) {
+    try {
+      await SecretService.deleteSecretEndpoint(secretName, transaction)
+    } catch (error) {
+      if (error.name !== 'NotFoundError') {
+        throw error
+      }
+    }
+  }
+}
+
+async function _reconcileResolverArtifactsOnce (options = {}, transaction) {
+  const fogs = await FogManager.findAll({}, transaction)
+  const fogFilter = Array.isArray(options.fogUuids) && options.fogUuids.length > 0
+    ? new Set(options.fogUuids)
+    : null
+  const candidateFogs = fogFilter
+    ? fogs.filter((fog) => fogFilter.has(fog.uuid))
+    : fogs
+  logger.info(`Reconciling NATS resolver artifacts for ${candidateFogs.length} fog(s)`)
+
+  const NatsAuthServiceRuntime = require('./nats-auth-service')
+  const MicroserviceManagerRuntime = require('../data/managers/microservice-manager')
+  const ApplicationManagerRuntime = require('../data/managers/application-manager')
+
+  for (const fog of candidateFogs) {
+    const natsMicroservice = await MicroserviceManagerRuntime.findOne({
+      iofogUuid: fog.uuid,
+      name: getSystemMicroserviceName('nats')
+    }, transaction)
+    if (natsMicroservice) {
+      fog.natsMicroserviceUuid = natsMicroservice.uuid
+    }
+
+    const fogMicroservices = await MicroserviceManagerRuntime.findAll({ iofogUuid: fog.uuid }, transaction)
+    for (const microservice of fogMicroservices) {
+      if (!microservice.natsAccess || !microservice.applicationId) {
+        continue
+      }
+      const app = await ApplicationManagerRuntime.findOne({ id: microservice.applicationId }, transaction)
+      if (!app || !app.natsAccess) {
+        continue
+      }
+      await NatsAuthServiceRuntime.reissueUserForMicroservice(microservice.uuid, transaction)
+    }
+
+    const natsInstance = await NatsInstanceManager.findByFog(fog.uuid, transaction)
+    if (!natsInstance) {
+      continue
+    }
+    try {
+      const isHub = !!natsInstance.isHub
+      const isServerMode = !natsInstance.isLeaf
+      const jwtBundle = await _buildJwtBundle(fog, natsInstance.isLeaf, transaction)
+      await _ensureConfigMap(natsJwtBundleConfigMap(fog), jwtBundle, transaction)
+      if (natsInstance.isLeaf && fog.natsMicroserviceUuid) {
+        await _buildLeafRemotes(fog, natsInstance, transaction)
+      }
+
+      const certName = natsInstance.certSecretName || natsServerCertName(fog)
+      const mqttCertName = natsLocalMQTTCertName(fog)
+      const configMapName = natsInstance.configMapName || natsConfigMapName(fog)
+      const configKey = NATS_CONFIG_KEY
+      const template = isHub ? readTemplate('server.conf') : readTemplate('leaf.conf')
+      const renderedTemplate = await _renderAndPersistNatsConfig(
+        fog,
+        natsInstance,
+        certName,
+        mqttCertName,
+        configMapName,
+        configKey,
+        template,
+        isHub,
+        isServerMode,
+        transaction
+      )
+      if (isHub && _isKubernetesControlPlane() && renderedTemplate) {
+        try {
+          await K8sClient.patchConfigMap(K8S_NATS_SERVER_CONFIG_MAP, { data: { [configKey]: renderedTemplate } })
+          await K8sClient.patchConfigMap(K8S_NATS_JWT_BUNDLE_CONFIG_MAP, { data: jwtBundle })
+        } catch (err) {
+          logger.warn(`Failed to patch Kubernetes NATS ConfigMaps (reconcile): ${err.message}`)
+        }
+      }
+      if (isHub && fog.natsMicroserviceUuid) {
+        const { user: hubSysUser } = await NatsAuthServiceRuntime.ensureSysUserForServer({ isHub: true }, transaction)
+        const credsSecretName = hubSysUser.credsSecretName
+        await _ensureVolumeMount(credsSecretName, { secretName: credsSecretName }, transaction)
+        await VolumeMountService.linkVolumeMountEndpoint(credsSecretName, [fog.uuid], transaction)
+        await _ensureVolumeMapping(fog.natsMicroserviceUuid, credsSecretName, NATS_CREDS_DIR, 'ro', 'volumeMount', transaction)
+      }
+    } catch (error) {
+      logger.error(`Failed to reconcile NATS artifacts for fog ${fog.uuid}: ${error.message}`)
+    }
+  }
+}
+
+async function reconcileResolverArtifacts (options = {}, transaction) {
+  if (natsReconcileRunning) {
+    natsReconcilePending = true
+    return { scheduled: true }
+  }
+
+  natsReconcileRunning = true
+  try {
+    do {
+      natsReconcilePending = false
+      await _reconcileResolverArtifactsOnce(options, transaction)
+    } while (natsReconcilePending)
+    return { scheduled: false }
+  } finally {
+    natsReconcileRunning = false
+  }
+}
+
+function isReconcileRunning () {
+  return natsReconcileRunning
+}
+
+function setReconcilePending () {
+  natsReconcilePending = true
+}
+
+function scheduleResolverArtifactsReconcile (options = {}) {
+  if (natsReconcileRunning) {
+    natsReconcilePending = true
+    return { scheduled: true }
+  }
+  if (natsReconcileScheduled) {
+    natsReconcilePending = true
+    return { scheduled: true }
+  }
+  natsReconcileScheduled = true
+  setImmediate(async () => {
+    natsReconcileScheduled = false
+    try {
+      await module.exports.reconcileResolverArtifacts(options)
+    } catch (error) {
+      logger.error(`Background NATS reconcile failed: ${error.message}`)
+    }
+  })
+  return { scheduled: true }
+}
+
+module.exports = {
+  ensureNatsForFog: TransactionDecorator.generateTransaction(ensureNatsForFog),
+  reconcileResolverArtifacts: TransactionDecorator.generateTransaction(reconcileResolverArtifacts),
+  scheduleResolverArtifactsReconcile: scheduleResolverArtifactsReconcile,
+  cleanupNatsForFog: TransactionDecorator.generateTransaction(cleanupNatsForFog),
+  ensureLeafCredsForFog,
+  isReconcileRunning,
+  setReconcilePending
+}

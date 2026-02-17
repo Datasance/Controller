@@ -252,7 +252,7 @@ class DatabaseProvider {
   // SQLite migration
   async runMigrationSQLite (dbName) {
     const migrationSqlPath = path.resolve(__dirname, '../migrations/sqlite/db_migration_sqlite_v1.1.0.sql')
-    const migrationVersion = '1.0.9'
+    const migrationVersion = '1.1.0'
 
     if (!fs.existsSync(migrationSqlPath)) {
       logger.error(`Migration file not found: ${migrationSqlPath}`)
@@ -325,7 +325,7 @@ class DatabaseProvider {
   // MySQL migration
   async runMigrationMySQL (db) {
     const migrationSqlPath = path.resolve(__dirname, '../migrations/mysql/db_migration_mysql_v1.1.0.sql')
-    const migrationVersion = '1.0.9'
+    const migrationVersion = '1.1.0'
 
     if (!fs.existsSync(migrationSqlPath)) {
       logger.error(`Migration file not found: ${migrationSqlPath}`)
@@ -386,7 +386,7 @@ class DatabaseProvider {
   // PostgreSQL migration
   async runMigrationPostgres (db) {
     const migrationSqlPath = path.resolve(__dirname, '../migrations/postgres/db_migration_pg_v1.1.0.sql')
-    const migrationVersion = '1.0.9'
+    const migrationVersion = '1.1.0'
 
     if (!fs.existsSync(migrationSqlPath)) {
       logger.error(`Migration file not found: ${migrationSqlPath}`)

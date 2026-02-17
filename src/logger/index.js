@@ -294,9 +294,61 @@ for (const level of Object.keys(levels)) {
     if (log[0] instanceof Error) {
       log = serializer.err(...log)
     }
+    if (level === 'apiRes' && log[0] && typeof log[0] === 'object') {
+      log[0] = sanitizeApiResLogPayload(log[0])
+    }
     getConsoleLogger()[level](...log)
     if (fileLogger !== null) {
       getLogger()[level](...log)
     }
   }
+}
+
+function sanitizeApiResLogPayload (payload) {
+  // Keep original req/res objects intact so pino serializers can process them.
+  // Redact only the remaining fields with cycle-aware traversal.
+  const sanitized = {}
+  for (const [key, value] of Object.entries(payload)) {
+    if (key === 'req' || key === 'res') {
+      sanitized[key] = value
+      continue
+    }
+    sanitized[key] = redactSensitiveKeys(value)
+  }
+  return sanitized
+}
+
+function redactSensitiveKeys (value, seen = new WeakSet()) {
+  if (value === null || value === undefined) {
+    return value
+  }
+
+  if (typeof value !== 'object') {
+    return value
+  }
+
+  if (Buffer.isBuffer(value) || value instanceof Date || value instanceof RegExp) {
+    return value
+  }
+
+  if (seen.has(value)) {
+    return '[Circular]'
+  }
+
+  seen.add(value)
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitiveKeys(item, seen))
+  }
+
+  const redacted = {}
+  for (const [key, item] of Object.entries(value)) {
+    const loweredKey = key.toLowerCase()
+    if (loweredKey === 'jwt' || loweredKey === 'creds' || loweredKey.includes('seed') || loweredKey.includes('secret')) {
+      redacted[key] = '[REDACTED]'
+      continue
+    }
+    redacted[key] = redactSensitiveKeys(item, seen)
+  }
+  return redacted
 }
