@@ -15,12 +15,15 @@ const Errors = require('../helpers/errors')
 const Validator = require('../schemas')
 const NatsInstanceManager = require('../data/managers/nats-instance-manager')
 const TransactionDecorator = require('../decorators/transaction-decorator')
+const NatsService = require('./nats-service')
 
 const DEFAULT_SERVER_PORT = 4222
 const DEFAULT_CLUSTER_PORT = 6222
 const DEFAULT_LEAF_PORT = 7422
 const DEFAULT_MQTT_PORT = 8883
 const DEFAULT_HTTP_PORT = 8222
+const DEFAULT_JS_STORAGE_SIZE = '10g'
+const DEFAULT_JS_MEMORY_STORE_SIZE = '1g'
 
 async function getDefaultHub (transaction) {
   const hub = await NatsInstanceManager.findOne({ isHub: true }, transaction)
@@ -33,12 +36,21 @@ async function getDefaultHub (transaction) {
     clusterPort: hub.clusterPort,
     leafPort: hub.leafPort,
     mqttPort: hub.mqttPort,
-    httpPort: hub.httpPort
+    httpPort: hub.httpPort,
+    jsStorageSize: hub.jsStorageSize,
+    jsMemoryStoreSize: hub.jsMemoryStoreSize
   }
 }
 
 async function upsertDefaultHub (hubData, transaction) {
   await Validator.validate(hubData, Validator.schemas.natsHubCreate)
+
+  const jsStorageSize = hubData.jsStorageSize != null && String(hubData.jsStorageSize).trim() !== ''
+    ? NatsService.normalizeJetstreamSize(hubData.jsStorageSize, DEFAULT_JS_STORAGE_SIZE)
+    : null
+  const jsMemoryStoreSize = hubData.jsMemoryStoreSize != null && String(hubData.jsMemoryStoreSize).trim() !== ''
+    ? NatsService.normalizeJetstreamSize(hubData.jsMemoryStoreSize, DEFAULT_JS_MEMORY_STORE_SIZE)
+    : null
 
   const createHubData = {
     isHub: true,
@@ -48,7 +60,9 @@ async function upsertDefaultHub (hubData, transaction) {
     clusterPort: hubData.clusterPort || DEFAULT_CLUSTER_PORT,
     leafPort: hubData.leafPort || DEFAULT_LEAF_PORT,
     mqttPort: hubData.mqttPort || DEFAULT_MQTT_PORT,
-    httpPort: hubData.httpPort || DEFAULT_HTTP_PORT
+    httpPort: hubData.httpPort || DEFAULT_HTTP_PORT,
+    jsStorageSize: jsStorageSize || null,
+    jsMemoryStoreSize: jsMemoryStoreSize || null
   }
 
   return NatsInstanceManager.updateOrCreate({ isHub: true }, createHubData, transaction)

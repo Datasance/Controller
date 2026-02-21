@@ -44,6 +44,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(36),
       allowNull: true,
       field: 'microservice_uuid'
+    },
+    natsUserRuleId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'nats_user_rule_id'
     }
   }, {
     tableName: 'NatsUsers',
@@ -67,6 +72,15 @@ module.exports = (sequelize, DataTypes) => {
         field: 'microservice_uuid'
       },
       as: 'microservice',
+      onDelete: 'set null'
+    })
+
+    NatsUser.belongsTo(models.NatsUserRule, {
+      foreignKey: {
+        name: 'natsUserRuleId',
+        field: 'nats_user_rule_id'
+      },
+      as: 'natsUserRule',
       onDelete: 'set null'
     })
   }

@@ -9,7 +9,9 @@ const natsHubCreate = {
     'clusterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'leafPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'mqttPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
-    'httpPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 }
+    'httpPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
+    'jsStorageSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 },
+    'jsMemoryStoreSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 }
   },
   'required': ['host'],
   'additionalProperties': true

@@ -26,6 +26,7 @@ const AppHelper = require('../helpers/app-helper')
 const Validator = require('../schemas')
 const NatsSystemRules = require('../config/nats-system-rules')
 const TransactionDecorator = require('../decorators/transaction-decorator')
+const config = require('../config')
 const logger = require('../logger')
 
 /**
@@ -161,6 +162,46 @@ async function getOperator (transaction) {
     name: operator.name,
     publicKey: operator.publicKey,
     jwt: operator.jwt
+  }
+}
+
+function _isKubernetesControlPlane () {
+  const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')
+  return controlPlane && String(controlPlane).toLowerCase() === 'kubernetes'
+}
+
+async function getBootstrap (transaction) {
+  if (!_isKubernetesControlPlane()) {
+    throw new Errors.ForbiddenError('NATS bootstrap is only available when the Controller runs on the Kubernetes control plane')
+  }
+  const operator = await NatsAuthService.ensureOperator(transaction, { triggerReconcile: false })
+  const seedSecret = await SecretService.getSecretEndpoint(operator.seedSecretName, transaction)
+  if (!seedSecret || !seedSecret.data || !seedSecret.data.seed) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, operator.seedSecretName))
+  }
+  const operatorSeed = typeof seedSecret.data.seed === 'string'
+    ? seedSecret.data.seed
+    : Buffer.from(seedSecret.data.seed).toString('utf8')
+
+  const { user } = await NatsAuthService.ensureSysUserForServer({ isHub: true }, transaction)
+  const credsSecret = await SecretService.getSecretEndpoint(user.credsSecretName, transaction)
+  if (!credsSecret || !credsSecret.data) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, user.credsSecretName))
+  }
+  const credsKey = Object.keys(credsSecret.data).find((key) => key.endsWith('.creds')) || 'creds'
+  const raw = credsSecret.data[credsKey]
+  if (!raw) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, user.credsSecretName))
+  }
+  const sysUserCredsBase64 = typeof raw === 'string'
+    ? Buffer.from(raw, 'utf8').toString('base64')
+    : Buffer.from(raw).toString('base64')
+
+  return {
+    operatorJwt: operator.jwt,
+    operatorPublicKey: operator.publicKey,
+    operatorSeed,
+    sysUserCredsBase64
   }
 }
 
@@ -306,7 +347,7 @@ async function getUserCreds (appName, userName, transaction) {
   const application = await ApplicationManager.findOne({ name: appName }, transaction)
   const sysAccount = await NatsAccountManager.findOne({ name: appName }, transaction)
 
-  if (!application && (!sysAccount || !sysAccount.isSystem)) {
+  if (!application && (!sysAccount || (!sysAccount.isSystem && !sysAccount.isLeafSystem))) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_NAME, appName))
   }
   let accountId = null
@@ -317,7 +358,7 @@ async function getUserCreds (appName, userName, transaction) {
     }
     accountId = account.id
   }
-  if (sysAccount && sysAccount.isSystem) {
+  if (sysAccount && (sysAccount.isSystem || sysAccount.isLeafSystem)) {
     accountId = sysAccount.id
   }
   const user = await NatsUserManager.findOne({ accountId: accountId, name: userName }, transaction)
@@ -448,22 +489,13 @@ async function deleteAccountRule (ruleName, transaction) {
     throw new Errors.NotFoundError(`NATS account rule ${ruleName} not found`)
   }
 
-  const defaultRule = await NatsAccountRuleManager.findOne({ name: NatsSystemRules.APPLICATION_ACCOUNT_RULE_NAME }, transaction)
-  if (!defaultRule) {
-    throw new Errors.NotFoundError(`NATS account rule ${NatsSystemRules.APPLICATION_ACCOUNT_RULE_NAME} not found`)
-  }
-
   const affectedApps = await ApplicationManager.findAll({ natsRuleId: rule.id }, transaction)
-  for (const app of affectedApps) {
-    await ApplicationManager.update({ id: app.id }, {
-      natsRuleId: app.natsAccess ? defaultRule.id : null
-    }, transaction)
+  if (affectedApps.length > 0) {
+    throw new Errors.ValidationError(
+      'Cannot delete NATS account rule that is attached to one or more applications. Detach or change the rule on each application first.'
+    )
   }
   await NatsAccountRuleManager.delete({ id: rule.id }, transaction)
-  if (affectedApps.length > 0) {
-    logger.info(`Scheduling NATS account reissue for ${affectedApps.length} app(s) after deleting rule ${ruleName}`)
-    NatsAuthService.scheduleReissueAccountsForApplications(affectedApps.map(app => app.id))
-  }
 }
 
 async function listUserRules (transaction) {
@@ -521,27 +553,19 @@ async function deleteUserRule (ruleName, transaction) {
     throw new Errors.NotFoundError(`NATS user rule ${ruleName} not found`)
   }
 
-  const defaultRule = await NatsUserRuleManager.findOne({ name: NatsSystemRules.MICROSERVICE_USER_RULE_NAME }, transaction)
-  if (!defaultRule) {
-    throw new Errors.NotFoundError(`NATS user rule ${NatsSystemRules.MICROSERVICE_USER_RULE_NAME} not found`)
-  }
-
   const affectedMicroservices = await MicroserviceManager.findAll({ natsRuleId: rule.id }, transaction)
-  for (const microservice of affectedMicroservices) {
-    await MicroserviceManager.update({ uuid: microservice.uuid }, {
-      natsRuleId: microservice.natsAccess ? defaultRule.id : null
-    }, transaction)
+  if (affectedMicroservices.length > 0) {
+    throw new Errors.ValidationError(
+      'Cannot delete NATS user rule that is attached to one or more users/microservices. Detach or change the rule on each microservice first.'
+    )
   }
   await NatsUserRuleManager.delete({ id: rule.id }, transaction)
-  if (affectedMicroservices.length > 0) {
-    logger.info(`Scheduling NATS user reissue for ${affectedMicroservices.length} microservice(s) after deleting rule ${ruleName}`)
-    NatsAuthService.scheduleReissueUsersForMicroservices(affectedMicroservices.map(ms => ms.uuid))
-  }
 }
 
 module.exports = {
   getOperator: TransactionDecorator.generateTransaction(getOperator),
   rotateOperator: TransactionDecorator.generateTransaction(rotateOperator),
+  getBootstrap: TransactionDecorator.generateTransaction(getBootstrap),
   getHub: TransactionDecorator.generateTransaction(getHub),
   upsertHub: TransactionDecorator.generateTransaction(upsertHub),
   listAccounts: TransactionDecorator.generateTransaction(listAccounts),

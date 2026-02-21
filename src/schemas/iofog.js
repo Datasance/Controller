@@ -52,6 +52,8 @@ const iofogCreate = {
     'natsClusterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'natsMqttPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'natsHttpPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
+    'jsStorageSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 },
+    'jsMemoryStoreSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 },
     'upstreamNatsServers': {
       'type': 'array',
       'items': { 'type': 'string', 'minLength': 1 }
@@ -127,6 +129,8 @@ const iofogUpdate = {
     'natsClusterPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'natsMqttPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
     'natsHttpPort': { 'type': 'integer', 'minimum': 1, 'maximum': 65535 },
+    'jsStorageSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 },
+    'jsMemoryStoreSize': { 'type': 'string', 'pattern': '^[0-9]+\\s*([mM][bB]?|[gG][bB]?|[tT][bB]?)?$', 'maxLength': 32 },
     'upstreamNatsServers': {
       'type': 'array',
       'items': { 'type': 'string', 'minLength': 1 }

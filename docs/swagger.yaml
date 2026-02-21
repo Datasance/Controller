@@ -5775,6 +5775,27 @@ paths:
                 $ref: "#/components/schemas/NatsOperatorResponse"
         "401":
           description: Not Authorized
+  /nats/bootstrap:
+    get:
+      tags:
+        - NATS
+      summary: Returns NATS operator and hub system user bootstrap data for K8s installer
+      operationId: getNatsBootstrap
+      security:
+        - authToken: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NatsBootstrapResponse"
+        "401":
+          description: Not Authorized
+        "403":
+          description: Forbidden (only available when Controller runs on Kubernetes control plane)
+        "404":
+          description: Not Found (bootstrap data or secrets missing)
   /nats/hub:
     get:
       tags:
@@ -7136,6 +7157,12 @@ components:
           type: number
         natsHttpPort:
           type: number
+        jsStorageSize:
+          type: string
+          description: JetStream max file store (e.g. 10g). Units m, mb, g, gb, t, tb.
+        jsMemoryStoreSize:
+          type: string
+          description: JetStream max memory store (e.g. 1g). Units m, mb, g, gb, t, tb.
         upstreamNatsServers:
           type: array
           items:
@@ -7247,6 +7274,12 @@ components:
           type: number
         natsHttpPort:
           type: number
+        jsStorageSize:
+          type: string
+          description: JetStream max file store (e.g. 10g). Units m, mb, g, gb, t, tb.
+        jsMemoryStoreSize:
+          type: string
+          description: JetStream max memory store (e.g. 1g). Units m, mb, g, gb, t, tb.
         upstreamNatsServers:
           type: array
           items:
@@ -8158,6 +8191,12 @@ components:
           type: integer
         httpPort:
           type: integer
+        jsStorageSize:
+          type: string
+          description: JetStream max file store (e.g. 10g, 1t). Units m, mb, g, gb, t, tb.
+        jsMemoryStoreSize:
+          type: string
+          description: JetStream max memory store (e.g. 1g). Units m, mb, g, gb, t, tb.
     NatsHubResponse:
       $ref: "#/components/schemas/NatsHubRequest"
     NatsOperatorResponse:
@@ -8168,6 +8207,17 @@ components:
         publicKey:
           type: string
         jwt:
+          type: string
+    NatsBootstrapResponse:
+      type: object
+      properties:
+        operatorJwt:
+          type: string
+        operatorPublicKey:
+          type: string
+        operatorSeed:
+          type: string
+        sysUserCredsBase64:
           type: string
     NatsAccountResponse:
       type: object

@@ -275,6 +275,10 @@ async function _handleRouterCertificates (fogData, uuid, isRouterModeChanged, tr
 
 async function createFogEndPoint (fogData, isCLI, transaction) {
   await Validator.validate(fogData, Validator.schemas.iofogCreate)
+  const isKubernetes = await checkKubernetesEnvironment()
+  if (isKubernetes && fogData.isSystem) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_SYSTEM_FOG_KUBERNETES))
+  }
   let createFogData = {
     uuid: AppHelper.generateUUID(),
     name: fogData.name,
@@ -333,6 +337,10 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, fogData.routerMode))
   }
 
+  if (fogData.isSystem && fogData.natsMode !== 'server') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_NATS_MODE, fogData.natsMode))
+  }
+
   // // TODO: handle multiple system fogs a.k.a multi-remote-controller and multi interior routers
   // if (fogData.isSystem && !!(await FogManager.findOne({ isSystem: true }, transaction))) {
   //   throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.DUPLICATE_SYSTEM_FOG))
@@ -370,7 +378,12 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
     clusterPort: fogData.natsClusterPort,
     mqttPort: fogData.natsMqttPort,
     httpPort: fogData.natsHttpPort,
-    upstreamNatsServers: fogData.upstreamNatsServers
+    jsStorageSize: fogData.jsStorageSize || NatsService.DEFAULT_JS_STORAGE_SIZE,
+    jsMemoryStoreSize: fogData.jsMemoryStoreSize || NatsService.DEFAULT_JS_MEMORY_STORE_SIZE
+  }
+
+  if (fogData.upstreamNatsServers) {
+    natsConfig.upstreamNatsServers = fogData.upstreamNatsServers
   }
 
   // Start background orchestration
@@ -521,6 +534,18 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     throw new Errors.ValidationError('Agent Resource Name is immutable')
   }
 
+  if (updateFogData.isSystem && updateFogData.natsMode !== 'server') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_NATS_MODE, updateFogData.natsMode))
+  }
+
+  if (updateFogData.isSystem && updateFogData.routerMode !== 'interior') {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER_MODE, updateFogData.routerMode))
+  }
+
+  if (updateFogData.isSystem !== undefined && updateFogData.isSystem !== oldFog.isSystem) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.INVALID_SYSTEM_CHANGE))
+  }
+
   // Prevent overwriting detected fogType (1 or 2) with "auto" (0)
   // If fogType is being set to "auto" (0) but the agent has already detected its type (1 or 2),
   // preserve the detected type to ensure getAgentMicroservices can find matching images
@@ -580,7 +605,9 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
     clusterPort: fogData.natsClusterPort,
     mqttPort: fogData.natsMqttPort,
     httpPort: fogData.natsHttpPort,
-    upstreamNatsServers: fogData.upstreamNatsServers
+    upstreamNatsServers: fogData.upstreamNatsServers,
+    jsStorageSize: fogData.jsStorageSize,
+    jsMemoryStoreSize: fogData.jsMemoryStoreSize
   }
 
   // Start background orchestration
@@ -865,12 +892,14 @@ async function _getFogNatsConfig (fog, transaction) {
   const natsConfig = {}
 
   if (nats) {
-    natsConfig.natsMode = nats.isHub ? 'server' : 'leaf'
+    natsConfig.natsMode = nats.isLeaf ? 'leaf' : 'server'
     natsConfig.natsServerPort = nats.serverPort
     natsConfig.natsLeafPort = nats.leafPort
     natsConfig.natsClusterPort = nats.clusterPort
     natsConfig.natsMqttPort = nats.mqttPort
     natsConfig.natsHttpPort = nats.httpPort
+    natsConfig.jsStorageSize = nats.jsStorageSize
+    natsConfig.jsMemoryStoreSize = nats.jsMemoryStoreSize
 
     const upstreamNatsConnections = await NatsConnectionManager.findAllWithNats({ sourceNats: nats.id }, transaction)
     natsConfig.upstreamNatsServers = upstreamNatsConnections

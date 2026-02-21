@@ -987,7 +987,7 @@ CREATE TABLE IF NOT EXISTS "NatsUsers" (
 
 CREATE TABLE IF NOT EXISTS "NatsInstances" (
     id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
-    iofog_uuid VARCHAR(36) NOT NULL,
+    iofog_uuid VARCHAR(36),
     is_leaf BOOLEAN DEFAULT true,
     is_hub BOOLEAN DEFAULT false,
     host TEXT,
@@ -999,6 +999,8 @@ CREATE TABLE IF NOT EXISTS "NatsInstances" (
     configmap_name TEXT,
     jwt_dir_mount_name TEXT,
     cert_secret_name TEXT,
+    js_storage_size TEXT,
+    js_memory_store_size TEXT,
     created_at TIMESTAMP(0),
     updated_at TIMESTAMP(0),
     FOREIGN KEY (iofog_uuid) REFERENCES "Fogs" (uuid) ON DELETE CASCADE
@@ -1012,6 +1014,20 @@ CREATE TABLE IF NOT EXISTS "NatsConnections" (
     updated_at TIMESTAMP(0),
     FOREIGN KEY (source_nats) REFERENCES "NatsInstances" (id) ON DELETE CASCADE,
     FOREIGN KEY (dest_nats) REFERENCES "NatsInstances" (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "NatsReconcileTasks" (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY NOT NULL,
+    reason VARCHAR(64) NOT NULL,
+    application_id INT,
+    account_rule_id INT,
+    user_rule_id INT,
+    fog_uuids TEXT,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    leader_uuid VARCHAR(36),
+    claimed_at TIMESTAMP(0),
+    created_at TIMESTAMP(0),
+    updated_at TIMESTAMP(0)
 );
 
 CREATE TABLE IF NOT EXISTS "NatsAccountRules" (
@@ -1079,6 +1095,9 @@ CREATE INDEX idx_nats_accounts_application_id ON "NatsAccounts" (application_id)
 CREATE UNIQUE INDEX idx_nats_users_account_id_name ON "NatsUsers" (account_id, name);
 CREATE INDEX idx_nats_users_account_id ON "NatsUsers" (account_id);
 CREATE INDEX idx_nats_users_microservice_uuid ON "NatsUsers" (microservice_uuid);
+ALTER TABLE "NatsUsers" ADD COLUMN nats_user_rule_id INT NULL;
+CREATE INDEX idx_nats_users_nats_user_rule_id ON "NatsUsers" (nats_user_rule_id);
+ALTER TABLE "NatsUsers" ADD CONSTRAINT fk_nats_users_nats_user_rule_id FOREIGN KEY (nats_user_rule_id) REFERENCES "NatsUserRules" (id) ON DELETE SET NULL;
 CREATE UNIQUE INDEX idx_nats_instances_iofog_uuid_unique ON "NatsInstances" (iofog_uuid);
 CREATE INDEX idx_nats_instances_iofog_uuid ON "NatsInstances" (iofog_uuid);
 CREATE UNIQUE INDEX idx_nats_connections_source_dest_unique ON "NatsConnections" (source_nats, dest_nats);
@@ -1086,6 +1105,7 @@ CREATE INDEX idx_nats_connections_source_nats ON "NatsConnections" (source_nats)
 CREATE INDEX idx_nats_connections_dest_nats ON "NatsConnections" (dest_nats);
 CREATE INDEX idx_nats_account_rules_name ON "NatsAccountRules" (name);
 CREATE INDEX idx_nats_user_rules_name ON "NatsUserRules" (name);
+CREATE INDEX idx_nats_reconcile_tasks_status_claimed ON "NatsReconcileTasks" (status, claimed_at);
 
 ALTER TABLE "Flows" ADD COLUMN nats_access BOOLEAN DEFAULT false;
 ALTER TABLE "Flows" ADD COLUMN nats_rule_id INT;

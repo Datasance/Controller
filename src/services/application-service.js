@@ -34,8 +34,13 @@ function _scheduleApplicationNatsOrchestration (applicationId, reason) {
   setImmediate(async () => {
     try {
       logger.info(`Starting background app NATS orchestration for app ${applicationId}: ${reason}`)
-      await NatsAuthService.reissueAccountForApplication(applicationId)
-      await MicroserviceService.reconcileNatsForApplication(applicationId)
+      if (reason === 'nats-access-disabled') {
+        await MicroserviceService.reconcileNatsForApplication(applicationId)
+        await NatsAuthService.deleteAccountForApplication(applicationId)
+      } else {
+        await NatsAuthService.reissueAccountForApplication(applicationId)
+        await MicroserviceService.reconcileNatsForApplication(applicationId)
+      }
       logger.info(`Completed background app NATS orchestration for app ${applicationId}: ${reason}`)
     } catch (error) {
       logger.error(`Background app NATS orchestration failed for app ${applicationId}: ${error.message}`)

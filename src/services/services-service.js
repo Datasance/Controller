@@ -125,7 +125,7 @@ async function validateNonK8sType (serviceConfig) {
 }
 
 async function _validateServiceName (serviceConfig) {
-  if (serviceConfig.name.toLowerCase() === 'controller' || serviceConfig.name.toLowerCase() === 'router' || serviceConfig.name.toLowerCase() === 'router-internal' || serviceConfig.name.toLowerCase() === 'docker' || serviceConfig.name.toLowerCase() === 'podman' || serviceConfig.name.toLowerCase() === 'kubernetes') {
+  if (serviceConfig.name.toLowerCase() === 'controller' || serviceConfig.name.toLowerCase() === 'router' || serviceConfig.name.toLowerCase() === 'router-internal' || serviceConfig.name.toLowerCase() === 'docker' || serviceConfig.name.toLowerCase() === 'podman' || serviceConfig.name.toLowerCase() === 'kubernetes' || serviceConfig.name.toLowerCase() === 'nats' || serviceConfig.name.toLowerCase() === 'nats-headless') {
     throw new Errors.ValidationError('Service name cannot be "controller" or "router" or "router-internal" or "docker"')
   }
 }

@@ -65,6 +65,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
       field: 'cert_secret_name'
+    },
+    jsStorageSize: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'js_storage_size'
+    },
+    jsMemoryStoreSize: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      field: 'js_memory_store_size'
     }
   }, {
     tableName: 'NatsInstances',

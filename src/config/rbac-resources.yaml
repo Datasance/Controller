@@ -277,6 +277,13 @@ resources:
         methods:
           POST: [update]
 
+  natsBootstrap:
+    basePath: /api/v3/nats
+    routes:
+      - path: /api/v3/nats/bootstrap
+        methods:
+          GET: [get]
+
   natsHub:
     basePath: /api/v3/nats
     routes:

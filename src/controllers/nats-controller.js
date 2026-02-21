@@ -22,6 +22,10 @@ const rotateOperatorEndPoint = async function () {
   return NatsApiService.rotateOperator()
 }
 
+const getBootstrapEndPoint = async function () {
+  return NatsApiService.getBootstrap()
+}
+
 const getHubEndPoint = async function () {
   return NatsApiService.getHub()
 }
@@ -135,6 +139,7 @@ const updateUserRuleFromYamlEndPoint = async function (req) {
 module.exports = {
   getOperatorEndPoint,
   rotateOperatorEndPoint,
+  getBootstrapEndPoint,
   getHubEndPoint,
   upsertHubEndPoint,
   listAccountsEndPoint,
