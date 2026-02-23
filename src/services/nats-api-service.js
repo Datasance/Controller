@@ -27,7 +27,7 @@ const Validator = require('../schemas')
 const NatsSystemRules = require('../config/nats-system-rules')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const config = require('../config')
-const logger = require('../logger')
+// const logger = require('../logger')
 
 /**
  * Parse a byte-size limit value: integer or string with k/m/g/t suffix.

@@ -74,6 +74,58 @@ describe('NATS Service', () => {
     })
   })
 
+  describe('mergeK8sHubClusterRoutes', () => {
+    it('preserves operator routes (nats-headless) and appends controller-managed routes', () => {
+      const currentRoutes = [
+        'nats://nats-0.nats-headless:6222',
+        'nats://nats-1.nats-headless:6222'
+      ]
+      const desiredControllerRoutes = ['nats://40.120.10.10:6222']
+      const result = NatsService.mergeK8sHubClusterRoutes(currentRoutes, desiredControllerRoutes)
+      expect(result).to.eql([
+        'nats://nats-0.nats-headless:6222',
+        'nats://nats-1.nats-headless:6222',
+        'nats://40.120.10.10:6222'
+      ])
+    })
+
+    it('keeps only operator routes when desiredControllerRoutes is empty', () => {
+      const currentRoutes = [
+        'nats://nats-0.nats-headless:6222',
+        'nats://nats-1.nats-headless:6222',
+        'nats://40.120.10.10:6222'
+      ]
+      const result = NatsService.mergeK8sHubClusterRoutes(currentRoutes, [])
+      expect(result).to.eql([
+        'nats://nats-0.nats-headless:6222',
+        'nats://nats-1.nats-headless:6222'
+      ])
+    })
+
+    it('returns only desiredControllerRoutes when currentRoutes has no operator routes', () => {
+      const currentRoutes = ['nats://40.120.10.10:6222']
+      const desiredControllerRoutes = ['nats://10.0.0.1:6222']
+      const result = NatsService.mergeK8sHubClusterRoutes(currentRoutes, desiredControllerRoutes)
+      expect(result).to.eql(['nats://10.0.0.1:6222'])
+    })
+
+    it('handles empty or null currentRoutes', () => {
+      expect(NatsService.mergeK8sHubClusterRoutes([], ['nats://40.120.10.10:6222'])).to.eql(['nats://40.120.10.10:6222'])
+      expect(NatsService.mergeK8sHubClusterRoutes(null, ['nats://40.120.10.10:6222'])).to.eql(['nats://40.120.10.10:6222'])
+    })
+
+    it('ignores non-string entries in currentRoutes', () => {
+      const currentRoutes = [
+        'nats://nats-0.nats-headless:6222',
+        123,
+        null,
+        undefined
+      ]
+      const result = NatsService.mergeK8sHubClusterRoutes(currentRoutes, [])
+      expect(result).to.eql(['nats://nats-0.nats-headless:6222'])
+    })
+  })
+
   describe('operator JWT fields', () => {
     it('encodeOperator from @nats-io/jwt accepts account_server_url, operator_service_urls, system_account', async () => {
       const { createOperator, encodeOperator } = require('@nats-io/jwt')

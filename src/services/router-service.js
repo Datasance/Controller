@@ -82,7 +82,14 @@ async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog,
 
   const upstreamRouters = []
   for (const upstreamRouterId of upstreamRouterIds) {
-    const upstreamRouter = upstreamRouterId === Constants.DEFAULT_ROUTER_NAME ? defaultRouter : await RouterManager.findOne({ iofogUuid: upstreamRouterId }, transaction)
+    let upstreamRouter = upstreamRouterId === Constants.DEFAULT_ROUTER_NAME ? defaultRouter : await RouterManager.findOne({ iofogUuid: upstreamRouterId }, transaction)
+    if (!upstreamRouter && upstreamRouterId !== Constants.DEFAULT_ROUTER_NAME) {
+      const fog = await FogManager.findOne({ name: upstreamRouterId }, transaction)
+      if (!fog) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, upstreamRouterId))
+      }
+      upstreamRouter = await RouterManager.findOne({ iofogUuid: fog.uuid }, transaction)
+    }
     if (!upstreamRouter) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, upstreamRouterId))
     }

@@ -134,7 +134,7 @@ diagnostics:
 # in the configured vault provider instead of encrypted in the database
 # vault:
 #   enabled: false         # Enable/disable vault integration
-#   provider: hashicorp  # Provider: hashicorp, aws, azure, google
+#   provider: hashicorp  # Provider: hashicorp, openbao, vault, aws, aws-secrets-manager, azure, azure-key-vault, google, google-secret-manager
 #   basePath: "pot/$namespace/secrets"  # Base path for secrets in vault ($namespace will be replaced with app.namespace)
 #   # HashiCorp Vault configuration
 #   hashicorp:

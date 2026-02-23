@@ -470,7 +470,18 @@ async function _computeLeafRemotesForInstance (fog, natsInstance, transaction) {
   return remotes
 }
 
-const CONTROLLER_ROUTE_PATTERN = /^nats:\/\/[^:]+:\d+$/
+// Routes matching this pattern are considered created by the K8s operator and are preserved when patching the hub ConfigMap.
+const DEFAULT_OPERATOR_ROUTE_PATTERN = /nats-headless/
+
+function _isOperatorRoute (route) {
+  if (typeof route !== 'string') return false
+  return DEFAULT_OPERATOR_ROUTE_PATTERN.test(route)
+}
+
+function mergeK8sHubClusterRoutes (currentRoutes, desiredControllerRoutes) {
+  const operatorRoutes = (currentRoutes || []).filter(r => typeof r === 'string' && _isOperatorRoute(r))
+  return [...operatorRoutes, ...(desiredControllerRoutes || [])]
+}
 
 async function _getControllerManagedClusterRoutes (transaction) {
   const allServerInstances = await NatsInstanceManager.findAll({ isLeaf: false }, transaction)
@@ -533,8 +544,7 @@ async function _patchK8sHubConfigMapClusterRoutes (desiredControllerRoutes, tran
   if (!Array.isArray(currentRoutes)) {
     currentRoutes = []
   }
-  const operatorRoutes = currentRoutes.filter(r => typeof r === 'string' && !CONTROLLER_ROUTE_PATTERN.test(r))
-  const newRoutes = [...operatorRoutes, ...desiredControllerRoutes]
+  const newRoutes = mergeK8sHubClusterRoutes(currentRoutes, desiredControllerRoutes)
   const newRoutesJson = JSON.stringify(newRoutes)
   const newContent = content.replace(/routes:\s*\[[^\]]*\]/m, `routes: ${newRoutesJson}`)
   await K8sClient.patchConfigMap(K8S_NATS_SERVER_CONFIG_MAP, { data: { [configKey]: newContent } })
@@ -633,9 +643,16 @@ async function _validateAndReturnUpstreamNats (upstreamNatsIds, isSystemFog, def
 
   const upstreamNats = []
   for (const upstreamId of upstreamNatsIds) {
-    const upstreamNatsInstance = upstreamId === Constants.DEFAULT_NATS_HUB_NAME
+    let upstreamNatsInstance = upstreamId === Constants.DEFAULT_NATS_HUB_NAME
       ? defaultHub
       : await NatsInstanceManager.findOne({ iofogUuid: upstreamId }, transaction)
+    if (!upstreamNatsInstance && upstreamId !== Constants.DEFAULT_NATS_HUB_NAME) {
+      const fog = await FogManager.findOne({ name: upstreamId }, transaction)
+      if (!fog) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_NATS, upstreamId))
+      }
+      upstreamNatsInstance = await NatsInstanceManager.findOne({ iofogUuid: fog.uuid }, transaction)
+    }
     if (!upstreamNatsInstance) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_NATS, upstreamId))
     }
@@ -1384,5 +1401,6 @@ module.exports = {
   ensureLeafCredsForFog,
   isReconcileRunning,
   setReconcilePending,
-  normalizeJetstreamSize
+  normalizeJetstreamSize,
+  mergeK8sHubClusterRoutes
 }
