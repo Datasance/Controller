@@ -183,7 +183,7 @@ async function getBootstrap (transaction) {
     ? seedSecret.data.seed
     : Buffer.from(seedSecret.data.seed).toString('utf8')
 
-  const { user } = await NatsAuthService.ensureSysUserForServer({ isHub: true }, transaction)
+  const { account: systemAccount, user } = await NatsAuthService.ensureSysUserForServer({ isHub: true }, transaction)
   const credsSecret = await SecretService.getSecretEndpoint(user.credsSecretName, transaction)
   if (!credsSecret || !credsSecret.data) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, user.credsSecretName))
@@ -201,6 +201,8 @@ async function getBootstrap (transaction) {
     operatorJwt: operator.jwt,
     operatorPublicKey: operator.publicKey,
     operatorSeed,
+    systemAccountJwt: systemAccount.jwt,
+    systemAccountPublicKey: systemAccount.publicKey,
     sysUserCredsBase64
   }
 }
