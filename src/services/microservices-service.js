@@ -1344,8 +1344,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     }
     await _ensureNatsCredsForMicroservice(updatedMicroservice, transaction)
   } else if (shouldDisableNats) {
-    await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
     await _detachNatsCredsForMicroservice(microservice, transaction)
+    await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
   }
 
   if (changeTrackingEnabled) {
@@ -2403,6 +2403,12 @@ async function _validateSystemMicroserviceOnGet (microserviceUuid, transaction) 
 }
 
 async function deleteMicroserviceWithRoutesAndPortMappings (microservice, transaction) {
+  // Clear Microservice -> NatsUser FK before revoking user (Postgres/MySQL enforce FK; SQLite does not)
+  await MicroserviceManager.update(
+    { uuid: microservice.uuid },
+    { natsAccountId: null, natsUserId: null, natsCredsSecretName: null },
+    transaction
+  )
   await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
   await MicroservicePortService.deletePortMappings(microservice, transaction)
 
