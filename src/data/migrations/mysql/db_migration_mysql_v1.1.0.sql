@@ -899,11 +899,16 @@ CREATE TABLE IF NOT EXISTS RbacRoleBindings (
 
 CREATE TABLE IF NOT EXISTS RbacServiceAccounts (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
     role_ref TEXT,
+    role_id INT,
+    microservice_uuid VARCHAR(36),
+    application_id INT,
     created_at DATETIME,
     updated_at DATETIME,
-    UNIQUE KEY unique_name (name(255))
+    FOREIGN KEY (role_id) REFERENCES RbacRoles (id),
+    FOREIGN KEY (microservice_uuid) REFERENCES Microservices (uuid) ON DELETE CASCADE,
+    FOREIGN KEY (application_id) REFERENCES Flows (id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_rbac_role_rules_role_id ON RbacRoleRules (role_id);
@@ -920,17 +925,15 @@ CREATE TABLE IF NOT EXISTS RbacCacheVersion (
 );
 
 
-ALTER TABLE Microservices ADD COLUMN service_account_id INT;
-CREATE INDEX idx_microservices_service_account_id ON Microservices (service_account_id);
-ALTER TABLE Microservices ADD CONSTRAINT fk_microservices_service_account_id FOREIGN KEY (service_account_id) REFERENCES RbacServiceAccounts (id);
 
 ALTER TABLE RbacRoleBindings ADD COLUMN role_id INT;
 CREATE INDEX idx_rbac_role_bindings_role_id ON RbacRoleBindings (role_id);
 ALTER TABLE RbacRoleBindings ADD CONSTRAINT fk_rbac_role_bindings_role_id FOREIGN KEY (role_id) REFERENCES RbacRoles (id);
 
-ALTER TABLE RbacServiceAccounts ADD COLUMN role_id INT;
 CREATE INDEX idx_rbac_service_accounts_role_id ON RbacServiceAccounts (role_id);
-ALTER TABLE RbacServiceAccounts ADD CONSTRAINT fk_rbac_service_accounts_role_id FOREIGN KEY (role_id) REFERENCES RbacRoles (id);
+CREATE UNIQUE INDEX idx_rbac_service_accounts_microservice_uuid_unique ON RbacServiceAccounts (microservice_uuid);
+CREATE UNIQUE INDEX idx_rbac_service_accounts_application_id_name_unique ON RbacServiceAccounts (application_id, name);
+
 
 CREATE TABLE IF NOT EXISTS ClusterControllers (
     uuid VARCHAR(36) PRIMARY KEY NOT NULL,

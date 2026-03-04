@@ -11,7 +11,8 @@ class SqliteDatabaseProvider extends DatabaseProvider {
 
     const sqliteConfig = config.get('database.sqlite', {})
     sqliteConfig.dialect = 'sqlite'
-    sqliteConfig.databaseName = process.env.DB_NAME || sqliteConfig.databaseName
+    const envDbName = typeof process.env.DB_NAME === 'string' ? process.env.DB_NAME.trim() : ''
+    sqliteConfig.databaseName = envDbName || sqliteConfig.databaseName || 'controller_db.sqlite'
     if (!sqliteConfig.databaseName.endsWith('.sqlite')) {
       sqliteConfig.databaseName += '.sqlite'
     }

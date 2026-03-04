@@ -38,6 +38,7 @@ function _scheduleApplicationNatsOrchestration (applicationId, reason) {
         await MicroserviceService.reconcileNatsForApplication(applicationId)
         await NatsAuthService.deleteAccountForApplication(applicationId)
       } else {
+        await NatsAuthService.ensureAccountForApplication(applicationId)
         await NatsAuthService.reissueAccountForApplication(applicationId)
         await MicroserviceService.reconcileNatsForApplication(applicationId)
       }
@@ -121,6 +122,8 @@ const deleteApplicationEndPoint = async function (conditions, isCLI, transaction
 
   await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId(conditions, true, transaction)
 
+  await NatsAuthService.deleteAccountForApplication(application.id, transaction)
+
   await ApplicationManager.delete(where, transaction)
 }
 
@@ -130,7 +133,13 @@ const deleteSystemApplicationEndPoint = async function (conditions, isCLI, trans
   }
   const where = AppHelper.deleteUndefinedFields(whereObj)
 
+  const application = await ApplicationManager.findOne({ ...conditions }, transaction)
+
   await _updateChangeTrackingsAndDeleteMicroservicesByApplicationId(conditions, true, transaction)
+
+  if (application) {
+    await NatsAuthService.deleteAccountForApplication(application.id, transaction)
+  }
 
   await ApplicationManager.delete(where, transaction)
 }
@@ -448,12 +457,14 @@ async function _updateChangeTrackingsAndDeleteMicroservicesByApplicationId (cond
   }
 }
 
+const bypassOptions = { bypassQueue: true }
+
 module.exports = {
-  createApplicationEndPoint: TransactionDecorator.generateTransaction(createApplicationEndPoint),
-  deleteApplicationEndPoint: TransactionDecorator.generateTransaction(deleteApplicationEndPoint),
-  deleteSystemApplicationEndPoint: TransactionDecorator.generateTransaction(deleteSystemApplicationEndPoint),
-  updateApplicationEndPoint: TransactionDecorator.generateTransaction(updateApplicationEndPoint),
-  patchApplicationEndPoint: TransactionDecorator.generateTransaction(patchApplicationEndPoint),
+  createApplicationEndPoint: TransactionDecorator.generateTransaction(createApplicationEndPoint, bypassOptions),
+  deleteApplicationEndPoint: TransactionDecorator.generateTransaction(deleteApplicationEndPoint, bypassOptions),
+  deleteSystemApplicationEndPoint: TransactionDecorator.generateTransaction(deleteSystemApplicationEndPoint, bypassOptions),
+  updateApplicationEndPoint: TransactionDecorator.generateTransaction(updateApplicationEndPoint, bypassOptions),
+  patchApplicationEndPoint: TransactionDecorator.generateTransaction(patchApplicationEndPoint, bypassOptions),
   getUserApplicationsEndPoint: TransactionDecorator.generateTransaction(getUserApplicationsEndPoint),
   getSystemApplicationsEndPoint: TransactionDecorator.generateTransaction(getSystemApplicationsEndPoint),
   getAllApplicationsEndPoint: TransactionDecorator.generateTransaction(getAllApplicationsEndPoint),

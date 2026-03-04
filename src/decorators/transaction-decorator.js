@@ -74,10 +74,20 @@ function applyTransaction (resolve, reject, transaction, that, ...args) {
     })
 }
 
-function generateTransaction (f) {
+/**
+ * @param {Function} f - Async function that accepts (..., transaction) as last argument
+ * @param {{ bypassQueue?: boolean }} [options] - If bypassQueue is true, run without enqueueing (so the call does not wait behind long-running queued transactions, e.g. NATS reconcile)
+ */
+function generateTransaction (f, options = {}) {
+  const { bypassQueue = false } = options
+  const t = transaction(f)
   return function (...args) {
-    const t = transaction(f)
-
+    if (isTest()) {
+      return t.apply(this, args)
+    }
+    if (bypassQueue) {
+      return Promise.resolve().then(() => t.apply(this, args))
+    }
     return new Promise((resolve, reject) => {
       applyTransaction(resolve, reject, t, this, ...args)
     })

@@ -11,6 +11,7 @@
  *
  */
 
+const crypto = require('crypto')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const SecretManager = require('../data/managers/secret-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
@@ -48,6 +49,19 @@ function validateSecretData (type, data) {
       )
     }
   }
+}
+
+/**
+ * Deterministic hash of secret data object (key-order independent).
+ * Used to skip secret update when content is unchanged.
+ */
+function _secretDataHash (data) {
+  if (data == null || typeof data !== 'object') {
+    return crypto.createHash('sha256').update(String(data)).digest('hex')
+  }
+  const sortedKeys = Object.keys(data).sort()
+  const canonical = JSON.stringify(sortedKeys.map(k => ({ k, v: data[k] })))
+  return crypto.createHash('sha256').update(canonical).digest('hex')
 }
 
 async function createSecretEndpoint (secretData, transaction) {
@@ -100,6 +114,43 @@ async function updateSecretEndpoint (secretName, secretData, transaction) {
     created_at: secret.created_at,
     updated_at: secret.updated_at
   }
+}
+
+/**
+ * Update secret only if data has changed. Skips update and change-tracking when content is identical.
+ * Use for NATS creds/seeds to avoid unnecessary volume mount version bumps and agent churn.
+ */
+async function updateSecretEndpointIfChanged (secretName, secretData, transaction) {
+  const validation = await Validator.validate(secretData, Validator.schemas.secretUpdate)
+  if (!validation.valid) {
+    throw new Errors.ValidationError(validation.error)
+  }
+
+  const existingSecret = await SecretManager.findOne({ name: secretName }, transaction)
+  if (!existingSecret) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.SECRET_NOT_FOUND, secretName))
+  }
+
+  if (existingSecret.type !== secretData.type) {
+    throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SECRET_TYPE_MISMATCH, secretName, existingSecret.type, secretData.type))
+  }
+
+  validateSecretData(existingSecret.type, secretData.data)
+
+  const existingData = existingSecret.data || {}
+  const existingHash = _secretDataHash(existingData)
+  const newHash = _secretDataHash(secretData.data)
+  if (existingHash === newHash) {
+    return {
+      id: existingSecret.id,
+      name: existingSecret.name,
+      type: existingSecret.type,
+      created_at: existingSecret.created_at,
+      updated_at: existingSecret.updated_at
+    }
+  }
+
+  return updateSecretEndpoint(secretName, secretData, transaction)
 }
 
 async function getSecretEndpoint (secretName, transaction) {
@@ -270,6 +321,7 @@ async function _updateMicroservicesUsingSecret (secretName, transaction) {
 module.exports = {
   createSecretEndpoint: TransactionDecorator.generateTransaction(createSecretEndpoint),
   updateSecretEndpoint: TransactionDecorator.generateTransaction(updateSecretEndpoint),
+  updateSecretEndpointIfChanged: TransactionDecorator.generateTransaction(updateSecretEndpointIfChanged),
   getSecretEndpoint: TransactionDecorator.generateTransaction(getSecretEndpoint),
   listSecretsEndpoint: TransactionDecorator.generateTransaction(listSecretsEndpoint),
   deleteSecretEndpoint: TransactionDecorator.generateTransaction(deleteSecretEndpoint)

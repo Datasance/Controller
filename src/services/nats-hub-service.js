@@ -36,9 +36,7 @@ async function getDefaultHub (transaction) {
     clusterPort: hub.clusterPort,
     leafPort: hub.leafPort,
     mqttPort: hub.mqttPort,
-    httpPort: hub.httpPort,
-    jsStorageSize: hub.jsStorageSize,
-    jsMemoryStoreSize: hub.jsMemoryStoreSize
+    httpPort: hub.httpPort
   }
 }
 

@@ -1,5 +1,21 @@
 'use strict'
 
+const AppHelper = require('../../helpers/app-helper')
+
+function _bigIntGetter (field) {
+  return function () {
+    const raw = this.getDataValue(field)
+    return AppHelper.convertToInt(raw, null)
+  }
+}
+
+function _bigIntSetter (field) {
+  return function (value) {
+    const n = value == null ? null : parseInt(value, 10)
+    this.setDataValue(field, (n != null && !isNaN(n)) ? n : null)
+  }
+}
+
 module.exports = (sequelize, DataTypes) => {
   const NatsUserRule = sequelize.define('NatsUserRule', {
     id: {
@@ -33,7 +49,9 @@ module.exports = (sequelize, DataTypes) => {
     maxData: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'max_data'
+      field: 'max_data',
+      get: _bigIntGetter('maxData'),
+      set: _bigIntSetter('maxData')
     },
     bearerToken: {
       type: DataTypes.BOOLEAN,
@@ -74,7 +92,9 @@ module.exports = (sequelize, DataTypes) => {
     respTtl: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'resp_ttl'
+      field: 'resp_ttl',
+      get: _bigIntGetter('respTtl'),
+      set: _bigIntSetter('respTtl')
     },
     pubAllow: {
       type: DataTypes.TEXT,

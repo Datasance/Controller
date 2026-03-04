@@ -1,4 +1,4 @@
-FROM node:iron-bookworm AS builder
+FROM node:24-bookworm AS builder
 
 ARG PKG_VERSION
 # ARG GITHUB_TOKEN
@@ -23,7 +23,7 @@ RUN npm version $PKG_VERSION --allow-same-version --no-git-tag-version
 RUN npm pack
 
 
-FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:latest
+FROM registry.access.redhat.com/ubi9/nodejs-24-minimal:latest
 
 USER root
 # Install dependencies for logging and development

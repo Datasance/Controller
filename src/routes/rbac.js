@@ -567,7 +567,7 @@ module.exports = [
   },
   {
     method: 'get',
-    path: '/api/v3/serviceaccounts/:name',
+    path: '/api/v3/serviceaccounts/:appName/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -597,7 +597,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/serviceaccounts/:name',
+    path: '/api/v3/serviceaccounts/:appName/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -631,7 +631,7 @@ module.exports = [
   },
   {
     method: 'patch',
-    path: '/api/v3/serviceaccounts/yaml/:name',
+    path: '/api/v3/serviceaccounts/yaml/:appName/:name',
     fileInput: 'serviceaccount',
     middleware: async (req, res) => {
       logger.apiReq(req)
@@ -666,7 +666,7 @@ module.exports = [
   },
   {
     method: 'delete',
-    path: '/api/v3/serviceaccounts/:name',
+    path: '/api/v3/serviceaccounts/:appName/:name',
     middleware: async (req, res) => {
       logger.apiReq(req)
 
@@ -679,6 +679,10 @@ module.exports = [
         {
           code: constants.HTTP_CODE_NOT_FOUND,
           errors: [Errors.NotFoundError]
+        },
+        {
+          code: constants.HTTP_CODE_CONFLICT,
+          errors: [Errors.ConflictError]
         }
       ]
 

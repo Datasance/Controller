@@ -119,11 +119,6 @@ module.exports = (sequelize, DataTypes) => {
       field: 'is_activated',
       defaultValue: true
     },
-    serviceAccountId: {
-      type: DataTypes.INTEGER,
-      field: 'service_account_id',
-      allowNull: true
-    },
     natsAccess: {
       type: DataTypes.BOOLEAN,
       field: 'nats_access',
@@ -257,12 +252,10 @@ module.exports = (sequelize, DataTypes) => {
       as: 'extraHosts'
     })
 
-    Microservice.belongsTo(models.RbacServiceAccount, {
-      foreignKey: {
-        name: 'serviceAccountId',
-        field: 'service_account_id'
-      },
-      as: 'serviceAccount'
+    Microservice.hasOne(models.RbacServiceAccount, {
+      foreignKey: 'microservice_uuid',
+      as: 'serviceAccount',
+      onDelete: 'cascade'
     })
 
     Microservice.belongsTo(models.NatsAccount, {

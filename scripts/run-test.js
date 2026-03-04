@@ -17,10 +17,13 @@ const { coverage } = require('./coverage')
 const { postmanTest } = require('./postmantest')
 
 switch (process.argv[2]) {
-  case 'test':
-    test(process.argv[3] === 'junit')
+  case 'test': {
+    const useReporter = process.argv[3] === 'junit'
+    const extraArgs = process.argv.slice(useReporter ? 4 : 3).filter(Boolean)
+    test(useReporter, extraArgs)
     cliTest()
     break
+  }
   case 'cli-tests':
     cliTest()
     break

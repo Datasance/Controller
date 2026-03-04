@@ -15,6 +15,7 @@ const RbacRoleManager = require('../data/managers/rbac-role-manager')
 const RbacRoleBindingManager = require('../data/managers/rbac-role-binding-manager')
 const RbacServiceAccountManager = require('../data/managers/rbac-service-account-manager')
 const MicroserviceManager = require('../data/managers/microservice-manager')
+const ApplicationManager = require('../data/managers/application-manager')
 const TransactionDecorator = require('../decorators/transaction-decorator')
 const Errors = require('../helpers/errors')
 const Validator = require('../schemas/index')
@@ -33,32 +34,22 @@ function validateNotSystemRole (roleName) {
 }
 
 /**
- * Helper function to notify microservices when a service account is updated
- * Finds all microservices linked to the service account and triggers change tracking
- * @param {number} serviceAccountId - ID of the updated service account
+ * Notify microservice when a service account linked to a microservice is updated
+ * @param {Object} serviceAccount - Service account object (must have microserviceUuid if linked to a microservice)
  * @param {object} transaction - Database transaction
  */
-async function _notifyMicroservicesForServiceAccountUpdate (serviceAccountId, transaction) {
+async function _notifyMicroservicesForServiceAccountUpdate (serviceAccount, transaction) {
+  const microserviceUuid = serviceAccount.microserviceUuid || (serviceAccount.get && serviceAccount.get('microserviceUuid'))
+  if (!microserviceUuid) {
+    return
+  }
   try {
-    const microservices = await MicroserviceManager.findAll({
-      serviceAccountId: serviceAccountId
-    }, transaction)
-
-    if (microservices && microservices.length > 0) {
-      const iofogUuids = microservices
-        .map(ms => ms.iofogUuid)
-        .filter(uuid => uuid !== null && uuid !== undefined)
-
-      for (const iofogUuid of iofogUuids) {
-        try {
-          await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceFull, transaction)
-        } catch (error) {
-          logger.error(`Failed to update change tracking for fog ${iofogUuid} after service account update:`, error.message)
-        }
-      }
+    const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+    if (microservice && microservice.iofogUuid) {
+      await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceFull, transaction)
     }
   } catch (error) {
-    logger.error(`Failed to notify microservices for service account update (ID: ${serviceAccountId}):`, error.message)
+    logger.error(`Failed to notify microservice for service account update (microserviceUuid: ${microserviceUuid}):`, error.message)
   }
 }
 
@@ -138,12 +129,14 @@ async function updateRoleEndpoint (name, roleData, transaction) {
     // Find all service accounts that reference this role using roleId for efficient querying
     const serviceAccounts = await RbacServiceAccountManager.findAll({ roleId: roleId }, transaction)
     for (const sa of serviceAccounts) {
-      // Trigger update to refresh cache and ensure roleId is set
-      await RbacServiceAccountManager.updateServiceAccount(sa.name, {
-        roleRef: sa.roleRef
-      }, transaction)
-      // Notify linked microservices
-      await _notifyMicroservicesForServiceAccountUpdate(sa.id, transaction)
+      const application = sa.applicationId ? await ApplicationManager.findOne({ id: sa.applicationId }, transaction) : null
+      const appName = application ? application.name : null
+      if (appName) {
+        await RbacServiceAccountManager.updateServiceAccount(appName, sa.name, {
+          roleRef: sa.roleRef
+        }, transaction)
+      }
+      await _notifyMicroservicesForServiceAccountUpdate(sa, transaction)
     }
   }
 
@@ -205,17 +198,17 @@ async function deleteRoleBindingEndpoint (name, transaction) {
 }
 
 // ServiceAccount Management
-async function listServiceAccountsEndpoint (transaction) {
-  const serviceAccounts = await RbacServiceAccountManager.listServiceAccounts(transaction)
+async function listServiceAccountsEndpoint (applicationName, transaction) {
+  const serviceAccounts = await RbacServiceAccountManager.listServiceAccounts(transaction, { applicationName })
   return {
     serviceAccounts: serviceAccounts
   }
 }
 
-async function getServiceAccountEndpoint (name, transaction) {
-  const sa = await RbacServiceAccountManager.getServiceAccount(name, transaction)
+async function getServiceAccountEndpoint (appName, name, transaction) {
+  const sa = await RbacServiceAccountManager.getServiceAccount(appName, name, transaction)
   if (!sa) {
-    throw new Errors.NotFoundError(`ServiceAccount '${name}' not found`)
+    throw new Errors.NotFoundError(`ServiceAccount '${name}' not found in application '${appName}'`)
   }
   return {
     serviceAccount: sa
@@ -223,7 +216,6 @@ async function getServiceAccountEndpoint (name, transaction) {
 }
 
 async function createServiceAccountEndpoint (saData, transaction) {
-  // Validate schema
   await Validator.validate(saData, Validator.schemas.serviceAccountCreate)
 
   const sa = await RbacServiceAccountManager.createServiceAccount(saData, transaction)
@@ -232,39 +224,32 @@ async function createServiceAccountEndpoint (saData, transaction) {
   }
 }
 
-async function updateServiceAccountEndpoint (name, saData, transaction) {
-  // Validate schema
+async function updateServiceAccountEndpoint (appName, name, saData, transaction) {
   await Validator.validate(saData, Validator.schemas.serviceAccountUpdate)
 
-  const sa = await RbacServiceAccountManager.updateServiceAccount(name, saData, transaction)
+  const sa = await RbacServiceAccountManager.updateServiceAccount(appName, name, saData, transaction)
 
-  // Notify linked microservices about the service account update
-  await _notifyMicroservicesForServiceAccountUpdate(sa.id, transaction)
+  await _notifyMicroservicesForServiceAccountUpdate(sa, transaction)
 
   return {
     serviceAccount: sa
   }
 }
 
-async function deleteServiceAccountEndpoint (name, transaction) {
-  // Get service account first to check if it exists and get its ID
-  const sa = await RbacServiceAccountManager.getServiceAccount(name, transaction)
+async function deleteServiceAccountEndpoint (appName, name, transaction) {
+  const sa = await RbacServiceAccountManager.getServiceAccount(appName, name, transaction)
   if (!sa) {
-    throw new Errors.NotFoundError(`ServiceAccount '${name}' not found`)
+    throw new Errors.NotFoundError(`ServiceAccount '${name}' not found in application '${appName}'`)
   }
 
-  // Check if any microservice is referencing this service account
-  const referencingMicroservice = await MicroserviceManager.findOne({
-    serviceAccountId: sa.id
-  }, transaction)
-
-  if (referencingMicroservice) {
+  if (sa.microserviceUuid) {
+    const microservice = await MicroserviceManager.findOne({ uuid: sa.microserviceUuid }, transaction)
     throw new Errors.ConflictError(
-      `Cannot delete ServiceAccount '${name}' because it is referenced by microservice '${referencingMicroservice.name}' (uuid: ${referencingMicroservice.uuid}). Please delete or update the microservice first.`
+      `Cannot delete ServiceAccount '${name}' because it is referenced by microservice '${microservice ? microservice.name : 'unknown'}' (uuid: ${sa.microserviceUuid}). Please delete or update the microservice first.`
     )
   }
 
-  await RbacServiceAccountManager.deleteServiceAccount(name, transaction)
+  await RbacServiceAccountManager.deleteServiceAccount(appName, name, transaction)
   return {
     message: `ServiceAccount '${name}' deleted successfully`
   }

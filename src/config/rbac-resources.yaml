@@ -826,11 +826,11 @@ resources:
       - path: /api/v3/serviceaccounts/yaml
         methods:
           POST: [create]
-      - path: /api/v3/serviceaccounts/yaml/:name
+      - path: /api/v3/serviceaccounts/yaml/:appName/:name
         methods:
           PATCH: [patch]
         resourceNameParam: name
-      - path: /api/v3/serviceaccounts/:name
+      - path: /api/v3/serviceaccounts/:appName/:name
         methods:
           GET: [get]
           PATCH: [patch]

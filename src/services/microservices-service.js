@@ -42,8 +42,8 @@ const SecretManager = require('../data/managers/secret-manager')
 const VolumeMountService = require('./volume-mount-service')
 const RbacServiceAccountManager = require('../data/managers/rbac-service-account-manager')
 const RbacRoleManager = require('../data/managers/rbac-role-manager')
+const RbacCacheVersionManager = require('../data/managers/rbac-cache-version-manager')
 const NatsAuthService = require('./nats-auth-service')
-const NatsService = require('./nats-service')
 const NatsUserRuleManager = require('../data/managers/nats-user-rule-manager')
 
 const Op = require('sequelize').Op
@@ -56,42 +56,43 @@ const logger = require('../logger')
 
 /**
  * Create or update service account for a microservice
+ * @param {string} microserviceUuid - UUID of the microservice
  * @param {string} microserviceName - Name of the microservice (used as service account name)
  * @param {string|null|undefined} roleRefName - Name of the role to reference (defaults to 'microservice' if not provided)
  * @param {Object} transaction - Database transaction
  * @returns {Object} Service account object
  */
-async function _createOrUpdateServiceAccountForMicroservice (microserviceName, roleRefName, transaction) {
-  // Default to 'microservice' role if not provided, null, undefined, or empty string
+async function _createOrUpdateServiceAccountForMicroservice (microserviceUuid, microserviceName, roleRefName, transaction) {
   const roleName = (roleRefName && typeof roleRefName === 'string' && roleRefName.trim() !== '') ? roleRefName : 'microservice'
 
-  // Validate role exists (check system roles first, then database)
   const role = await RbacRoleManager.getRoleWithRules(roleName, transaction)
   if (!role) {
     throw new Errors.ValidationError(`Referenced role '${roleName}' does not exist`)
   }
 
-  // Prepare roleRef object
   const roleRef = {
     kind: 'Role',
     name: roleName
   }
 
-  // Check if service account already exists
-  const existingServiceAccount = await RbacServiceAccountManager.findOne({ name: microserviceName }, transaction)
+  const existingServiceAccount = await RbacServiceAccountManager.findOneByMicroserviceUuid(microserviceUuid, transaction)
 
   if (existingServiceAccount) {
-    // Update existing service account
-    const updated = await RbacServiceAccountManager.updateServiceAccount(microserviceName, { roleRef }, transaction)
-    return updated
-  } else {
-    // Create new service account
-    const created = await RbacServiceAccountManager.createServiceAccount({
-      name: microserviceName,
-      roleRef
-    }, transaction)
-    return created
+    await RbacServiceAccountManager.update({ id: existingServiceAccount.id }, { roleRef, name: microserviceName }, transaction)
+    await RbacCacheVersionManager.incrementVersion(transaction)
+    return RbacServiceAccountManager.findOne({ id: existingServiceAccount.id }, transaction)
   }
+
+  const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+  if (!microservice || microservice.applicationId == null) {
+    throw new Errors.ValidationError('Microservice or application not found for service account creation')
+  }
+  return RbacServiceAccountManager.createServiceAccount({
+    microserviceUuid,
+    applicationId: microservice.applicationId,
+    name: microserviceName,
+    roleRef
+  }, transaction)
 }
 
 async function _ensureNatsCredsForMicroservice (microservice, transaction) {
@@ -142,7 +143,7 @@ async function _ensureNatsCredsForMicroservice (microservice, transaction) {
   if (existingCredsPathEnv) {
     await MicroserviceEnvManager.update(
       { id: existingCredsPathEnv.id },
-      { value: containerDest },
+      { value: `${containerDest}/${credsPath}` },
       transaction
     )
   } else {
@@ -200,19 +201,17 @@ async function _detachNatsCredsForMicroservice (microservice, transaction) {
 
 /**
  * Delete service account for a microservice
- * @param {string} microserviceName - Name of the microservice (used as service account name)
+ * @param {string} microserviceUuid - UUID of the microservice
  * @param {Object} transaction - Database transaction
  */
-async function _deleteServiceAccountForMicroservice (microserviceName, transaction) {
+async function _deleteServiceAccountForMicroservice (microserviceUuid, transaction) {
   try {
-    await RbacServiceAccountManager.deleteServiceAccount(microserviceName, transaction)
+    await RbacServiceAccountManager.deleteByMicroserviceUuid(microserviceUuid, transaction)
   } catch (error) {
-    // Gracefully handle not found errors (service account might not exist)
     if (error.name !== 'NotFoundError') {
       throw error
     }
-    // Log but don't fail if service account doesn't exist
-    logger.warn(`Service account '${microserviceName}' not found during microservice deletion, continuing...`)
+    logger.warn(`Service account for microservice ${microserviceUuid} not found during deletion, continuing...`)
   }
 }
 
@@ -583,13 +582,7 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
     roleRefName = microserviceData.serviceAccount.roleRef.name
   }
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microservice.name, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: microservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(microservice.uuid, microservice.name, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to create service account for microservice ${microservice.name}:`, error.message)
     throw error
@@ -601,9 +594,6 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
       throw new Errors.ValidationError('Microservice natsAccess requires application natsAccess=true')
     }
     await _ensureNatsCredsForMicroservice(microservice, transaction)
-    if (microservice.iofogUuid) {
-      await NatsService.ensureLeafCredsForFog(microservice.iofogUuid, transaction)
-    }
   }
 
   const res = {
@@ -1043,13 +1033,7 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
   // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
 
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: updatedMicroservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(updatedMicroservice.uuid, microserviceName, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to update service account for microservice ${microserviceName}:`, error.message)
     throw error
@@ -1343,13 +1327,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
 
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: updatedMicroservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(updatedMicroservice.uuid, microserviceName, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to update service account for system microservice ${microserviceName}:`, error.message)
     throw error
@@ -1365,14 +1343,9 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
       await NatsAuthService.reissueUserForMicroservice(updatedMicroservice.uuid, transaction)
     }
     await _ensureNatsCredsForMicroservice(updatedMicroservice, transaction)
-    if (updatedMicroservice.iofogUuid) {
-      await NatsService.ensureLeafCredsForFog(updatedMicroservice.iofogUuid, transaction)
-    }
   } else if (shouldDisableNats) {
     await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
     await _detachNatsCredsForMicroservice(microservice, transaction)
-  } else if (updatedMicroservice.natsAccess && updatedMicroservice.iofogUuid) {
-    await NatsService.ensureLeafCredsForFog(updatedMicroservice.iofogUuid, transaction)
   }
 
   if (changeTrackingEnabled) {
@@ -1615,7 +1588,7 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
   }
 
   // Delete service account for microservice
-  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
+  await _deleteServiceAccountForMicroservice(microservice.uuid, transaction)
 
   await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   await _updateChangeTracking(false, microservice.iofogUuid, transaction)
@@ -2434,7 +2407,7 @@ async function deleteMicroserviceWithRoutesAndPortMappings (microservice, transa
   await MicroservicePortService.deletePortMappings(microservice, transaction)
 
   // Delete service account for microservice (safety net in case it wasn't deleted earlier)
-  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
+  await _deleteServiceAccountForMicroservice(microservice.uuid, transaction)
 
   await MicroserviceManager.delete({
     uuid: microservice.uuid
@@ -2689,19 +2662,22 @@ async function reconcileNatsForApplication (applicationId, transaction) {
       }
       continue
     }
-    await NatsAuthService.reissueUserForMicroservice(microservice.uuid, transaction)
+    const reconcileTriggerOptions = { triggerReconcile: false }
+    await NatsAuthService.reissueUserForMicroservice(microservice.uuid, transaction, reconcileTriggerOptions)
     const refreshed = await MicroserviceManager.findOne({ uuid: microservice.uuid }, transaction)
     await _ensureNatsCredsForMicroservice(refreshed || microservice, transaction)
   }
 }
 
+const bypassOptions = { bypassQueue: true }
+
 module.exports = {
-  createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint),
+  createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint, bypassOptions),
   createPortMappingEndPoint: TransactionDecorator.generateTransaction(createPortMappingEndPoint),
   createSystemPortMappingEndPoint: TransactionDecorator.generateTransaction(createSystemPortMappingEndPoint),
   createVolumeMappingEndPoint: TransactionDecorator.generateTransaction(createVolumeMappingEndPoint),
   createSystemVolumeMappingEndPoint: TransactionDecorator.generateTransaction(createSystemVolumeMappingEndPoint),
-  deleteMicroserviceEndPoint: TransactionDecorator.generateTransaction(deleteMicroserviceEndPoint),
+  deleteMicroserviceEndPoint: TransactionDecorator.generateTransaction(deleteMicroserviceEndPoint, bypassOptions),
   deleteMicroserviceWithRoutesAndPortMappings: deleteMicroserviceWithRoutesAndPortMappings,
   deleteNotRunningMicroservices: deleteNotRunningMicroservices,
   deletePortMappingEndPoint: TransactionDecorator.generateTransaction(deletePortMappingEndPoint),
@@ -2716,8 +2692,8 @@ module.exports = {
   listMicroservicesEndPoint: TransactionDecorator.generateTransaction(listMicroservicesEndPoint),
   listSystemMicroservicesEndPoint: TransactionDecorator.generateTransaction(listSystemMicroservicesEndPoint),
   listVolumeMappingsEndPoint: TransactionDecorator.generateTransaction(listVolumeMappingsEndPoint),
-  updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint),
-  updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint),
+  updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint, bypassOptions),
+  updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint, bypassOptions),
   updateMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceConfigEndPoint),
   getMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getMicroserviceConfigEndPoint),
   getSystemMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getSystemMicroserviceConfigEndPoint),
@@ -2734,5 +2710,5 @@ module.exports = {
   deleteSystemExecEndPoint: TransactionDecorator.generateTransaction(deleteSystemExecEndPoint),
   startMicroserviceEndPoint: TransactionDecorator.generateTransaction(startMicroserviceEndPoint),
   stopMicroserviceEndPoint: TransactionDecorator.generateTransaction(stopMicroserviceEndPoint),
-  reconcileNatsForApplication: TransactionDecorator.generateTransaction(reconcileNatsForApplication)
+  reconcileNatsForApplication: TransactionDecorator.generateTransaction(reconcileNatsForApplication, bypassOptions)
 }

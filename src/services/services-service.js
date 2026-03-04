@@ -125,7 +125,7 @@ async function validateNonK8sType (serviceConfig) {
 }
 
 async function _validateServiceName (serviceConfig) {
-  if (serviceConfig.name.toLowerCase() === 'controller' || serviceConfig.name.toLowerCase() === 'router' || serviceConfig.name.toLowerCase() === 'router-internal' || serviceConfig.name.toLowerCase() === 'docker' || serviceConfig.name.toLowerCase() === 'podman' || serviceConfig.name.toLowerCase() === 'kubernetes' || serviceConfig.name.toLowerCase() === 'nats' || serviceConfig.name.toLowerCase() === 'nats-headless') {
+  if (serviceConfig.name.toLowerCase() === 'controller' || serviceConfig.name.toLowerCase() === 'router' || serviceConfig.name.toLowerCase() === 'router-internal' || serviceConfig.name.toLowerCase() === 'docker' || serviceConfig.name.toLowerCase() === 'podman' || serviceConfig.name.toLowerCase() === 'kubernetes' || serviceConfig.name.toLowerCase() === 'nats' || serviceConfig.name.toLowerCase() === 'nats-headless' || serviceConfig.name.toLowerCase() === 'nats-server') {
     throw new Errors.ValidationError('Service name cannot be "controller" or "router" or "router-internal" or "docker"')
   }
 }
@@ -955,15 +955,9 @@ async function _updateK8sService (serviceConfig, transaction) {
 // Helper function to delete Kubernetes service
 async function _deleteK8sService (serviceName) {
   try {
-    await K8sClient.deleteService(serviceName)
+    await K8sClient.deleteService(serviceName, { ignoreNotFound: true })
   } catch (error) {
-    // If it's a 404 (Not Found), log a warning and continue
-    if (error.response && error.response.status === 404) {
-      logger.warn(`K8s service ${serviceName} not found during delete. It may have already been deleted.`)
-    } else {
-      // For other errors, you may want to log and rethrow, or just log as warning
-      logger.warn(`Failed to delete K8s service ${serviceName}: ${error.message}`)
-    }
+    logger.warn(`Failed to delete K8s service ${serviceName}: ${error.message}`)
     // Do not throw, so the flow continues
   }
 }

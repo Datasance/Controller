@@ -84,7 +84,7 @@ database:
   #   useSSL: false       # Use SSL for PostgreSQL connection
   #   sslCA: ""           # PostgreSQL SSL CA in base64 encoded string
   sqlite:
-    databaseName: dev_database.sqlite  # SQLite database file name
+    databaseName: controller_db.sqlite  # SQLite database file name
     logging: false     # Enable SQLite query logging
     transactionType: IMMEDIATE      # SQLite transaction type
     pool:
@@ -140,7 +140,7 @@ diagnostics:
 #   hashicorp:
 #     address: "http://localhost:8200"  # Vault server address (can also be set via VAULT_HASHICORP_ADDRESS env var)
 #     token: ""  # Vault token (can also be set via VAULT_HASHICORP_TOKEN env var)
-#     mount: "secret"  # Vault mount point (can also be set via VAULT_HASHICORP_MOUNT env var)
+#     mount: "kv"  # Vault mount point (can also be set via VAULT_HASHICORP_MOUNT env var)
 #   # AWS Secrets Manager configuration
 #   aws:
 #     region: "us-east-1"  # AWS region (can also be set via VAULT_AWS_REGION or AWS_REGION env var)

@@ -463,12 +463,15 @@ async function parseServiceAccountFile (fileContent) {
     if (doc.metadata == null) {
       throw new Errors.ValidationError('Invalid YAML format: metadata is required')
     }
+    if (!doc.metadata.applicationName) {
+      throw new Errors.ValidationError('ServiceAccount YAML must have metadata.applicationName')
+    }
     if (!doc.roleRef || !doc.roleRef.name) {
       throw new Errors.ValidationError('ServiceAccount must have a roleRef with a name')
     }
     return {
       name: doc.metadata.name,
-      // namespace removed - not stored in database (controller manages single namespace)
+      applicationName: doc.metadata.applicationName,
       roleRef: doc.roleRef
     }
   } catch (error) {
@@ -541,8 +544,8 @@ function _natsAccountRuleSpecToModel (spec) {
     disallowBearer: spec.disallowBearer != null ? spec.disallowBearer : limits.disallow_bearer,
     respMax: spec.respMax != null ? spec.respMax : resp.max,
     respTtl: spec.respTtl != null ? spec.respTtl : resp.ttl,
-    imports: Array.isArray(spec.imports) ? JSON.stringify(spec.imports) : (spec.imports != null ? spec.imports : undefined),
-    exports: Array.isArray(spec.exports) ? JSON.stringify(spec.exports) : (spec.exports != null ? spec.exports : undefined),
+    imports: Array.isArray(spec.imports) ? spec.imports : undefined,
+    exports: Array.isArray(spec.exports) ? spec.exports : undefined,
     memStorage: spec.memStorage != null ? spec.memStorage : limits.mem_storage,
     diskStorage: spec.diskStorage != null ? spec.diskStorage : limits.disk_storage,
     streams: spec.streams != null ? spec.streams : limits.streams,
@@ -551,11 +554,11 @@ function _natsAccountRuleSpecToModel (spec) {
     memMaxStreamBytes: spec.memMaxStreamBytes != null ? spec.memMaxStreamBytes : limits.mem_max_stream_bytes,
     diskMaxStreamBytes: spec.diskMaxStreamBytes != null ? spec.diskMaxStreamBytes : limits.disk_max_stream_bytes,
     maxBytesRequired: spec.maxBytesRequired != null ? spec.maxBytesRequired : limits.max_bytes_required,
-    tieredLimits: typeof spec.tieredLimits === 'object' ? JSON.stringify(spec.tieredLimits) : (spec.tiered_limits && typeof spec.tiered_limits === 'object' ? JSON.stringify(spec.tiered_limits) : (spec.tieredLimits != null ? spec.tieredLimits : spec.tiered_limits)),
-    pubAllow: Array.isArray(spec.pubAllow) ? JSON.stringify(spec.pubAllow) : (pub.allow ? JSON.stringify(pub.allow) : spec.pubAllow),
-    pubDeny: Array.isArray(spec.pubDeny) ? JSON.stringify(spec.pubDeny) : (pub.deny ? JSON.stringify(pub.deny) : spec.pubDeny),
-    subAllow: Array.isArray(spec.subAllow) ? JSON.stringify(spec.subAllow) : (sub.allow ? JSON.stringify(sub.allow) : spec.subAllow),
-    subDeny: Array.isArray(spec.subDeny) ? JSON.stringify(spec.subDeny) : (sub.deny ? JSON.stringify(sub.deny) : spec.subDeny)
+    tieredLimits: typeof spec.tieredLimits === 'object' ? spec.tieredLimits : (spec.tiered_limits && typeof spec.tiered_limits === 'object' ? spec.tiered_limits : undefined),
+    pubAllow: Array.isArray(spec.pubAllow) ? spec.pubAllow : (Array.isArray(pub.allow) ? pub.allow : undefined),
+    pubDeny: Array.isArray(spec.pubDeny) ? spec.pubDeny : (Array.isArray(pub.deny) ? pub.deny : undefined),
+    subAllow: Array.isArray(spec.subAllow) ? spec.subAllow : (Array.isArray(sub.allow) ? sub.allow : undefined),
+    subDeny: Array.isArray(spec.subDeny) ? spec.subDeny : (Array.isArray(sub.deny) ? sub.deny : undefined)
   }
   return _pickDefined(raw)
 }
@@ -574,17 +577,17 @@ function _natsUserRuleSpecToModel (spec) {
     maxData: spec.maxData,
     bearerToken: spec.bearerToken != null ? spec.bearerToken : spec.bearer_token,
     proxyRequired: spec.proxyRequired != null ? spec.proxyRequired : spec.proxy_required,
-    allowedConnectionTypes: Array.isArray(spec.allowedConnectionTypes) ? JSON.stringify(spec.allowedConnectionTypes) : (spec.allowed_connection_types ? JSON.stringify(spec.allowed_connection_types) : spec.allowedConnectionTypes),
-    src: Array.isArray(spec.src) ? JSON.stringify(spec.src) : spec.src,
-    times: Array.isArray(spec.times) ? JSON.stringify(spec.times) : spec.times,
+    allowedConnectionTypes: Array.isArray(spec.allowedConnectionTypes) ? spec.allowedConnectionTypes : (Array.isArray(spec.allowed_connection_types) ? spec.allowed_connection_types : undefined),
+    src: Array.isArray(spec.src) ? spec.src : undefined,
+    times: Array.isArray(spec.times) ? spec.times : undefined,
     timesLocation: spec.timesLocation != null ? spec.timesLocation : (spec.times_location != null ? spec.times_location : spec.locale),
     respMax: spec.respMax != null ? spec.respMax : resp.max,
     respTtl: spec.respTtl != null ? spec.respTtl : resp.ttl,
-    pubAllow: Array.isArray(spec.pubAllow) ? JSON.stringify(spec.pubAllow) : (pub.allow ? JSON.stringify(pub.allow) : spec.pubAllow),
-    pubDeny: Array.isArray(spec.pubDeny) ? JSON.stringify(spec.pubDeny) : (pub.deny ? JSON.stringify(pub.deny) : spec.pubDeny),
-    subAllow: Array.isArray(spec.subAllow) ? JSON.stringify(spec.subAllow) : (sub.allow ? JSON.stringify(sub.allow) : spec.subAllow),
-    subDeny: Array.isArray(spec.subDeny) ? JSON.stringify(spec.subDeny) : (sub.deny ? JSON.stringify(sub.deny) : spec.subDeny),
-    tags: Array.isArray(spec.tags) ? JSON.stringify(spec.tags) : spec.tags
+    pubAllow: Array.isArray(spec.pubAllow) ? spec.pubAllow : (Array.isArray(pub.allow) ? pub.allow : undefined),
+    pubDeny: Array.isArray(spec.pubDeny) ? spec.pubDeny : (Array.isArray(pub.deny) ? pub.deny : undefined),
+    subAllow: Array.isArray(spec.subAllow) ? spec.subAllow : (Array.isArray(sub.allow) ? sub.allow : undefined),
+    subDeny: Array.isArray(spec.subDeny) ? spec.subDeny : (Array.isArray(sub.deny) ? sub.deny : undefined),
+    tags: Array.isArray(spec.tags) ? spec.tags : undefined
   }
   return _pickDefined(raw)
 }
@@ -609,6 +612,10 @@ async function parseNatsAccountRuleFile (fileContent, options = {}) {
     }
     delete result.jetstreamEnabled
     delete result.jetstream
+    delete result.limits
+    delete result.default_permissions
+    delete result.info_url
+    delete result.tiered_limits
     return result
   } catch (error) {
     if (error instanceof Errors.ValidationError) {
@@ -631,11 +638,21 @@ async function parseNatsUserRuleFile (fileContent, options = {}) {
       throw new Errors.ValidationError(`Rule name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.ruleName})`)
     }
     const modelFields = _natsUserRuleSpecToModel(doc.spec)
-    return {
+    const result = {
       name: doc.metadata.name,
       ...doc.spec,
       ...modelFields
     }
+    delete result.pub
+    delete result.sub
+    delete result.resp
+    delete result.allowed_connection_types
+    delete result.bearer_token
+    delete result.proxy_required
+    delete result.times_location
+    delete result.subs
+    delete result.payload
+    return result
   } catch (error) {
     if (error instanceof Errors.ValidationError) {
       throw error

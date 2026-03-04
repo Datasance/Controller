@@ -255,9 +255,9 @@ initialize().then(() => {
       port: apiPort,
       user: {},
       controllerDevMode: devMode,
-      keycloakURL: kcURL,
+      keycloakUrl: kcURL,
       keycloakRealm: kcRealm,
-      keycloakClientid: kcClient
+      keycloakClientId: kcClient
     }
     if (viewerURL) {
       ecnViewerControllerConfig.url = viewerURL

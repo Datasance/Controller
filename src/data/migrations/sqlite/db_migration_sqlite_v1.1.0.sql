@@ -885,8 +885,11 @@ CREATE TABLE IF NOT EXISTS RbacRoleBindings (
 
 CREATE TABLE IF NOT EXISTS RbacServiceAccounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    name TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
     role_ref TEXT,
+    role_id INTEGER,
+    microservice_uuid VARCHAR(36),
+    application_id INTEGER,
     created_at DATETIME,
     updated_at DATETIME
 );
@@ -903,14 +906,14 @@ CREATE TABLE IF NOT EXISTS RbacCacheVersion (
     updated_at DATETIME
 );
 
-ALTER TABLE Microservices ADD COLUMN service_account_id INTEGER;
-CREATE INDEX idx_microservices_service_account_id ON Microservices (service_account_id);
 
 ALTER TABLE RbacRoleBindings ADD COLUMN role_id INTEGER;
 CREATE INDEX idx_rbac_role_bindings_role_id ON RbacRoleBindings (role_id);
 
-ALTER TABLE RbacServiceAccounts ADD COLUMN role_id INTEGER;
 CREATE INDEX idx_rbac_service_accounts_role_id ON RbacServiceAccounts (role_id);
+CREATE UNIQUE INDEX idx_rbac_service_accounts_microservice_uuid_unique ON RbacServiceAccounts (microservice_uuid) WHERE microservice_uuid IS NOT NULL;
+CREATE UNIQUE INDEX idx_rbac_service_accounts_application_id_name_unique ON RbacServiceAccounts (application_id, name);
+
 
 CREATE TABLE IF NOT EXISTS ClusterControllers (
     uuid VARCHAR(36) PRIMARY KEY NOT NULL,

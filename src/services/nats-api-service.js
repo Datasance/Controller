@@ -564,28 +564,30 @@ async function deleteUserRule (ruleName, transaction) {
   await NatsUserRuleManager.delete({ id: rule.id }, transaction)
 }
 
+const bypassOptions = { bypassQueue: true }
+
 module.exports = {
-  getOperator: TransactionDecorator.generateTransaction(getOperator),
-  rotateOperator: TransactionDecorator.generateTransaction(rotateOperator),
-  getBootstrap: TransactionDecorator.generateTransaction(getBootstrap),
-  getHub: TransactionDecorator.generateTransaction(getHub),
-  upsertHub: TransactionDecorator.generateTransaction(upsertHub),
+  getOperator: TransactionDecorator.generateTransaction(getOperator, bypassOptions),
+  rotateOperator: TransactionDecorator.generateTransaction(rotateOperator, bypassOptions),
+  getBootstrap: TransactionDecorator.generateTransaction(getBootstrap, bypassOptions),
+  getHub: TransactionDecorator.generateTransaction(getHub, bypassOptions),
+  upsertHub: TransactionDecorator.generateTransaction(upsertHub, bypassOptions),
   listAccounts: TransactionDecorator.generateTransaction(listAccounts),
   getAccount: TransactionDecorator.generateTransaction(getAccount),
-  ensureAccount: TransactionDecorator.generateTransaction(ensureAccount),
+  ensureAccount: TransactionDecorator.generateTransaction(ensureAccount, bypassOptions),
   listAllUsers: TransactionDecorator.generateTransaction(listAllUsers),
   listUsers: TransactionDecorator.generateTransaction(listUsers),
-  createUser: TransactionDecorator.generateTransaction(createUser),
+  createUser: TransactionDecorator.generateTransaction(createUser, bypassOptions),
   getUserCreds: TransactionDecorator.generateTransaction(getUserCreds),
-  deleteUser: TransactionDecorator.generateTransaction(deleteUser),
-  createMqttBearer: TransactionDecorator.generateTransaction(createMqttBearer),
-  deleteMqttBearer: TransactionDecorator.generateTransaction(deleteMqttBearer),
+  deleteUser: TransactionDecorator.generateTransaction(deleteUser, bypassOptions),
+  createMqttBearer: TransactionDecorator.generateTransaction(createMqttBearer, bypassOptions),
+  deleteMqttBearer: TransactionDecorator.generateTransaction(deleteMqttBearer, bypassOptions),
   listAccountRules: TransactionDecorator.generateTransaction(listAccountRules),
-  createAccountRule: TransactionDecorator.generateTransaction(createAccountRule),
-  updateAccountRule: TransactionDecorator.generateTransaction(updateAccountRule),
-  deleteAccountRule: TransactionDecorator.generateTransaction(deleteAccountRule),
+  createAccountRule: TransactionDecorator.generateTransaction(createAccountRule, bypassOptions),
+  updateAccountRule: TransactionDecorator.generateTransaction(updateAccountRule, bypassOptions),
+  deleteAccountRule: TransactionDecorator.generateTransaction(deleteAccountRule, bypassOptions),
   listUserRules: TransactionDecorator.generateTransaction(listUserRules),
-  createUserRule: TransactionDecorator.generateTransaction(createUserRule),
-  updateUserRule: TransactionDecorator.generateTransaction(updateUserRule),
-  deleteUserRule: TransactionDecorator.generateTransaction(deleteUserRule)
+  createUserRule: TransactionDecorator.generateTransaction(createUserRule, bypassOptions),
+  updateUserRule: TransactionDecorator.generateTransaction(updateUserRule, bypassOptions),
+  deleteUserRule: TransactionDecorator.generateTransaction(deleteUserRule, bypassOptions)
 }

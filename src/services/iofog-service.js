@@ -392,8 +392,8 @@ async function createFogEndPoint (fogData, isCLI, transaction) {
       const transaction = { fakeTransaction: true }
       try {
         // --- Begin orchestration logic (previously inside runWithRetries) ---
-        await _handleRouterCertificates(fogData, createFogData.uuid, false, transaction)
-        await NatsService.ensureNatsForFog({ ...fogData, uuid: createFogData.uuid }, natsConfig, transaction)
+        await _handleRouterCertificates({ ...fogData, name: fog.name }, fog.uuid, false, transaction)
+        await NatsService.ensureNatsForFog(fog, natsConfig, transaction)
 
         if (fogData.routerMode !== 'none') {
           if (!fogData.host && !isCLI) {
@@ -617,11 +617,13 @@ async function updateFogEndPoint (fogData, isCLI, transaction) {
       try {
         // --- Begin orchestration logic ---
         const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
-        await _handleRouterCertificates(fogData, fog.uuid, isRouterModeChanged, transaction)
+        await _handleRouterCertificates({ ...fogData, name: fog.name }, fog.uuid, isRouterModeChanged, transaction)
         if (natsConfig.mode === 'none') {
           await NatsService.cleanupNatsForFog(fog, transaction)
+          await _deleteNatsMicroserviceByFog(fogData, transaction)
+          await ChangeTrackingService.update(fogData.uuid, ChangeTrackingService.events.microserviceList, transaction)
         } else {
-          await NatsService.ensureNatsForFog({ ...fogData, uuid: fogData.uuid }, natsConfig, transaction)
+          await NatsService.ensureNatsForFog(fog, natsConfig, transaction)
         }
 
         if (routerMode === 'none') {
@@ -1286,6 +1288,30 @@ async function _deleteHalMicroserviceByFog (fogData, transaction) {
   }
 }
 
+async function _deleteNatsMicroserviceByFog (fogData, transaction) {
+  const natsItem = await CatalogService.getNatsCatalogItem(transaction)
+  if (!natsItem) return
+  const deleteNatsMicroserviceData = {
+    iofogUuid: fogData.uuid,
+    catalogItemId: natsItem.id
+  }
+
+  const fog = await FogManager.findOne({ uuid: fogData.uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, fogData.uuid))
+  }
+  const systemAppName = getSystemAppName(fog.name)
+  const legacySystemAppName = getLegacySystemAppName(fog.uuid)
+  let application = await ApplicationManager.findOne({ name: systemAppName }, transaction)
+  if (!application) {
+    application = await ApplicationManager.findOne({ name: legacySystemAppName }, transaction)
+  }
+  if (application) {
+    deleteNatsMicroserviceData.applicationId = application.id
+    await MicroserviceManager.delete(deleteNatsMicroserviceData, transaction)
+  }
+}
+
 async function _createBluetoothMicroserviceForFog (fogData, oldFog, transaction) {
   const bluetoothItem = await CatalogService.getBluetoothCatalogItem(transaction)
   const systemMicroserviceName = getSystemMicroserviceName('ble')
@@ -1639,10 +1665,12 @@ async function _updateImages (images, microserviceUuid, transaction) {
   return _createMicroserviceImages({ uuid: microserviceUuid }, images, transaction)
 }
 
+const bypassOptions = { bypassQueue: true }
+
 module.exports = {
-  createFogEndPoint: TransactionDecorator.generateTransaction(createFogEndPoint),
-  updateFogEndPoint: TransactionDecorator.generateTransaction(updateFogEndPoint),
-  deleteFogEndPoint: TransactionDecorator.generateTransaction(deleteFogEndPoint),
+  createFogEndPoint: TransactionDecorator.generateTransaction(createFogEndPoint, bypassOptions),
+  updateFogEndPoint: TransactionDecorator.generateTransaction(updateFogEndPoint, bypassOptions),
+  deleteFogEndPoint: TransactionDecorator.generateTransaction(deleteFogEndPoint, bypassOptions),
   getFogEndPoint: TransactionDecorator.generateTransaction(getFogEndPoint),
   getFogListEndPoint: TransactionDecorator.generateTransaction(getFogListEndPoint),
   generateProvisioningKeyEndPoint: TransactionDecorator.generateTransaction(generateProvisioningKeyEndPoint),

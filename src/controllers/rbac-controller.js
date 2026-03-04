@@ -68,12 +68,14 @@ const deleteRoleBindingEndpoint = async function (req) {
 
 // ServiceAccount Endpoints
 const listServiceAccountsEndpoint = async function (req) {
-  return RbacService.listServiceAccountsEndpoint()
+  const applicationName = req.query.applicationName
+  return RbacService.listServiceAccountsEndpoint(applicationName)
 }
 
 const getServiceAccountEndpoint = async function (req) {
+  const appName = req.params.appName
   const name = req.params.name
-  return RbacService.getServiceAccountEndpoint(name)
+  return RbacService.getServiceAccountEndpoint(appName, name)
 }
 
 const createServiceAccountEndpoint = async function (req) {
@@ -82,14 +84,16 @@ const createServiceAccountEndpoint = async function (req) {
 }
 
 const updateServiceAccountEndpoint = async function (req) {
+  const appName = req.params.appName
   const name = req.params.name
   const saData = req.body
-  return RbacService.updateServiceAccountEndpoint(name, saData)
+  return RbacService.updateServiceAccountEndpoint(appName, name, saData)
 }
 
 const deleteServiceAccountEndpoint = async function (req) {
+  const appName = req.params.appName
   const name = req.params.name
-  return RbacService.deleteServiceAccountEndpoint(name)
+  return RbacService.deleteServiceAccountEndpoint(appName, name)
 }
 
 // YAML Endpoints
@@ -126,10 +130,11 @@ const createServiceAccountFromYamlEndpoint = async function (req) {
 }
 
 const updateServiceAccountFromYamlEndpoint = async function (req) {
+  const appName = req.params.appName
   const name = req.params.name
   const fileContent = req.file.buffer.toString()
   const saData = await YamlParserService.parseServiceAccountFile(fileContent)
-  return RbacService.updateServiceAccountEndpoint(name, saData)
+  return RbacService.updateServiceAccountEndpoint(appName, name, saData)
 }
 
 module.exports = {

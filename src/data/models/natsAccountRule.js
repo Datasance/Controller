@@ -1,5 +1,21 @@
 'use strict'
 
+const AppHelper = require('../../helpers/app-helper')
+
+function _bigIntGetter (field) {
+  return function () {
+    const raw = this.getDataValue(field)
+    return AppHelper.convertToInt(raw, null)
+  }
+}
+
+function _bigIntSetter (field) {
+  return function (value) {
+    const n = value == null ? null : parseInt(value, 10)
+    this.setDataValue(field, (n != null && !isNaN(n)) ? n : null)
+  }
+}
+
 module.exports = (sequelize, DataTypes) => {
   const NatsAccountRule = sequelize.define('NatsAccountRule', {
     id: {
@@ -38,7 +54,9 @@ module.exports = (sequelize, DataTypes) => {
     maxData: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'max_data'
+      field: 'max_data',
+      get: _bigIntGetter('maxData'),
+      set: _bigIntSetter('maxData')
     },
     maxExports: {
       type: DataTypes.INTEGER,
@@ -84,7 +102,9 @@ module.exports = (sequelize, DataTypes) => {
     respTtl: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'resp_ttl'
+      field: 'resp_ttl',
+      get: _bigIntGetter('respTtl'),
+      set: _bigIntSetter('respTtl')
     },
     imports: {
       type: DataTypes.TEXT,
@@ -99,12 +119,16 @@ module.exports = (sequelize, DataTypes) => {
     memStorage: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'mem_storage'
+      field: 'mem_storage',
+      get: _bigIntGetter('memStorage'),
+      set: _bigIntSetter('memStorage')
     },
     diskStorage: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'disk_storage'
+      field: 'disk_storage',
+      get: _bigIntGetter('diskStorage'),
+      set: _bigIntSetter('diskStorage')
     },
     streams: {
       type: DataTypes.INTEGER,
@@ -124,12 +148,16 @@ module.exports = (sequelize, DataTypes) => {
     memMaxStreamBytes: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'mem_max_stream_bytes'
+      field: 'mem_max_stream_bytes',
+      get: _bigIntGetter('memMaxStreamBytes'),
+      set: _bigIntSetter('memMaxStreamBytes')
     },
     diskMaxStreamBytes: {
       type: DataTypes.BIGINT,
       allowNull: true,
-      field: 'disk_max_stream_bytes'
+      field: 'disk_max_stream_bytes',
+      get: _bigIntGetter('diskMaxStreamBytes'),
+      set: _bigIntSetter('diskMaxStreamBytes')
     },
     maxBytesRequired: {
       type: DataTypes.BOOLEAN,
