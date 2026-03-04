@@ -151,6 +151,8 @@ async function linkVolumeMountEndpoint (name, fogUuids, transaction) {
 
   const volumeMount = await getVolumeMountEndpoint(name, transaction)
 
+  const alreadyLinked = new Set(await findVolumeMountedFogNodes(name, transaction))
+
   for (const fogUuid of fogUuids) {
     const agent = await FogManager.findOne({ uuid: fogUuid }, transaction)
     if (!agent) {
@@ -159,8 +161,10 @@ async function linkVolumeMountEndpoint (name, fogUuids, transaction) {
     await agent.addVolumeMount(volumeMount.uuid, transaction)
   }
 
-  // Update change tracking for all linked fog nodes
-  await _updateChangeTrackingForFogs(fogUuids, transaction)
+  const newlyLinked = fogUuids.filter((uuid) => !alreadyLinked.has(uuid))
+  if (newlyLinked.length > 0) {
+    await _updateChangeTrackingForFogs(newlyLinked, transaction)
+  }
 
   return getVolumeMountEndpoint(name, transaction)
 }

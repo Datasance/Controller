@@ -12,8 +12,17 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
-      field: 'name',
-      unique: true
+      field: 'name'
+    },
+    microserviceUuid: {
+      type: DataTypes.STRING(36),
+      field: 'microservice_uuid',
+      allowNull: true
+    },
+    applicationId: {
+      type: DataTypes.INTEGER,
+      field: 'application_id',
+      allowNull: true
     },
     roleRef: {
       type: DataTypes.TEXT,
@@ -48,7 +57,11 @@ module.exports = (sequelize, DataTypes) => {
     indexes: [
       {
         unique: true,
-        fields: ['name']
+        fields: ['microserviceUuid']
+      },
+      {
+        unique: true,
+        fields: ['applicationId', 'name']
       }
     ]
   })
@@ -60,6 +73,14 @@ module.exports = (sequelize, DataTypes) => {
         field: 'role_id'
       },
       as: 'role'
+    })
+    RbacServiceAccount.belongsTo(models.Microservice, {
+      foreignKey: 'microserviceUuid',
+      as: 'microservice'
+    })
+    RbacServiceAccount.belongsTo(models.Application, {
+      foreignKey: 'applicationId',
+      as: 'application'
     })
   }
 

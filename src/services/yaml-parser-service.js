@@ -21,6 +21,7 @@ async function parseAppYAML (app) {
   const application = {
     ...app,
     isActivated: app.isActivated || true,
+    natsConfig: lget(app, 'natsConfig', undefined),
     microservices: await Promise.all((app.microservices || []).map(async (m) => parseMicroserviceYAML(m)))
   }
   return application
@@ -359,12 +360,11 @@ const parseMicroserviceYAML = async (microservice) => {
     env: parseEnvVariables(lget(microservice, 'container.env', [])),
     images,
     extraHosts: lget(microservice, 'container.extraHosts', []),
-    ...microservice.msRoutes,
-    pubTags: lget(microservice, 'msRoutes.pubTags', []),
-    subTags: lget(microservice, 'msRoutes.subTags', []),
     application: microservice.application,
     schedule: lget(microservice, 'schedule', 50),
-    serviceAccount: lget(microservice, 'serviceAccount', undefined)
+    serviceAccount: lget(microservice, 'serviceAccount', undefined),
+    natsEnabled: lget(microservice, 'natsEnabled', undefined),
+    natsConfig: lget(microservice, 'natsConfig', undefined)
   }
   _deleteUndefinedFields(microserviceData)
   return microserviceData
@@ -463,12 +463,15 @@ async function parseServiceAccountFile (fileContent) {
     if (doc.metadata == null) {
       throw new Errors.ValidationError('Invalid YAML format: metadata is required')
     }
+    if (!doc.metadata.applicationName) {
+      throw new Errors.ValidationError('ServiceAccount YAML must have metadata.applicationName')
+    }
     if (!doc.roleRef || !doc.roleRef.name) {
       throw new Errors.ValidationError('ServiceAccount must have a roleRef with a name')
     }
     return {
       name: doc.metadata.name,
-      // namespace removed - not stored in database (controller manages single namespace)
+      applicationName: doc.metadata.applicationName,
       roleRef: doc.roleRef
     }
   } catch (error) {
@@ -510,6 +513,154 @@ async function parseCertificateFile (fileContent) {
   }
 }
 
+function _pickDefined (obj) {
+  const out = {}
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) out[k] = v
+  }
+  return out
+}
+
+function _natsAccountRuleSpecToModel (spec) {
+  if (!spec || typeof spec !== 'object') {
+    return {}
+  }
+  const limits = spec.limits || {}
+  const defaultPerms = spec.default_permissions || {}
+  const pub = defaultPerms.pub || {}
+  const sub = defaultPerms.sub || {}
+  const resp = defaultPerms.resp || {}
+  const raw = {
+    description: spec.description,
+    infoUrl: spec.info_url !== undefined ? spec.info_url : spec.infoUrl,
+    maxConnections: spec.maxConnections != null ? spec.maxConnections : limits.conn,
+    maxLeafNodeConnections: spec.maxLeafNodeConnections != null ? spec.maxLeafNodeConnections : limits.leaf,
+    maxData: spec.maxData != null ? spec.maxData : limits.data,
+    maxExports: spec.maxExports != null ? spec.maxExports : limits.exports,
+    maxImports: spec.maxImports != null ? spec.maxImports : limits.imports,
+    maxMsgPayload: spec.maxMsgPayload != null ? spec.maxMsgPayload : limits.payload,
+    maxSubscriptions: spec.maxSubscriptions != null ? spec.maxSubscriptions : limits.subs,
+    exportsAllowWildcards: spec.exportsAllowWildcards != null ? spec.exportsAllowWildcards : limits.wildcards,
+    disallowBearer: spec.disallowBearer != null ? spec.disallowBearer : limits.disallow_bearer,
+    respMax: spec.respMax != null ? spec.respMax : resp.max,
+    respTtl: spec.respTtl != null ? spec.respTtl : resp.ttl,
+    imports: Array.isArray(spec.imports) ? spec.imports : undefined,
+    exports: Array.isArray(spec.exports) ? spec.exports : undefined,
+    memStorage: spec.memStorage != null ? spec.memStorage : limits.mem_storage,
+    diskStorage: spec.diskStorage != null ? spec.diskStorage : limits.disk_storage,
+    streams: spec.streams != null ? spec.streams : limits.streams,
+    consumer: spec.consumer != null ? spec.consumer : limits.consumer,
+    maxAckPending: spec.maxAckPending != null ? spec.maxAckPending : limits.max_ack_pending,
+    memMaxStreamBytes: spec.memMaxStreamBytes != null ? spec.memMaxStreamBytes : limits.mem_max_stream_bytes,
+    diskMaxStreamBytes: spec.diskMaxStreamBytes != null ? spec.diskMaxStreamBytes : limits.disk_max_stream_bytes,
+    maxBytesRequired: spec.maxBytesRequired != null ? spec.maxBytesRequired : limits.max_bytes_required,
+    tieredLimits: typeof spec.tieredLimits === 'object' ? spec.tieredLimits : (spec.tiered_limits && typeof spec.tiered_limits === 'object' ? spec.tiered_limits : undefined),
+    pubAllow: Array.isArray(spec.pubAllow) ? spec.pubAllow : (Array.isArray(pub.allow) ? pub.allow : undefined),
+    pubDeny: Array.isArray(spec.pubDeny) ? spec.pubDeny : (Array.isArray(pub.deny) ? pub.deny : undefined),
+    subAllow: Array.isArray(spec.subAllow) ? spec.subAllow : (Array.isArray(sub.allow) ? sub.allow : undefined),
+    subDeny: Array.isArray(spec.subDeny) ? spec.subDeny : (Array.isArray(sub.deny) ? sub.deny : undefined)
+  }
+  return _pickDefined(raw)
+}
+
+function _natsUserRuleSpecToModel (spec) {
+  if (!spec || typeof spec !== 'object') {
+    return {}
+  }
+  const pub = spec.pub || {}
+  const sub = spec.sub || {}
+  const resp = spec.resp || {}
+  const raw = {
+    description: spec.description,
+    maxSubscriptions: spec.maxSubscriptions != null ? spec.maxSubscriptions : spec.subs,
+    maxPayload: spec.maxPayload != null ? spec.maxPayload : spec.payload,
+    maxData: spec.maxData,
+    bearerToken: spec.bearerToken != null ? spec.bearerToken : spec.bearer_token,
+    proxyRequired: spec.proxyRequired != null ? spec.proxyRequired : spec.proxy_required,
+    allowedConnectionTypes: Array.isArray(spec.allowedConnectionTypes) ? spec.allowedConnectionTypes : (Array.isArray(spec.allowed_connection_types) ? spec.allowed_connection_types : undefined),
+    src: Array.isArray(spec.src) ? spec.src : undefined,
+    times: Array.isArray(spec.times) ? spec.times : undefined,
+    timesLocation: spec.timesLocation != null ? spec.timesLocation : (spec.times_location != null ? spec.times_location : spec.locale),
+    respMax: spec.respMax != null ? spec.respMax : resp.max,
+    respTtl: spec.respTtl != null ? spec.respTtl : resp.ttl,
+    pubAllow: Array.isArray(spec.pubAllow) ? spec.pubAllow : (Array.isArray(pub.allow) ? pub.allow : undefined),
+    pubDeny: Array.isArray(spec.pubDeny) ? spec.pubDeny : (Array.isArray(pub.deny) ? pub.deny : undefined),
+    subAllow: Array.isArray(spec.subAllow) ? spec.subAllow : (Array.isArray(sub.allow) ? sub.allow : undefined),
+    subDeny: Array.isArray(spec.subDeny) ? spec.subDeny : (Array.isArray(sub.deny) ? sub.deny : undefined),
+    tags: Array.isArray(spec.tags) ? spec.tags : undefined
+  }
+  return _pickDefined(raw)
+}
+
+async function parseNatsAccountRuleFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || doc.kind !== 'NatsAccountRule') {
+      throw new Errors.ValidationError(`Invalid kind ${doc && doc.kind}, expected NatsAccountRule`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: metadata and spec are required')
+    }
+    if (options.isUpdate && options.ruleName && doc.metadata.name !== options.ruleName) {
+      throw new Errors.ValidationError(`Rule name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.ruleName})`)
+    }
+    const modelFields = _natsAccountRuleSpecToModel(doc.spec)
+    const result = {
+      name: doc.metadata.name,
+      ...doc.spec,
+      ...modelFields
+    }
+    delete result.jetstreamEnabled
+    delete result.jetstream
+    delete result.limits
+    delete result.default_permissions
+    delete result.info_url
+    delete result.tiered_limits
+    return result
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing NATS account rule YAML: ${error.message}`)
+  }
+}
+
+async function parseNatsUserRuleFile (fileContent, options = {}) {
+  try {
+    const doc = yaml.load(fileContent)
+    if (!doc || doc.kind !== 'NatsUserRule') {
+      throw new Errors.ValidationError(`Invalid kind ${doc && doc.kind}, expected NatsUserRule`)
+    }
+    if (doc.metadata == null || doc.spec == null) {
+      throw new Errors.ValidationError('Invalid YAML format: metadata and spec are required')
+    }
+    if (options.isUpdate && options.ruleName && doc.metadata.name !== options.ruleName) {
+      throw new Errors.ValidationError(`Rule name in YAML (${doc.metadata.name}) doesn't match endpoint path (${options.ruleName})`)
+    }
+    const modelFields = _natsUserRuleSpecToModel(doc.spec)
+    const result = {
+      name: doc.metadata.name,
+      ...doc.spec,
+      ...modelFields
+    }
+    delete result.pub
+    delete result.sub
+    delete result.resp
+    delete result.allowed_connection_types
+    delete result.bearer_token
+    delete result.proxy_required
+    delete result.times_location
+    delete result.subs
+    delete result.payload
+    return result
+  } catch (error) {
+    if (error instanceof Errors.ValidationError) {
+      throw error
+    }
+    throw new Errors.ValidationError(`Error parsing NATS user rule YAML: ${error.message}`)
+  }
+}
+
 module.exports = {
   parseAppTemplateFile: parseAppTemplateFile,
   parseAppFile: parseAppFile,
@@ -518,6 +669,8 @@ module.exports = {
   parseVolumeMountFile: parseVolumeMountFile,
   parseConfigMapFile: parseConfigMapFile,
   parseCertificateFile: parseCertificateFile,
+  parseNatsAccountRuleFile: parseNatsAccountRuleFile,
+  parseNatsUserRuleFile: parseNatsUserRuleFile,
   parseServiceFile: parseServiceFile,
   parseRoleFile: parseRoleFile,
   parseRoleBindingFile: parseRoleBindingFile,

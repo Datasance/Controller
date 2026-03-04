@@ -21,7 +21,6 @@ const MicroserviceManager = require('../data/managers/microservice-manager')
 const MicroserviceCapAddManager = require('../data/managers/microservice-cap-add-manager')
 const MicroserviceStatusManager = require('../data/managers/microservice-status-manager')
 const MicroserviceExecStatusManager = require('../data/managers/microservice-exec-status-manager')
-const ApplicationManager = require('../data/managers/application-manager')
 const MicroservicePortManager = require('../data/managers/microservice-port-manager')
 const RouterConnectionManager = require('../data/managers/router-connection-manager')
 const RouterManager = require('../data/managers/router-manager')
@@ -35,6 +34,10 @@ const FogManager = require('../data/managers/iofog-manager')
 const config = require('../config')
 const VolumeMountService = require('./volume-mount-service')
 const VolumeMappingManager = require('../data/managers/volume-mapping-manager')
+const {
+  ensureSystemApplication,
+  getSystemMicroserviceName
+} = require('../helpers/system-naming')
 
 const SITE_CONFIG_VERSION = 'pot'
 const SITE_CONFIG_NAMESPACE = process.env.CONTROLLER_NAMESPACE || config.get('app.namespace')
@@ -79,7 +82,14 @@ async function validateAndReturnUpstreamRouters (upstreamRouterIds, isSystemFog,
 
   const upstreamRouters = []
   for (const upstreamRouterId of upstreamRouterIds) {
-    const upstreamRouter = upstreamRouterId === Constants.DEFAULT_ROUTER_NAME ? defaultRouter : await RouterManager.findOne({ iofogUuid: upstreamRouterId }, transaction)
+    let upstreamRouter = upstreamRouterId === Constants.DEFAULT_ROUTER_NAME ? defaultRouter : await RouterManager.findOne({ iofogUuid: upstreamRouterId }, transaction)
+    if (!upstreamRouter && upstreamRouterId !== Constants.DEFAULT_ROUTER_NAME) {
+      const fog = await FogManager.findOne({ name: upstreamRouterId }, transaction)
+      if (!fog) {
+        throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, upstreamRouterId))
+      }
+      upstreamRouter = await RouterManager.findOne({ iofogUuid: fog.uuid }, transaction)
+    }
     if (!upstreamRouter) {
       throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_ROUTER, upstreamRouterId))
     }
@@ -113,7 +123,7 @@ async function createRouterForFog (fogData, uuid, upstreamRouters, transaction) 
 
   for (const upstreamRouter of upstreamRouters) {
     await RouterConnectionManager.create({ sourceRouter: router.id, destRouter: upstreamRouter.id }, transaction)
-    const connectorConfig = _getRouterConnectorConfig(isEdge, upstreamRouter, uuid)
+    const connectorConfig = await _getRouterConnectorConfig(isEdge, upstreamRouter, uuid, transaction)
     microserviceConfig.connectors[connectorConfig.name] = connectorConfig
   }
 
@@ -242,10 +252,11 @@ async function updateConfig (routerID, containerEngine, transaction) {
   )
 
   for (const upstreamRouterConnection of upstreamRoutersConnections) {
-    const connectorConfig = _getRouterConnectorConfig(
+    const connectorConfig = await _getRouterConnectorConfig(
       router.isEdge,
       upstreamRouterConnection.dest,
-      router.iofogUuid
+      router.iofogUuid,
+      transaction
     )
     newConfig.connectors[connectorConfig.name] = connectorConfig
   }
@@ -332,14 +343,14 @@ function _createRouterPorts (routerMicroserviceUuid, port, transaction) {
 async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, transaction) {
   const routerCatalog = await CatalogService.getRouterCatalogItem(transaction)
   const hostNetworkMode = !isEdge
-  const routerApplicationData = {
-    name: `system-${uuid.toLowerCase()}`,
-    isActivated: true,
-    isSystem: true
+  const fog = await FogManager.findOne({ uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuid))
   }
+  const application = await ensureSystemApplication(fog, transaction)
   const routerMicroserviceData = {
     uuid: AppHelper.generateUUID(),
-    name: `router-${uuid.toLowerCase()}`,
+    name: getSystemMicroserviceName('router'),
     config: JSON.stringify(microserviceConfig),
     catalogItemId: routerCatalog.id,
     iofogUuid: uuid,
@@ -375,9 +386,8 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
   const capAddValues = [
     { capAdd: 'NET_RAW' }
   ]
-  let application = await ApplicationManager.findOne({ name: routerApplicationData.name }, transaction)
   if (!application) {
-    application = await ApplicationManager.create(routerApplicationData, transaction)
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, `system-${fog.name}`))
   }
   routerMicroserviceData.applicationId = application.id
   const routerMicroservice = await MicroserviceManager.create(routerMicroserviceData, transaction)
@@ -402,19 +412,31 @@ async function _createRouterMicroservice (isEdge, uuid, microserviceConfig, tran
   return routerMicroservice
 }
 
-function _getRouterConnectorConfig (isEdge, dest, uuid) {
+async function _getRouterConnectorConfig (isEdge, dest, uuid, transaction) {
+  const fog = await FogManager.findOne({ uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuid))
+  }
   const config = {
     name: dest.iofogUuid || Constants.DEFAULT_ROUTER_NAME,
     role: isEdge ? 'edge' : 'inter-router',
     host: dest.host,
     port: (isEdge ? dest.edgeRouterPort : dest.interRouterPort).toString(),
-    sslProfile: `${uuid}-site-server`
+    sslProfile: `router-site-server-${fog.name}`
   }
 
   return config
 }
 
 async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interRouterPort, edgeRouterPort, containerEngine, transaction) {
+  const fog = await FogManager.findOne({ uuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, uuid))
+  }
+  // Get SSL secrets for all profiles
+  const siteServerSecret = await SecretManager.getSecret(`router-site-server-${fog.name}`, transaction)
+  const localServerSecret = await SecretManager.getSecret(`router-local-server-${fog.name}`, transaction)
+  const localAgentSecret = await SecretManager.getSecret(`router-local-agent-${fog.name}`, transaction)
   let platform = 'docker'
   if (containerEngine === 'podman') {
     platform = 'podman'
@@ -459,11 +481,6 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     caCertFile: SYSTEM_DEFAULT_CA_PATH
   }
 
-  // Get SSL secrets for all profiles and add path-based sslProfiles (no base64)
-  const siteServerSecret = await SecretManager.getSecret(`${uuid}-site-server`, transaction)
-  const localServerSecret = await SecretManager.getSecret(`${uuid}-local-server`, transaction)
-  const localAgentSecret = await SecretManager.getSecret(`${uuid}-local-agent`, transaction)
-
   function addSslProfileFromSecret (profileName, secret) {
     if (!secret) return
     const profile = { name: profileName }
@@ -479,9 +496,9 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     config.sslProfiles[profileName] = profile
   }
 
-  addSslProfileFromSecret(`${uuid}-site-server`, siteServerSecret)
-  addSslProfileFromSecret(`${uuid}-local-server`, localServerSecret)
-  addSslProfileFromSecret(`${uuid}-local-agent`, localAgentSecret)
+  addSslProfileFromSecret(`router-site-server-${fog.name}`, siteServerSecret)
+  addSslProfileFromSecret(`router-local-server-${fog.name}`, localServerSecret)
+  addSslProfileFromSecret(`router-local-agent-${fog.name}`, localAgentSecret)
 
   // Add default AMQP listener (internal)
   config.listeners[`${uuid}-amqp`] = {
@@ -499,7 +516,7 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
     role: 'normal',
     authenticatePeer: true,
     saslMechanisms: 'EXTERNAL',
-    sslProfile: `${uuid}-local-server`
+    sslProfile: `router-local-server-${fog.name}`
   }
   config.listeners[`${uuid}-amqps`] = amqpsListener
 
@@ -512,7 +529,7 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
       role: 'inter-router',
       authenticatePeer: true,
       saslMechanisms: 'EXTERNAL',
-      sslProfile: `${uuid}-site-server`
+      sslProfile: `router-site-server-${fog.name}`
     }
     config.listeners[`${uuid}-inter-router`] = interRouterListener
 
@@ -524,7 +541,7 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
       role: 'edge',
       authenticatePeer: true,
       saslMechanisms: 'EXTERNAL',
-      sslProfile: `${uuid}-site-server`
+      sslProfile: `router-site-server-${fog.name}`
     }
     config.listeners[`${uuid}-edge`] = edgeListener
   }
@@ -532,14 +549,18 @@ async function _getRouterMicroserviceConfig (isEdge, uuid, messagingPort, interR
   return config
 }
 
-const ROUTER_SSL_PROFILE_NAMES = (uuid) => [
-  `${uuid}-site-server`,
-  `${uuid}-local-server`,
-  `${uuid}-local-agent`
+const ROUTER_SSL_PROFILE_NAMES = (name) => [
+  `router-site-server-${name}`,
+  `router-local-server-${name}`,
+  `router-local-agent-${name}`
 ]
 
 async function _ensureRouterSslVolumeMountsAndMappings (iofogUuid, routerMicroserviceUuid, transaction, doCleanup = false) {
-  const profileNames = ROUTER_SSL_PROFILE_NAMES(iofogUuid)
+  const fog = await FogManager.findOne({ uuid: iofogUuid }, transaction)
+  if (!fog) {
+    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_IOFOG_UUID, iofogUuid))
+  }
+  const profileNames = ROUTER_SSL_PROFILE_NAMES(fog.name)
   const profileNamesWithSecret = new Set()
 
   for (const name of profileNames) {

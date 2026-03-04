@@ -31,11 +31,10 @@ const ChangeTrackingService = require('./change-tracking-service')
 const AppHelper = require('../helpers/app-helper')
 const Errors = require('../helpers/errors')
 const ErrorMessages = require('../helpers/error-messages')
+const { slugifyName } = require('../helpers/system-naming')
 const Validator = require('../schemas/index')
 const ApplicationManager = require('../data/managers/application-manager')
 const CatalogService = require('../services/catalog-service')
-const RoutingManager = require('../data/managers/routing-manager')
-const RoutingService = require('../services/routing-service')
 const ServiceManager = require('../data/managers/service-manager')
 const ServiceServices = require('./services-service')
 const ConfigMapManager = require('../data/managers/config-map-manager')
@@ -43,6 +42,9 @@ const SecretManager = require('../data/managers/secret-manager')
 const VolumeMountService = require('./volume-mount-service')
 const RbacServiceAccountManager = require('../data/managers/rbac-service-account-manager')
 const RbacRoleManager = require('../data/managers/rbac-role-manager')
+const RbacCacheVersionManager = require('../data/managers/rbac-cache-version-manager')
+const NatsAuthService = require('./nats-auth-service')
+const NatsUserRuleManager = require('../data/managers/nats-user-rule-manager')
 
 const Op = require('sequelize').Op
 const FogManager = require('../data/managers/iofog-manager')
@@ -50,92 +52,166 @@ const MicroserviceExtraHostManager = require('../data/managers/microservice-extr
 const { VOLUME_MAPPING_DEFAULT } = require('../helpers/constants')
 const constants = require('../helpers/constants')
 const isEqual = require('lodash/isEqual')
-const TagsManager = require('../data/managers/tags-manager')
 const logger = require('../logger')
-
-async function _setPubTags (microserviceModel, tagsArray, transaction) {
-  if (tagsArray) {
-    let tags = []
-    for (const tag of tagsArray) {
-      let tagModel = await TagsManager.findOne({ value: tag }, transaction)
-      if (!tagModel) {
-        tagModel = await TagsManager.create({ value: tag }, transaction)
-      }
-      tags.push(tagModel)
-    }
-    await microserviceModel.setPubTags(tags)
-  }
-}
-
-async function _setSubTags (microserviceModel, tagsArray, transaction) {
-  if (tagsArray) {
-    let tags = []
-    for (const tag of tagsArray) {
-      let tagModel = await TagsManager.findOne({ value: tag }, transaction)
-      if (!tagModel) {
-        tagModel = await TagsManager.create({ value: tag }, transaction)
-      }
-      tags.push(tagModel)
-    }
-    await microserviceModel.setSubTags(tags)
-  }
-}
 
 /**
  * Create or update service account for a microservice
+ * @param {string} microserviceUuid - UUID of the microservice
  * @param {string} microserviceName - Name of the microservice (used as service account name)
  * @param {string|null|undefined} roleRefName - Name of the role to reference (defaults to 'microservice' if not provided)
  * @param {Object} transaction - Database transaction
  * @returns {Object} Service account object
  */
-async function _createOrUpdateServiceAccountForMicroservice (microserviceName, roleRefName, transaction) {
-  // Default to 'microservice' role if not provided, null, undefined, or empty string
+async function _createOrUpdateServiceAccountForMicroservice (microserviceUuid, microserviceName, roleRefName, transaction) {
   const roleName = (roleRefName && typeof roleRefName === 'string' && roleRefName.trim() !== '') ? roleRefName : 'microservice'
 
-  // Validate role exists (check system roles first, then database)
   const role = await RbacRoleManager.getRoleWithRules(roleName, transaction)
   if (!role) {
     throw new Errors.ValidationError(`Referenced role '${roleName}' does not exist`)
   }
 
-  // Prepare roleRef object
   const roleRef = {
     kind: 'Role',
     name: roleName
   }
 
-  // Check if service account already exists
-  const existingServiceAccount = await RbacServiceAccountManager.findOne({ name: microserviceName }, transaction)
+  const existingServiceAccount = await RbacServiceAccountManager.findOneByMicroserviceUuid(microserviceUuid, transaction)
 
   if (existingServiceAccount) {
-    // Update existing service account
-    const updated = await RbacServiceAccountManager.updateServiceAccount(microserviceName, { roleRef }, transaction)
-    return updated
-  } else {
-    // Create new service account
-    const created = await RbacServiceAccountManager.createServiceAccount({
-      name: microserviceName,
-      roleRef
-    }, transaction)
-    return created
+    await RbacServiceAccountManager.update({ id: existingServiceAccount.id }, { roleRef, name: microserviceName }, transaction)
+    await RbacCacheVersionManager.incrementVersion(transaction)
+    return RbacServiceAccountManager.findOne({ id: existingServiceAccount.id }, transaction)
   }
+
+  const microservice = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+  if (!microservice || microservice.applicationId == null) {
+    throw new Errors.ValidationError('Microservice or application not found for service account creation')
+  }
+  return RbacServiceAccountManager.createServiceAccount({
+    microserviceUuid,
+    applicationId: microservice.applicationId,
+    name: microserviceName,
+    roleRef
+  }, transaction)
+}
+
+async function _ensureNatsCredsForMicroservice (microservice, transaction) {
+  if (!microservice.iofogUuid) {
+    return
+  }
+
+  const { account, user } = await NatsAuthService.ensureUserForMicroservice(microservice, transaction)
+  const credsSecretName = user.credsSecretName
+
+  try {
+    await VolumeMountService.getVolumeMountEndpoint(credsSecretName, transaction)
+  } catch (err) {
+    if (err.name !== 'NotFoundError') {
+      throw err
+    }
+    await VolumeMountService.createVolumeMountEndpoint({ name: credsSecretName, secretName: credsSecretName }, transaction)
+  }
+
+  const linkedFogUuids = await VolumeMountService.findVolumeMountedFogNodes(credsSecretName, transaction)
+  if (!linkedFogUuids.includes(microservice.iofogUuid)) {
+    await VolumeMountService.linkVolumeMountEndpoint(credsSecretName, [microservice.iofogUuid], transaction)
+  }
+  const application = microservice.application || await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  const accountName = application ? application.name : account.name
+  const credsPath = `${slugifyName(accountName, 64)}/${slugifyName(microservice.name, 64)}.creds`
+  const containerDest = `/etc/nats/creds`
+  const existingMapping = await VolumeMappingManager.findOne({
+    microserviceUuid: microservice.uuid,
+    hostDestination: credsSecretName,
+    containerDestination: containerDest,
+    type: 'volumeMount'
+  }, transaction)
+  if (!existingMapping) {
+    await VolumeMappingManager.create({
+      microserviceUuid: microservice.uuid,
+      hostDestination: credsSecretName,
+      containerDestination: containerDest,
+      accessMode: 'ro',
+      type: 'volumeMount'
+    }, transaction)
+  }
+
+  const existingCredsPathEnv = await MicroserviceEnvManager.findOne(
+    { microserviceUuid: microservice.uuid, key: 'NATS_CREDS_PATH' },
+    transaction
+  )
+  if (existingCredsPathEnv) {
+    await MicroserviceEnvManager.update(
+      { id: existingCredsPathEnv.id },
+      { value: `${containerDest}/${credsPath}` },
+      transaction
+    )
+  } else {
+    await MicroserviceEnvManager.create(
+      { microserviceUuid: microservice.uuid, key: 'NATS_CREDS_PATH', value: `${containerDest}/${credsPath}` },
+      transaction
+    )
+  }
+
+  await MicroserviceManager.update(
+    { uuid: microservice.uuid },
+    {
+      natsAccess: true,
+      natsAccountId: account.id,
+      natsUserId: user.id,
+      natsCredsSecretName: credsSecretName
+    },
+    transaction
+  )
+}
+
+async function _detachNatsCredsForMicroservice (microservice, transaction) {
+  if (!microservice.natsCredsSecretName) {
+    return
+  }
+
+  await MicroserviceEnvManager.delete(
+    { microserviceUuid: microservice.uuid, key: 'NATS_CREDS_PATH' },
+    transaction
+  )
+
+  await VolumeMappingManager.delete({
+    microserviceUuid: microservice.uuid,
+    hostDestination: microservice.natsCredsSecretName,
+    type: 'volumeMount'
+  }, transaction)
+
+  try {
+    await VolumeMountService.unlinkVolumeMountEndpoint(microservice.natsCredsSecretName, [microservice.iofogUuid], transaction)
+  } catch (err) {
+    // Ignore missing volume mount or link errors
+  }
+
+  await MicroserviceManager.update(
+    { uuid: microservice.uuid },
+    {
+      natsAccess: false,
+      natsAccountId: null,
+      natsUserId: null,
+      natsCredsSecretName: null
+    },
+    transaction
+  )
 }
 
 /**
  * Delete service account for a microservice
- * @param {string} microserviceName - Name of the microservice (used as service account name)
+ * @param {string} microserviceUuid - UUID of the microservice
  * @param {Object} transaction - Database transaction
  */
-async function _deleteServiceAccountForMicroservice (microserviceName, transaction) {
+async function _deleteServiceAccountForMicroservice (microserviceUuid, transaction) {
   try {
-    await RbacServiceAccountManager.deleteServiceAccount(microserviceName, transaction)
+    await RbacServiceAccountManager.deleteByMicroserviceUuid(microserviceUuid, transaction)
   } catch (error) {
-    // Gracefully handle not found errors (service account might not exist)
     if (error.name !== 'NotFoundError') {
       throw error
     }
-    // Log but don't fail if service account doesn't exist
-    logger.warn(`Service account '${microserviceName}' not found during microservice deletion, continuing...`)
+    logger.warn(`Service account for microservice ${microserviceUuid} not found during deletion, continuing...`)
   }
 }
 
@@ -352,11 +428,38 @@ async function _findFog (microserviceData, isCLI, transaction) {
   return FogManager.findOne(fogConditions, transaction)
 }
 
+async function _normalizeMicroserviceNatsConfig (microserviceData, transaction, existingMicroservice = null) {
+  if (Object.prototype.hasOwnProperty.call(microserviceData, 'natsAccess')) {
+    throw new Errors.ValidationError('natsAccess must be provided under natsConfig.natsAccess')
+  }
+  const natsConfig = microserviceData.natsConfig || {}
+  if (natsConfig.natsAccess !== undefined) {
+    microserviceData.natsAccess = natsConfig.natsAccess
+  } else if (existingMicroservice) {
+    microserviceData.natsAccess = existingMicroservice.natsAccess
+  }
+
+  if (natsConfig.natsRule) {
+    const rule = await NatsUserRuleManager.findOne({ name: natsConfig.natsRule }, transaction)
+    if (!rule) {
+      throw new Errors.ValidationError(`NATS user rule ${natsConfig.natsRule} does not exist`)
+    }
+    microserviceData.natsRuleId = rule.id
+  } else if (existingMicroservice && !Object.prototype.hasOwnProperty.call(natsConfig, 'natsRule')) {
+    microserviceData.natsRuleId = existingMicroservice.natsRuleId
+  }
+
+  if (microserviceData.natsAccess === false) {
+    microserviceData.natsRuleId = null
+  }
+}
+
 async function createMicroserviceEndPoint (microserviceData, isCLI, transaction) {
   // API Retro compatibility
   if (!microserviceData.application) {
     microserviceData.application = microserviceData.flowId
   }
+  await _normalizeMicroserviceNatsConfig(microserviceData, transaction)
   await Validator.validate(microserviceData, Validator.schemas.microserviceCreate)
 
   // find fog
@@ -464,37 +567,6 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
     await _createVolumeMappings(microservice, microserviceData.volumeMappings, transaction)
   }
 
-  if (microserviceData.pubTags) {
-    await _setPubTags(microservice, microserviceData.pubTags, transaction)
-  }
-
-  if (microserviceData.subTags) {
-    await _setSubTags(microservice, microserviceData.subTags, transaction)
-    const fogsNeedUpdate = new Set()
-    for (const tag of microserviceData.subTags) {
-      try {
-        const where = {
-          delete: false,
-          '$pubTags.value$': tag
-        }
-        // Get fog nodes with microservices for the given pubTag
-        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['iofogUuid'] })
-        if (response.length > 0) {
-          response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
-        }
-      } catch (error) {
-        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
-      }
-    }
-    for (const fog of fogsNeedUpdate) {
-      try {
-        await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
-      } catch (error) {
-        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
-      }
-    }
-  }
-
   if (microserviceData.iofogUuid) {
     await _updateChangeTracking(false, microserviceData.iofogUuid, transaction)
   }
@@ -510,16 +582,18 @@ async function createMicroserviceEndPoint (microserviceData, isCLI, transaction)
     roleRefName = microserviceData.serviceAccount.roleRef.name
   }
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microservice.name, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: microservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(microservice.uuid, microservice.name, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to create service account for microservice ${microservice.name}:`, error.message)
     throw error
+  }
+
+  if (microserviceData.natsAccess) {
+    const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+    if (!app || !app.natsAccess) {
+      throw new Errors.ValidationError('Microservice natsAccess requires application natsAccess=true')
+    }
+    await _ensureNatsCredsForMicroservice(microservice, transaction)
   }
 
   const res = {
@@ -703,6 +777,7 @@ async function _updateRelatedExtraHosts (updatedMicroservice, transaction) {
 
 async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceData, isCLI, transaction, changeTrackingEnabled = true) {
   await Validator.validate(microserviceData, Validator.schemas.microserviceUpdate)
+  _validateMicroserviceSchedule(microserviceData.schedule, true)
   let needStatusReset = false
   const query = isCLI
     ? {
@@ -761,6 +836,9 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  if (microserviceDataUpdate.name && microserviceDataUpdate.name !== microservice.name) {
+    throw new Errors.ValidationError('Microservice Resource Name is immutable')
   }
   if (microserviceDataUpdate.registryId) {
     const registry = await RegistryManager.findOne({ id: microserviceDataUpdate.registryId }, transaction)
@@ -873,7 +951,7 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
     microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
-    microserviceDataUpdate.schedule ||
+    (microserviceDataUpdate.schedule !== undefined && microserviceDataUpdate.schedule !== microservice.schedule) ||
     extraHosts
   )
   const updatedMicroservice = await MicroserviceManager.updateAndFind(query, microserviceDataUpdate, transaction)
@@ -955,21 +1033,13 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
   // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
 
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: updatedMicroservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(updatedMicroservice.uuid, microserviceName, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to update service account for microservice ${microserviceName}:`, error.message)
     throw error
   }
 
   if (changeTrackingEnabled) {
-    await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
-    await ChangeTrackingService.update(updatedMicroservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
     await _updateChangeTracking(true, microservice.iofogUuid, transaction)
     await _updateChangeTracking(true, updatedMicroservice.iofogUuid, transaction)
   } else {
@@ -981,6 +1051,8 @@ async function updateSystemMicroserviceEndPoint (microserviceUuid, microserviceD
 }
 
 async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, isCLI, transaction, changeTrackingEnabled = true) {
+  const current = await MicroserviceManager.findOne({ uuid: microserviceUuid }, transaction)
+  await _normalizeMicroserviceNatsConfig(microserviceData, transaction, current)
   await Validator.validate(microserviceData, Validator.schemas.microserviceUpdate)
   let needStatusReset = false
   const query = isCLI
@@ -1027,7 +1099,9 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     env: microserviceData.env,
     cmd: microserviceData.cmd,
     ports: microserviceData.ports,
-    healthCheck: microserviceData.healthCheck
+    healthCheck: microserviceData.healthCheck,
+    natsAccess: microserviceData.natsAccess,
+    natsRuleId: microserviceData.natsRuleId
   }
 
   const microserviceDataUpdate = AppHelper.deleteUndefinedFields(microserviceToUpdate)
@@ -1040,6 +1114,13 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
   if (!microservice) {
     throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_MICROSERVICE_UUID, microserviceUuid))
+  }
+  const application = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  if (microserviceDataUpdate.natsAccess === true && (!application || !application.natsAccess)) {
+    throw new Errors.ValidationError('Microservice natsAccess requires application natsAccess=true')
+  }
+  if (microserviceDataUpdate.name && microserviceDataUpdate.name !== microservice.name) {
+    throw new Errors.ValidationError('Microservice Resource Name is immutable')
   }
   if (microserviceDataUpdate.registryId) {
     const registry = await RegistryManager.findOne({ id: microserviceDataUpdate.registryId }, transaction)
@@ -1079,6 +1160,8 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   if (microservice.catalogItem && microservice.catalogItem.category === 'SYSTEM') {
     throw new Errors.ValidationError(AppHelper.formatMessage(ErrorMessages.SYSTEM_MICROSERVICE_UPDATE, microserviceUuid))
   }
+
+  _validateMicroserviceSchedule(microserviceDataUpdate.schedule, false)
 
   // Validate images vs catalog item
 
@@ -1156,7 +1239,7 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
     microserviceDataUpdate.runtime ||
     microserviceDataUpdate.volumeMappings ||
     microserviceDataUpdate.ports ||
-    microserviceDataUpdate.schedule ||
+    (microserviceDataUpdate.schedule !== undefined && microserviceDataUpdate.schedule !== microservice.schedule) ||
     extraHosts
   )
   const updatedMicroservice = await MicroserviceManager.updateAndFind(query, microserviceDataUpdate, transaction)
@@ -1211,37 +1294,6 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   }
 
   // Update tags
-  if (microserviceData.pubTags) {
-    await _setPubTags(microservice, microserviceData.pubTags, transaction)
-  }
-
-  if (microserviceData.subTags) {
-    await _setSubTags(microservice, microserviceData.subTags, transaction)
-    const fogsNeedUpdate = new Set()
-    for (const tag of microserviceData.subTags) {
-      try {
-        const where = {
-          delete: false,
-          '$pubTags.value$': tag
-        }
-        // Get fog nodes with microservices for the given pubTag
-        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['iofogUuid'] })
-        if (response.length > 0) {
-          response.forEach(ms => ms.iofogUuid && fogsNeedUpdate.add(ms.iofogUuid))
-        }
-      } catch (error) {
-        logger.error(`Checking fog nodes list for pubTag "${tag.value}":`, error.message)
-      }
-    }
-    for (const fog of fogsNeedUpdate) {
-      try {
-        await ChangeTrackingService.update(fog, ChangeTrackingService.events.microserviceFull, transaction)
-      } catch (error) {
-        logger.error(`Updating change tracking for fog "${fog.value}":`, error.message)
-      }
-    }
-  }
-
   if (needStatusReset) {
     const microserviceStatus = {
       status: MicroserviceStates.QUEUED,
@@ -1275,21 +1327,28 @@ async function updateMicroserviceEndPoint (microserviceUuid, microserviceData, i
   // If serviceAccount field is not provided, roleRefName stays null and will default to 'microservice' role
 
   try {
-    const serviceAccount = await _createOrUpdateServiceAccountForMicroservice(microserviceName, roleRefName, transaction)
-    // Update microservice with service account ID
-    await MicroserviceManager.update(
-      { uuid: updatedMicroservice.uuid },
-      { serviceAccountId: serviceAccount.id },
-      transaction
-    )
+    await _createOrUpdateServiceAccountForMicroservice(updatedMicroservice.uuid, microserviceName, roleRefName, transaction)
   } catch (error) {
     logger.error(`Failed to update service account for system microservice ${microserviceName}:`, error.message)
     throw error
   }
 
+  const shouldEnableNats = microserviceData.natsAccess === true
+  const shouldDisableNats = microserviceData.natsAccess === false && microservice.natsAccess
+  const natsRuleChanged = Object.prototype.hasOwnProperty.call(microserviceData, 'natsRuleId') &&
+    microserviceData.natsRuleId !== microservice.natsRuleId
+
+  if (shouldEnableNats) {
+    if (natsRuleChanged) {
+      await NatsAuthService.reissueUserForMicroservice(updatedMicroservice.uuid, transaction)
+    }
+    await _ensureNatsCredsForMicroservice(updatedMicroservice, transaction)
+  } else if (shouldDisableNats) {
+    await _detachNatsCredsForMicroservice(microservice, transaction)
+    await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
+  }
+
   if (changeTrackingEnabled) {
-    await ChangeTrackingService.update(microservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
-    await ChangeTrackingService.update(updatedMicroservice.iofogUuid, ChangeTrackingService.events.microserviceRouting, transaction)
     await _updateChangeTracking(true, microservice.iofogUuid, transaction)
     await _updateChangeTracking(true, updatedMicroservice.iofogUuid, transaction)
   } else {
@@ -1529,7 +1588,7 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
   }
 
   // Delete service account for microservice
-  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
+  await _deleteServiceAccountForMicroservice(microservice.uuid, transaction)
 
   await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
   await _updateChangeTracking(false, microservice.iofogUuid, transaction)
@@ -1544,39 +1603,6 @@ async function deleteNotRunningMicroservices (fog, transaction) {
       microservice.microserviceStatus.status === MicroserviceStates.DELETING ||
       microservice.microserviceStatus.status === MicroserviceStates.MARKED_FOR_DELETION)
     .forEach(async (microservice) => { await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction) })
-}
-
-async function createRouteEndPoint (sourceMicroserviceUuid, destMicroserviceUuid, isCLI, transaction) {
-  // Print deprecated warning
-  const sourceMsvc = await MicroserviceManager.findMicroserviceOnGet({ uuid: sourceMicroserviceUuid }, transaction)
-  if (!sourceMsvc) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_SOURCE_MICROSERVICE_UUID, sourceMicroserviceUuid))
-  }
-  const destMsvc = await MicroserviceManager.findMicroserviceOnGet({ uuid: destMicroserviceUuid }, transaction)
-  if (!destMsvc) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_SOURCE_MICROSERVICE_UUID, destMsvc))
-  }
-
-  const application = await ApplicationManager.findOne({ id: sourceMsvc.applicationId }, transaction)
-  if (!application) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.INVALID_FLOW_ID, sourceMsvc.applicationId))
-  }
-
-  return RoutingService.createRouting({ application: application.name, from: sourceMsvc.name, to: destMsvc.name, name: `r-${sourceMsvc.name}-${destMsvc.name}` }, isCLI, transaction)
-}
-
-async function deleteRouteEndPoint (sourceMicroserviceUuid, destMicroserviceUuid, isCLI, transaction) {
-  // Print deprecated warning
-
-  const route = await RoutingManager.findOnePopulated({
-    sourceMicroserviceUuid: sourceMicroserviceUuid,
-    destMicroserviceUuid: destMicroserviceUuid
-  }, transaction)
-  if (!route) {
-    throw new Errors.NotFoundError(AppHelper.formatMessage(ErrorMessages.ROUTE_NOT_FOUND))
-  }
-
-  return RoutingService.deleteRouting(route.application.name, route.name, isCLI, transaction)
 }
 
 async function createPortMappingEndPoint (microserviceUuid, portMappingData, isCLI, transaction) {
@@ -1756,77 +1782,20 @@ async function listPortMappingsEndPoint (microserviceUuid, isCLI, transaction) {
   return MicroservicePortService.listPortMappings(microserviceUuid, isCLI, transaction)
 }
 
-async function getReceiverMicroservices (microservice, transaction) {
-  // 1. Get existing routes (app-level routing)
-  const routes = await RoutingManager.findAll({ sourceMicroserviceUuid: microservice.uuid }, transaction)
-
-  let receiverMicroservices = routes.map(route => route.destMicroserviceUuid)
-
-  // 2. Check if the microservice has pubTags and fetch microservices associated with those tags
-  if (microservice.pubTags) {
-    for (const tag of microservice.pubTags) {
-      try {
-        const where = {
-          delete: false,
-          '$subTags.value$': tag.value
-        }
-        // Get microservices for the given pubTag
-        const response = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['uuid'] })
-        if (response.length > 0) {
-          const tagMicroservices = response.map(ms => ms.uuid)
-          // Add the microservices' UUIDs to the receiver list (filtering duplicates and removing the current microservice's UUID)
-          receiverMicroservices = [
-            ...new Set([
-              ...receiverMicroservices,
-              ...tagMicroservices.filter(uuid => uuid !== microservice.uuid) // Remove the current microservice's UUID
-            ])
-          ]
-        }
-      } catch (error) {
-        logger.error(`Checking microservices for pubTag "${tag.value}":`, error.message)
-      }
-    }
-  }
-  return receiverMicroservices
-}
-
-async function isMicroserviceConsumer (microservice, transaction) {
-  // Step 1: App-level routing check
-  const routes = await RoutingManager.findAll({ destMicroserviceUuid: microservice.uuid }, transaction)
-
-  if (routes.length > 0) {
-    return true
-  }
-
-  // Step 2: Subtag-based routing check
-  if (microservice.subTags) {
-    for (const tag of microservice.subTags) {
-      try {
-        const where = {
-          delete: false,
-          '$pubTags.value$': tag.value
-        }
-        const result = await MicroserviceManager.findAllExcludeFields(where, transaction, { attributes: ['uuid'] })
-
-        if (result.length > 0) {
-          return true
-        }
-      } catch (error) {
-        logger.error(`Checking microservices for subTag "${tag.value}":`, error.message)
-      }
-    }
-  }
-  return false
-}
-
 async function isMicroserviceRouter (microservice, transaction) {
-  if (microservice.name === `router-${microservice.iofogUuid.toLowerCase()}`) {
-    const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
-    if (app.isSystem === true) {
-      return true
-    }
+  if (microservice.name !== 'router') {
+    return false
   }
-  return false
+  const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  return !!(app && app.isSystem === true)
+}
+
+async function isMicroserviceNats (microservice, transaction) {
+  if (microservice.name !== 'nats') {
+    return false
+  }
+  const app = await ApplicationManager.findOne({ id: microservice.applicationId }, transaction)
+  return !!(app && app.isSystem === true)
 }
 
 async function createVolumeMappingEndPoint (microserviceUuid, volumeMappingData, isCLI, transaction) {
@@ -1990,6 +1959,24 @@ function _validateMicroserviceAnnotations (annotations) {
   return result
 }
 
+function _validateMicroserviceSchedule (schedule, isSystem) {
+  if (schedule === undefined || schedule === null) {
+    return
+  }
+  if (!Number.isInteger(schedule)) {
+    throw new Errors.ValidationError('Microservice schedule must be an integer')
+  }
+  if (isSystem) {
+    if (schedule < 0 || schedule > 5) {
+      throw new Errors.ValidationError('System microservice schedule must be between 0 and 5')
+    }
+    return
+  }
+  if (schedule < 6 || schedule > 100) {
+    throw new Errors.ValidationError('Microservice schedule must be between 6 and 100')
+  }
+}
+
 function _validateMicroserviceHealthCheck (healthCheck) {
   let result
   if (healthCheck) {
@@ -2037,7 +2024,9 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
     runtime: microserviceData.runtime,
     registryId: microserviceData.registryId || 1,
     schedule: microserviceData.schedule || 50,
-    logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1
+    logSize: (microserviceData.logSize || constants.MICROSERVICE_DEFAULT_LOG_SIZE) * 1,
+    natsAccess: !!microserviceData.natsAccess,
+    natsRuleId: microserviceData.natsRuleId
   }
 
   newMicroservice = AppHelper.deleteUndefinedFields(newMicroservice)
@@ -2052,6 +2041,9 @@ async function _createMicroservice (microserviceData, isCLI, transaction) {
   // validate application
   const application = await _validateApplication(microserviceData.application, isCLI, transaction)
   newMicroservice.applicationId = application.id
+  if (newMicroservice.natsAccess && !application.natsAccess) {
+    throw new Errors.ValidationError('Microservice natsAccess requires application natsAccess=true')
+  }
 
   await _checkForDuplicateName(newMicroservice.name, {}, newMicroservice.applicationId, transaction)
 
@@ -2410,38 +2402,18 @@ async function _validateSystemMicroserviceOnGet (microserviceUuid, transaction) 
   }
 }
 
-async function _getLogicalRoutesByMicroservice (microserviceUuid, transaction) {
-  const res = []
-  const query = {
-    [Op.or]:
-      [
-        {
-          sourceMicroserviceUuid: microserviceUuid
-        },
-        {
-          destMicroserviceUuid: microserviceUuid
-        }
-      ]
-  }
-  const routes = await RoutingManager.findAllPopulated(query, transaction)
-  for (const route of routes) {
-    if (route.sourceMicroserviceUuid && route.destMicroserviceUuid) {
-      res.push(route)
-    }
-  }
-  return res
-}
-
 async function deleteMicroserviceWithRoutesAndPortMappings (microservice, transaction) {
-  const routes = await _getLogicalRoutesByMicroservice(microservice.uuid, transaction)
-  for (const route of routes) {
-    await RoutingService.deleteRouting(route.application.name, route.name, false, transaction)
-  }
-
+  // Clear Microservice -> NatsUser FK before revoking user (Postgres/MySQL enforce FK; SQLite does not)
+  await MicroserviceManager.update(
+    { uuid: microservice.uuid },
+    { natsAccountId: null, natsUserId: null, natsCredsSecretName: null },
+    transaction
+  )
+  await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
   await MicroservicePortService.deletePortMappings(microservice, transaction)
 
   // Delete service account for microservice (safety net in case it wasn't deleted earlier)
-  await _deleteServiceAccountForMicroservice(microservice.name, transaction)
+  await _deleteServiceAccountForMicroservice(microservice.uuid, transaction)
 
   await MicroserviceManager.delete({
     uuid: microservice.uuid
@@ -2457,7 +2429,6 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const extraHosts = await MicroserviceExtraHostManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
   const images = await CatalogItemImageManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
   const volumeMappings = await VolumeMappingManager.findAll({ microserviceUuid: microserviceUuid }, transaction)
-  const routes = await getReceiverMicroservices(microservice, transaction)
   const env = await MicroserviceEnvManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const cmd = await MicroserviceArgManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const arg = cmd.map((it) => it.cmd)
@@ -2467,8 +2438,6 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   const capAdds = capAdd.map((it) => it.capAdd)
   const capDrop = await MicroserviceCapDropManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const capDrops = capDrop.map((it) => it.capDrop)
-  const pubTags = microservice.pubTags ? microservice.pubTags.map(t => t.value) : []
-  const subTags = microservice.subTags ? microservice.subTags.map(t => t.value) : []
   const status = await MicroserviceStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const execStatus = await MicroserviceExecStatusManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
   const healthCheck = await MicroserviceHealthCheckManager.findAllExcludeFields({ microserviceUuid: microserviceUuid }, transaction)
@@ -2481,7 +2450,6 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
     res.ports.push(mapping)
   }
   res.volumeMappings = volumeMappings.map((vm) => vm.dataValues)
-  res.routes = routes
   res.env = env
   res.cmd = arg
   res.cdiDevices = cdiDevs
@@ -2542,8 +2510,6 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
       res.healthCheck = {}
     }
   }
-  res.pubTags = pubTags
-  res.subTags = subTags
 
   res.logSize *= 1
 
@@ -2552,41 +2518,19 @@ async function _buildGetMicroserviceResponse (microservice, transaction) {
   // API retrocompatibility
   res.flowId = res.applicationId
 
+  // Resolve natsRuleId to rule name for API response
+  let natsRuleName = null
+  if (res.natsRuleId) {
+    const natsRule = await NatsUserRuleManager.findOne({ id: res.natsRuleId }, transaction)
+    natsRuleName = natsRule ? natsRule.name : null
+  }
+  res.natsConfig = {
+    natsAccess: !!res.natsAccess,
+    natsRule: natsRuleName
+  }
+  delete res.natsRuleId
+
   return res
-}
-
-async function listMicroserviceByPubTagEndPoint (pubTag, transaction) {
-  const where = {
-    delete: false,
-    '$pubTags.value$': pubTag
-  }
-
-  const microservices = await MicroserviceManager.findAllExcludeFields(where, transaction)
-
-  const res = await Promise.all(microservices.map(async (microservice) => {
-    return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
-  }))
-
-  return {
-    microservices: res
-  }
-}
-
-async function listMicroserviceBySubTagEndPoint (subTag, transaction) {
-  const where = {
-    delete: false,
-    '$subTags.value$': subTag
-  }
-
-  const microservices = await MicroserviceManager.findAllExcludeFields(where, transaction)
-
-  const res = await Promise.all(microservices.map(async (microservice) => {
-    return _buildGetMicroserviceResponse(microservice.dataValues, transaction)
-  }))
-
-  return {
-    microservices: res
-  }
 }
 
 async function createExecEndPoint (microserviceUuid, isCLI, transaction) {
@@ -2710,32 +2654,52 @@ async function stopMicroserviceEndPoint (microserviceUuid, isCLI, transaction) {
   }
 }
 
+async function reconcileNatsForApplication (applicationId, transaction) {
+  const application = await ApplicationManager.findOne({ id: applicationId }, transaction)
+  if (!application) {
+    return
+  }
+  const microservices = await MicroserviceManager.findAll({ applicationId }, transaction)
+  for (const microservice of microservices) {
+    if (!application.natsAccess || !microservice.natsAccess) {
+      if (microservice.natsUserId || microservice.natsCredsSecretName || microservice.natsAccess) {
+        await NatsAuthService.revokeMicroserviceUser(microservice.uuid, transaction)
+        await _detachNatsCredsForMicroservice(microservice, transaction)
+      }
+      continue
+    }
+    const reconcileTriggerOptions = { triggerReconcile: false }
+    await NatsAuthService.reissueUserForMicroservice(microservice.uuid, transaction, reconcileTriggerOptions)
+    const refreshed = await MicroserviceManager.findOne({ uuid: microservice.uuid }, transaction)
+    await _ensureNatsCredsForMicroservice(refreshed || microservice, transaction)
+  }
+}
+
+const bypassOptions = { bypassQueue: true }
+
 module.exports = {
-  createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint),
+  createMicroserviceEndPoint: TransactionDecorator.generateTransaction(createMicroserviceEndPoint, bypassOptions),
   createPortMappingEndPoint: TransactionDecorator.generateTransaction(createPortMappingEndPoint),
   createSystemPortMappingEndPoint: TransactionDecorator.generateTransaction(createSystemPortMappingEndPoint),
-  createRouteEndPoint: TransactionDecorator.generateTransaction(createRouteEndPoint),
   createVolumeMappingEndPoint: TransactionDecorator.generateTransaction(createVolumeMappingEndPoint),
   createSystemVolumeMappingEndPoint: TransactionDecorator.generateTransaction(createSystemVolumeMappingEndPoint),
-  deleteMicroserviceEndPoint: TransactionDecorator.generateTransaction(deleteMicroserviceEndPoint),
+  deleteMicroserviceEndPoint: TransactionDecorator.generateTransaction(deleteMicroserviceEndPoint, bypassOptions),
   deleteMicroserviceWithRoutesAndPortMappings: deleteMicroserviceWithRoutesAndPortMappings,
   deleteNotRunningMicroservices: deleteNotRunningMicroservices,
   deletePortMappingEndPoint: TransactionDecorator.generateTransaction(deletePortMappingEndPoint),
   deleteSystemPortMappingEndPoint: TransactionDecorator.generateTransaction(deleteSystemPortMappingEndPoint),
-  deleteRouteEndPoint: TransactionDecorator.generateTransaction(deleteRouteEndPoint),
   deleteVolumeMappingEndPoint: TransactionDecorator.generateTransaction(deleteVolumeMappingEndPoint),
   deleteSystemVolumeMappingEndPoint: TransactionDecorator.generateTransaction(deleteSystemVolumeMappingEndPoint),
   getMicroserviceEndPoint: TransactionDecorator.generateTransaction(getMicroserviceEndPoint),
   getSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(getSystemMicroserviceEndPoint),
-  getReceiverMicroservices,
-  isMicroserviceConsumer,
   isMicroserviceRouter,
+  isMicroserviceNats,
   listMicroservicePortMappingsEndPoint: TransactionDecorator.generateTransaction(listPortMappingsEndPoint),
   listMicroservicesEndPoint: TransactionDecorator.generateTransaction(listMicroservicesEndPoint),
   listSystemMicroservicesEndPoint: TransactionDecorator.generateTransaction(listSystemMicroservicesEndPoint),
   listVolumeMappingsEndPoint: TransactionDecorator.generateTransaction(listVolumeMappingsEndPoint),
-  updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint),
-  updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint),
+  updateMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceEndPoint, bypassOptions),
+  updateSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(updateSystemMicroserviceEndPoint, bypassOptions),
   updateMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(updateMicroserviceConfigEndPoint),
   getMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getMicroserviceConfigEndPoint),
   getSystemMicroserviceConfigEndPoint: TransactionDecorator.generateTransaction(getSystemMicroserviceConfigEndPoint),
@@ -2746,12 +2710,11 @@ module.exports = {
   rebuildSystemMicroserviceEndPoint: TransactionDecorator.generateTransaction(rebuildSystemMicroserviceEndPoint),
   buildGetMicroserviceResponse: _buildGetMicroserviceResponse,
   updateChangeTracking: _updateChangeTracking,
-  listMicroserviceByPubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceByPubTagEndPoint),
-  listMicroserviceBySubTagEndPoint: TransactionDecorator.generateTransaction(listMicroserviceBySubTagEndPoint),
   createExecEndPoint: TransactionDecorator.generateTransaction(createExecEndPoint),
   deleteExecEndPoint: TransactionDecorator.generateTransaction(deleteExecEndPoint),
   createSystemExecEndPoint: TransactionDecorator.generateTransaction(createSystemExecEndPoint),
   deleteSystemExecEndPoint: TransactionDecorator.generateTransaction(deleteSystemExecEndPoint),
   startMicroserviceEndPoint: TransactionDecorator.generateTransaction(startMicroserviceEndPoint),
-  stopMicroserviceEndPoint: TransactionDecorator.generateTransaction(stopMicroserviceEndPoint)
+  stopMicroserviceEndPoint: TransactionDecorator.generateTransaction(stopMicroserviceEndPoint),
+  reconcileNatsForApplication: TransactionDecorator.generateTransaction(reconcileNatsForApplication, bypassOptions)
 }

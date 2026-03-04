@@ -110,6 +110,14 @@ class ConflictError extends Error {
   }
 }
 
+class ForbiddenError extends Error {
+  constructor (message) {
+    super(message)
+    this.message = message
+    this.name = 'ForbiddenError'
+  }
+}
+
 module.exports = {
   AuthenticationError: AuthenticationError,
   TransactionError: TransactionError,
@@ -122,5 +130,6 @@ module.exports = {
   InvalidArgumentError: InvalidArgumentError,
   InvalidArgumentTypeError: InvalidArgumentTypeError,
   CLIArgsNotProvidedError: CLIArgsNotProvidedError,
-  ConflictError: ConflictError
+  ConflictError: ConflictError,
+  ForbiddenError: ForbiddenError
 }

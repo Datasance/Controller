@@ -22,8 +22,6 @@ module.exports = (sequelize, DataTypes) => {
   Tags.associate = function (models) {
     Tags.belongsToMany(models.Fog, { through: 'IofogTags', as: 'iofogs' })
     Tags.belongsToMany(models.EdgeResource, { through: 'EdgeResourceOrchestrationTags', as: 'edgeResources' })
-    Tags.belongsToMany(models.Microservice, { through: 'MicroservicePubTags', as: 'pubMicroservices' })
-    Tags.belongsToMany(models.Microservice, { through: 'MicroserviceSubTags', as: 'subMicroservices' })
     Tags.belongsToMany(models.Service, { through: 'ServiceTags', as: 'services' })
   }
   return Tags

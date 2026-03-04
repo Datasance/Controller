@@ -396,6 +396,11 @@ module.exports = (sequelize, DataTypes) => {
       as: 'router'
     })
 
+    Fog.hasOne(models.NatsInstance, {
+      foreignKey: 'iofog_uuid',
+      as: 'nats'
+    })
+
     Fog.belongsToMany(models.Tags, { through: 'IofogTags', as: 'tags' })
     Fog.belongsToMany(models.EdgeResource, { through: 'AgentEdgeResources', as: 'edgeResources' })
     Fog.belongsToMany(models.VolumeMount, { through: 'FogVolumeMounts', as: 'volumeMounts' })

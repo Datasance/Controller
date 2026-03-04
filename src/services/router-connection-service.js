@@ -2,6 +2,7 @@ const rhea = require('rhea')
 const config = require('../config')
 const logger = require('../logger')
 const RouterManager = require('../data/managers/router-manager')
+const FogManager = require('../data/managers/iofog-manager')
 const CertificateService = require('./certificate-service')
 const SecretService = require('./secret-service')
 const os = require('os')
@@ -262,7 +263,11 @@ class RouterConnectionService {
       return 'default-router-local-ca'
     }
     const router = await this._getDefaultRouterRecord()
-    return `${router.iofogUuid}-local-ca`
+    const fog = await FogManager.findOne({ uuid: router.iofogUuid }, this.fakeTransaction)
+    if (!fog) {
+      throw new Error('Router not found. Please ensure router is provisioned.')
+    }
+    return `router-local-ca-${fog.name}`
   }
 
   _buildControllerHosts () {

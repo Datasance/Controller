@@ -1,6 +1,6 @@
 const WebSocket = require('ws')
 const config = require('../config')
-const logger = require('../logger')
+const baseLogger = require('../logger')
 const Errors = require('../helpers/errors')
 const SessionManager = require('./session-manager')
 const LogSessionManager = require('./log-session-manager')
@@ -19,6 +19,7 @@ const MicroserviceLogStatusManager = require('../data/managers/microservice-log-
 const FogLogStatusManager = require('../data/managers/fog-log-status-manager')
 const ChangeTrackingService = require('../services/change-tracking-service')
 const FogManager = require('../data/managers/iofog-manager')
+const FogStates = require('../enums/fog-state')
 
 const MESSAGE_TYPES = {
   STDIN: 0,
@@ -34,6 +35,115 @@ const MESSAGE_TYPES = {
 }
 
 const EventService = require('../services/event-service')
+
+let processErrorHandlersRegistered = false
+
+function safeSerializeForLog (value) {
+  try {
+    return JSON.parse(JSON.stringify(value))
+  } catch (error) {
+    return {
+      serializationError: error.message,
+      type: value && value.constructor ? value.constructor.name : typeof value,
+      asString: String(value)
+    }
+  }
+}
+
+function formatErrorForLog (errorLike) {
+  if (errorLike instanceof Error) {
+    return {
+      type: 'Error',
+      name: errorLike.name,
+      message: errorLike.message,
+      stack: errorLike.stack,
+      cause: errorLike.cause ? formatErrorForLog(errorLike.cause) : undefined
+    }
+  }
+
+  if (typeof errorLike === 'string') {
+    return {
+      type: 'string',
+      message: errorLike
+    }
+  }
+
+  if (typeof errorLike === 'object' && errorLike !== null) {
+    return {
+      type: errorLike.constructor ? errorLike.constructor.name : 'object',
+      details: safeSerializeForLog(errorLike)
+    }
+  }
+
+  return {
+    type: typeof errorLike,
+    details: errorLike
+  }
+}
+
+function normalizeErrorLogArgs (args) {
+  if (!Array.isArray(args) || args.length === 0) {
+    return args
+  }
+
+  const [first, ...rest] = args
+
+  if (args.length === 1) {
+    if (first instanceof Error) {
+      return [{
+        msg: first.message || 'Error',
+        error: formatErrorForLog(first)
+      }]
+    }
+    return args
+  }
+
+  if (typeof first === 'string') {
+    const payload = { msg: first }
+    const context = {}
+    const additional = []
+
+    for (const item of rest) {
+      if (item instanceof Error && !payload.error) {
+        payload.error = formatErrorForLog(item)
+        continue
+      }
+
+      if (typeof item === 'object' && item !== null) {
+        Object.assign(context, safeSerializeForLog(item))
+        continue
+      }
+
+      additional.push(item)
+    }
+
+    if (Object.keys(context).length > 0) {
+      payload.context = context
+    }
+    if (additional.length > 0) {
+      payload.args = additional
+    }
+
+    return [payload]
+  }
+
+  return args
+}
+
+function createSafeLogger (loggerInstance) {
+  return new Proxy(loggerInstance, {
+    get (target, prop, receiver) {
+      const original = Reflect.get(target, prop, receiver)
+      if (prop !== 'error' || typeof original !== 'function') {
+        return original
+      }
+
+      return (...args) => original.apply(target, normalizeErrorLogArgs(args))
+    }
+  })
+}
+
+const logger = createSafeLogger(baseLogger)
 
 class WebSocketServer {
   constructor () {
@@ -212,22 +322,29 @@ class WebSocketServer {
       }
     })
 
-    // Add global error handler for the server
-    process.on('uncaughtException', (error) => {
-      logger.error('Uncaught exception in WebSocket server:' + JSON.stringify({
-        error: error.message,
-        stack: error.stack
-      }))
-      // Don't let the error crash the process
-    })
+    // Register process-level handlers once to avoid duplicate logs.
+    if (!processErrorHandlersRegistered) {
+      process.on('uncaughtException', (error) => {
+        logger.error({
+          msg: 'Uncaught exception in process (registered by WebSocket server)',
+          error: formatErrorForLog(error)
+        })
+        // Don't let the error crash the process
+      })
 
-    process.on('unhandledRejection', (reason, promise) => {
-      logger.error('Unhandled rejection in WebSocket server:' + JSON.stringify({
-        reason: reason,
-        promise: promise
-      }))
-      // Don't let the error crash the process
-    })
+      process.on('unhandledRejection', (reason, promise) => {
+        logger.error({
+          msg: 'Unhandled rejection in process (registered by WebSocket server)',
+          reason: formatErrorForLog(reason),
+          promise: {
+            type: promise && promise.constructor ? promise.constructor.name : typeof promise
+          }
+        })
+        // Don't let the error crash the process
+      })
+
+      processErrorHandlersRegistered = true
+    }
 
     this.sessionManager.startCleanup()
   }
@@ -2318,10 +2435,24 @@ class WebSocketServer {
       if (microserviceUuid) {
         // Validate microservice and check if it matches expected system type
         await this.validateMicroservice(microserviceUuid, expectSystem, transaction)
+
+        const statusArr = await MicroserviceStatusManager.findAllExcludeFields({
+          microserviceUuid: microserviceUuid
+        }, transaction)
+        if (!statusArr || statusArr.length === 0) {
+          throw new Errors.NotFoundError('Microservice status not found')
+        }
+        const status = statusArr[0]
+        if (status.status !== microserviceState.RUNNING) {
+          throw new Errors.ValidationError('Microservice is not running')
+        }
       }
 
       if (fogUuid) {
-        await this.validateFog(fogUuid, transaction)
+        const fog = await this.validateFog(fogUuid, transaction)
+        if (fog.daemonStatus !== FogStates.RUNNING) {
+          throw new Errors.ValidationError('Fog is not running')
+        }
       }
 
       // 3. RBAC Authorization is handled at route level, so we just validate resources here

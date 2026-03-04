@@ -48,12 +48,12 @@ module.exports = {
     rules: [
       {
         apiGroups: [''],
-        resources: ['microservices', 'systemMicroservices', 'fogs', 'applications', 'systemApplications', 'applicationTemplates', 'services', 'routings', 'router', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'tunnels', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'events', 'users', 'config', 'controller', 'execSessions', 'systemExecSessions', 'logs', 'systemLogs'],
+        resources: ['microservices', 'systemMicroservices', 'fogs', 'applications', 'systemApplications', 'applicationTemplates', 'services', 'router', 'natsAccounts', 'natsUsers', 'natsAccountRules', 'natsUserRules', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'tunnels', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'events', 'users', 'config', 'controller', 'execSessions', 'systemExecSessions', 'logs', 'systemLogs'],
         verbs: ['*']
       },
       {
         apiGroups: [''],
-        resources: ['roles', 'roleBindings'],
+        resources: ['roles', 'roleBindings', 'natsOperator', 'natsHub'],
         verbs: ['get', 'list']
       }
     ]
@@ -68,12 +68,12 @@ module.exports = {
     rules: [
       {
         apiGroups: [''],
-        resources: ['microservices', 'applications', 'applicationTemplates', 'services', 'routings', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'controller', 'execSessions', 'logs'],
+        resources: ['microservices', 'applications', 'applicationTemplates', 'services', 'natsAccounts', 'natsUsers', 'natsAccountRules', 'natsUserRules', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'controller', 'execSessions', 'logs'],
         verbs: ['get', 'list', 'create', 'update', 'patch', 'delete']
       },
       {
         apiGroups: [''],
-        resources: ['fogs', 'router', 'tunnels', 'users', 'config', 'roles', 'roleBindings', 'systemMicroservices', 'systemApplications'],
+        resources: ['fogs', 'router', 'tunnels', 'users', 'config', 'roles', 'roleBindings', 'systemMicroservices', 'systemApplications', 'natsOperator', 'natsHub'],
         verbs: ['get', 'list']
       }
     ]
@@ -88,7 +88,7 @@ module.exports = {
     rules: [
       {
         apiGroups: [''],
-        resources: ['microservices', 'fogs', 'applications', 'systemMicroservices', 'systemApplications', 'applicationTemplates', 'services', 'routings', 'router', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'config', 'controller', 'roles', 'roleBindings'],
+        resources: ['microservices', 'fogs', 'applications', 'systemMicroservices', 'systemApplications', 'applicationTemplates', 'services', 'router', 'natsOperator', 'natsHub', 'natsAccounts', 'natsUsers', 'natsAccountRules', 'natsUserRules', 'flows', 'catalog', 'registries', 'secrets', 'configMaps', 'volumeMounts', 'certificates', 'edgeResources', 'capabilities', 'diagnostics', 'serviceAccounts', 'config', 'controller', 'roles', 'roleBindings'],
         verbs: ['get', 'list']
       }
     ]
@@ -134,12 +134,6 @@ module.exports = {
         apiGroups: ['agent.datasance.com/v3'],
         resources: ['config'],
         verbs: ['get']
-      },
-      {
-        apiGroups: ['agent.datasance.com/v3'],
-        resources: ['message'],
-        verbs: ['post']
-        // Note: WebSocket 'get' for message is handled separately by agent
       },
       {
         apiGroups: ['agent.datasance.com/v3'],

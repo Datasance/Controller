@@ -23,7 +23,6 @@ const events = Object.freeze({
     deleteNode: false,
     microserviceList: false,
     microserviceConfig: false,
-    routing: false,
     registries: false,
     tunnel: false,
     diagnostics: false,
@@ -41,8 +40,7 @@ const events = Object.freeze({
   },
   microserviceFull: {
     microserviceConfig: true,
-    microserviceList: true,
-    routing: true
+    microserviceList: true
   },
   microserviceCommon: {
     microserviceConfig: true,
@@ -53,9 +51,6 @@ const events = Object.freeze({
   },
   microserviceConfig: {
     microserviceConfig: true
-  },
-  microserviceRouting: {
-    routing: true
   },
   edgeResources: {
     linkedEdgeResources: true

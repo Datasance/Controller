@@ -60,6 +60,9 @@ settings:
   controllerHeartbeatInterval: 30        # Controller heartbeat interval in seconds (default: 30)
   controllerInactiveThreshold: 300       # Mark controller inactive after N seconds without heartbeat (default: 300 = 5 minutes)
   controllerCleanupInterval: 600         # Controller cleanup job interval in seconds (default: 600 = 10 minutes)
+  natsReconcileChunkSize: 1              # NATS reconcile task chunk size in fogs per task (default: 1)
+  natsReconcileTaskStalenessSeconds: 900 # NATS reconcile task staleness for reclaim (default: 900 = 15 minutes)
+  natsReconcileWorkerIntervalSeconds: 3 # NATS reconcile worker poll interval in seconds (default: 3)
 
 # Database Configuration
 database:
@@ -81,7 +84,7 @@ database:
   #   useSSL: false       # Use SSL for PostgreSQL connection
   #   sslCA: ""           # PostgreSQL SSL CA in base64 encoded string
   sqlite:
-    databaseName: dev_database.sqlite  # SQLite database file name
+    databaseName: controller_db.sqlite  # SQLite database file name
     logging: false     # Enable SQLite query logging
     transactionType: IMMEDIATE      # SQLite transaction type
     pool:
@@ -113,6 +116,13 @@ systemImages:
   debug:
     "1": "ghcr.io/datasance/node-debugger:latest"
     "2": "ghcr.io/datasance/node-debugger:latest"
+  nats:
+    "1": "ghcr.io/datasance/nats:latest"
+    "2": "ghcr.io/datasance/nats:latest"
+
+# NATS Configuration
+nats:
+  enabled: true
 
 # Diagnostics Configuration
 diagnostics:
@@ -124,13 +134,13 @@ diagnostics:
 # in the configured vault provider instead of encrypted in the database
 # vault:
 #   enabled: false         # Enable/disable vault integration
-#   provider: hashicorp  # Provider: hashicorp, aws, azure, google
+#   provider: hashicorp  # Provider: hashicorp, openbao, vault, aws, aws-secrets-manager, azure, azure-key-vault, google, google-secret-manager
 #   basePath: "pot/$namespace/secrets"  # Base path for secrets in vault ($namespace will be replaced with app.namespace)
 #   # HashiCorp Vault configuration
 #   hashicorp:
 #     address: "http://localhost:8200"  # Vault server address (can also be set via VAULT_HASHICORP_ADDRESS env var)
 #     token: ""  # Vault token (can also be set via VAULT_HASHICORP_TOKEN env var)
-#     mount: "secret"  # Vault mount point (can also be set via VAULT_HASHICORP_MOUNT env var)
+#     mount: "kv"  # Vault mount point (can also be set via VAULT_HASHICORP_MOUNT env var)
 #   # AWS Secrets Manager configuration
 #   aws:
 #     region: "us-east-1"  # AWS region (can also be set via VAULT_AWS_REGION or AWS_REGION env var)

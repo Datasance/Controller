@@ -35,7 +35,14 @@ const initializeModels = (sequelize) => {
 }
 
 const configureImage = async (db, name, fogTypes, images) => {
-  const catalogItem = await db.CatalogItem.findOne({ where: { name, isPublic: false } })
+  const isNats = name === constants.NATS_CATALOG_NAME
+  const catalogItem = await db.CatalogItem.findOne({
+    where: isNats ? { name } : { name, isPublic: false }
+  })
+  if (!catalogItem) {
+    logger.warn(`Catalog item not found for ${name}, skipping image configuration`)
+    return
+  }
   for (const fogType of fogTypes) {
     if (fogType.id === 0) {
       // Skip auto detect type
@@ -82,6 +89,7 @@ db.initDB = async (isStart) => {
     const fogTypes = await db.FogType.findAll({})
     await configureImage(db, constants.ROUTER_CATALOG_NAME, fogTypes, config.get('systemImages.router', {}))
     await configureImage(db, constants.DEBUG_CATALOG_NAME, fogTypes, config.get('systemImages.debug', {}))
+    await configureImage(db, constants.NATS_CATALOG_NAME, fogTypes, config.get('systemImages.nats', {}))
 
     // Initialize controller UUID
     try {

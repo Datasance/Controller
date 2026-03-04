@@ -37,16 +37,6 @@ const getSystemMicroserviceEndPoint = async function (req) {
   return MicroservicesService.getSystemMicroserviceEndPoint(microserviceUuid, false)
 }
 
-const listMicroserviceByPubTagEndPoint = async function (req) {
-  const pubTag = req.params.tag
-  return MicroservicesService.listMicroserviceByPubTagEndPoint(pubTag)
-}
-
-const listMicroserviceBySubTagEndPoint = async function (req) {
-  const subTag = req.params.tag
-  return MicroservicesService.listMicroserviceBySubTagEndPoint(subTag)
-}
-
 const updateMicroserviceEndPoint = async function (req) {
   const microservice = req.body
   const microserviceUuid = req.params.uuid
@@ -137,18 +127,6 @@ const getSystemMicroservicesByApplicationEndPoint = async function (req) {
 
   const applicationName = req.query.application
   return MicroservicesService.listSystemMicroservicesEndPoint({ applicationName, flowId }, false)
-}
-
-const createMicroserviceRouteEndPoint = async function (req) {
-  const sourceUuid = req.params.uuid
-  const destUuid = req.params.receiverUuid
-  return MicroservicesService.createRouteEndPoint(sourceUuid, destUuid, false)
-}
-
-const deleteMicroserviceRouteEndPoint = async function (req) {
-  const sourceUuid = req.params.uuid
-  const destUuid = req.params.receiverUuid
-  return MicroservicesService.deleteRouteEndPoint(sourceUuid, destUuid, false)
 }
 
 const createMicroservicePortMappingEndPoint = async function (req) {
@@ -255,8 +233,6 @@ module.exports = {
   createMicroserviceOnFogEndPoint: (createMicroserviceOnFogEndPoint),
   getMicroserviceEndPoint: (getMicroserviceEndPoint),
   getSystemMicroserviceEndPoint: (getSystemMicroserviceEndPoint),
-  listMicroserviceByPubTagEndPoint: (listMicroserviceByPubTagEndPoint),
-  listMicroserviceBySubTagEndPoint: (listMicroserviceBySubTagEndPoint),
   updateMicroserviceEndPoint: (updateMicroserviceEndPoint),
   updateSystemMicroserviceEndPoint: (updateSystemMicroserviceEndPoint),
   rebuildMicroserviceEndPoint: (rebuildMicroserviceEndPoint),
@@ -264,8 +240,6 @@ module.exports = {
   deleteMicroserviceEndPoint: (deleteMicroserviceEndPoint),
   getMicroservicesByApplicationEndPoint: (getMicroservicesByApplicationEndPoint),
   getSystemMicroservicesByApplicationEndPoint: (getSystemMicroservicesByApplicationEndPoint),
-  createMicroserviceRouteEndPoint: (createMicroserviceRouteEndPoint),
-  deleteMicroserviceRouteEndPoint: (deleteMicroserviceRouteEndPoint),
   createMicroservicePortMappingEndPoint: (createMicroservicePortMappingEndPoint),
   createSystemMicroservicePortMappingEndPoint: (createSystemMicroservicePortMappingEndPoint),
   deleteMicroservicePortMappingEndPoint: (deleteMicroservicePortMappingEndPoint),

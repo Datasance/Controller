@@ -197,9 +197,15 @@ const roleBindingUpdate = {
 const serviceAccountCreate = {
   id: '/serviceAccountCreate',
   type: 'object',
-  required: ['name', 'roleRef'],
+  required: ['name', 'applicationName', 'roleRef'],
   properties: {
     name: {
+      type: 'string',
+      minLength: 1,
+      maxLength: 255,
+      pattern: nameRegex
+    },
+    applicationName: {
       type: 'string',
       minLength: 1,
       maxLength: 255,
