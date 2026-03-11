@@ -627,13 +627,15 @@ async function _renderAndPersistNatsConfig (fog, natsInstance, certName, mqttCer
   const leafAdvertiseHose = fog.host || fog.ipAddress || fog.ipAddressExternal
   const jsMaxMemory = _normalizeJetstreamSize(natsInstance.jsMemoryStoreSize, DEFAULT_JS_MEMORY_STORE_SIZE)
   const jsMaxFile = _normalizeJetstreamSize(natsInstance.jsStorageSize, DEFAULT_JS_STORAGE_SIZE)
+  const serverName = (fog && fog.name) || (fog && fog.uuid) || 'nats'
   const variables = {
     OPERATOR_JWT: operator ? operator.jwt : undefined,
     SYSTEM_ACCOUNT: systemAccount.publicKey,
     NATS_CLUSTER_ROUTES: JSON.stringify(clusterRoutes),
     NATS_LEAF_REMOTES: JSON.stringify(leafRemotes),
     CONTROLLER_NAME: (process.env.CONTROLLER_NAME || config.get('app.name')),
-    JETSTREAM_DOMAIN: jetstreamDomain,
+    SERVER_NAME: _escapeConfString(serverName),
+    JETSTREAM_DOMAIN: _escapeConfString(jetstreamDomain),
     JETSTREAM_KEY: _escapeConfString(jetstreamKey.jsk),
     JETSTREAM_PREV_KEY: _escapeConfString(jetstreamKey.prevKey || ''),
     NATS_SERVER_PORT: natsInstance.serverPort,
