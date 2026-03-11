@@ -1,6 +1,6 @@
 {
   "name": "@datasance/iofogcontroller",
-  "version": "3.7.0",
+  "version": "3.7.1",
   "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
   "main": "./src/main.js",
   "author": "Emirhan Durmus",
@@ -60,7 +60,7 @@
     "iofog-controller": "src/main.js"
   },
   "dependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.999.0",
+    "@aws-sdk/client-secrets-manager": "^3.1006.0",
     "@azure/identity": "^4.13.0",
     "@azure/keyvault-secrets": "^4.10.0",
     "@datasance/ecn-viewer": "1.4.2",
@@ -109,7 +109,7 @@
     "sqlite3": "^5.1.7",
     "qs": "6.14.2",
     "rhea": "^3.0.4",
-    "sequelize": "6.37.7",
+    "sequelize": "6.37.8",
     "string-format": "2.0.0",
     "uuid": "11.1.0",
     "ws": "^8.18.0",
@@ -154,12 +154,8 @@
         "tar-fs": "^2.1.4"
       }
     },
-    "@aws-sdk/client-secrets-manager": {
-      "@aws-sdk/core": {
-        "fast-xml-parser": "^5.3.8"
-      }
-    },
-    "tar": "^7.5.8",
+    "@tootallnate/once": "^3.0.1",
+    "tar": "^7.5.10",
     "lodash": "^4.17.23",
     "bn.js": "^5.2.3",
     "minimatch": "10.2.3",
