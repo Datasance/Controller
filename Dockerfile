@@ -11,11 +11,6 @@ COPY package.json .
 
 COPY . .
 
-# # Set GitHub npm registry with authentication token
-# RUN sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
-
-# RUN npm config set @datasance:registry https://npm.pkg.github.com/
-
 RUN npm i --build-from-source --force
 
 RUN npm version $PKG_VERSION --allow-same-version --no-git-tag-version
