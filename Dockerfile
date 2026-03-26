@@ -44,7 +44,7 @@ ENV NPM_CONFIG_PREFIX=/home/runner/.npm-global
 ENV NPM_CONFIG_CACHE=/home/runner/.npm
 ENV PATH=$PATH:/home/runner/.npm-global/bin
 
-COPY --from=builder /tmp/datasance-iofogcontroller-*.tgz /home/runner/iofog-controller.tgz
+COPY --from=builder /tmp/eclipse-iofog-iofogcontroller-*.tgz /home/runner/iofog-controller.tgz
 
 ENV PID_BASE=/home/runner 
 
@@ -52,10 +52,10 @@ RUN npm i -g /home/runner/iofog-controller.tgz && \
   rm -rf /home/runner/iofog-controller.tgz && \
   iofog-controller config dev-mode --on
 
-RUN rm -rf /home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/src/data/sqlite_files/*
+RUN rm -rf /home/runner/.npm-global/lib/node_modules/@eclipse-iofog/iofogcontroller/src/data/sqlite_files/*
 
 COPY LICENSE /licenses/LICENSE
 LABEL org.opencontainers.image.description=controller
-LABEL org.opencontainers.image.source=https://github.com/datasance/controller
+LABEL org.opencontainers.image.source=https://github.com/eclipse-iofog/Controller
 LABEL org.opencontainers.image.licenses=EPL2.0
-CMD [ "node", "/home/runner/.npm-global/lib/node_modules/@datasance/iofogcontroller/src/server.js" ]
+CMD [ "node", "/home/runner/.npm-global/lib/node_modules/@eclipse-iofog/iofogcontroller/src/server.js" ]

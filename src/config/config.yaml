@@ -1,9 +1,9 @@
 # Application Configuration
 app:
-  name: pot  # Application name
+  name: iofog  # Application name
   uuid: ""
   controlPlane: Remote        # Control plane type: Remote or Kubernetes or Local
-  namespace: datasance  # Namespace for the application
+  namespace: iofog  # Namespace for the application
 
 # Server Configuration
 server:
@@ -111,14 +111,14 @@ bridgePorts:
 # System Images Configuration
 systemImages:
   router:
-    "1": "ghcr.io/datasance/router:latest"
-    "2": "ghcr.io/datasance/router:latest"
+    "1": "ghcr.io/eclipse-iofog/router:latest"
+    "2": "ghcr.io/eclipse-iofog/router:latest"
   debug:
-    "1": "ghcr.io/datasance/node-debugger:latest"
-    "2": "ghcr.io/datasance/node-debugger:latest"
+    "1": "ghcr.io/eclipse-iofog/node-debugger:latest"
+    "2": "ghcr.io/eclipse-iofog/node-debugger:latest"
   nats:
-    "1": "ghcr.io/datasance/nats:latest"
-    "2": "ghcr.io/datasance/nats:latest"
+    "1": "ghcr.io/eclipse-iofog/nats:latest"
+    "2": "ghcr.io/eclipse-iofog/nats:latest"
 
 # NATS Configuration
 nats:

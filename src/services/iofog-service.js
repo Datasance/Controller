@@ -1,6 +1,6 @@
 /*
  *  *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -61,7 +61,7 @@ const FogPublicKeyManager = require('../data/managers/iofog-public-key-manager')
 
 const SITE_CA_CERT = 'router-site-ca'
 const DEFAULT_ROUTER_LOCAL_CA = 'default-router-local-ca'
-const SERVICE_ANNOTATION_TAG = 'service.datasance.com/tag'
+const SERVICE_ANNOTATION_TAG = 'service.iofog.org/tag'
 
 async function checkKubernetesEnvironment () {
   const controlPlane = process.env.CONTROL_PLANE || config.get('app.ControlPlane')

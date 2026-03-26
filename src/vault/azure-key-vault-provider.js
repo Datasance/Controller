@@ -1,6 +1,6 @@
 /*
  *  *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -159,7 +159,7 @@ class AzureKeyVaultProvider extends BaseVaultProvider {
     if (this.config && this.config.basePath && typeof this.config.basePath === 'string') {
       return this.config.basePath
     }
-    return 'pot-controller/secrets'
+    return 'iofog-controller/secrets'
   }
 }
 

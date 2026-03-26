@@ -1,6 +1,6 @@
 /*
  *  *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -19,13 +19,13 @@
 const config = require('./index')
 
 function getNamespace () {
-  return process.env.CONTROLLER_NAMESPACE || config.get('app.namespace', 'datasance')
+  return process.env.CONTROLLER_NAMESPACE || config.get('app.namespace', 'iofog')
 }
 
 module.exports = {
   ADMIN_ROLE: {
     name: 'admin',
-    apiVersion: 'datasance.com/v3',
+    apiVersion: 'iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
@@ -40,7 +40,7 @@ module.exports = {
   },
   SRE_ROLE: {
     name: 'sre',
-    apiVersion: 'datasance.com/v3',
+    apiVersion: 'iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
@@ -60,7 +60,7 @@ module.exports = {
   },
   DEVELOPER_ROLE: {
     name: 'developer',
-    apiVersion: 'datasance.com/v3',
+    apiVersion: 'iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
@@ -80,7 +80,7 @@ module.exports = {
   },
   VIEWER_ROLE: {
     name: 'viewer',
-    apiVersion: 'datasance.com/v3',
+    apiVersion: 'iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
@@ -95,7 +95,7 @@ module.exports = {
   },
   AGENT_ADMIN_ROLE: {
     name: 'agent-admin',
-    apiVersion: 'agent.datasance.com/v3',
+    apiVersion: 'agent.iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
@@ -111,7 +111,7 @@ module.exports = {
         // - deprovision (delete)
         // - config (post)
         // - prune (post)
-        apiGroups: ['agent.datasance.com/v3'],
+        apiGroups: ['agent.iofog.org/v3'],
         resources: ['*'],
         verbs: ['*']
       }
@@ -119,29 +119,29 @@ module.exports = {
   },
   MICROSERVICE_ROLE: {
     name: 'microservice',
-    apiVersion: 'agent.datasance.com/v3',
+    apiVersion: 'agent.iofog.org/v3',
     kind: 'Role',
     get namespace () {
       return getNamespace()
     },
     rules: [
       {
-        apiGroups: ['agent.datasance.com/v3'],
+        apiGroups: ['agent.iofog.org/v3'],
         resources: ['gps'],
         verbs: ['get', 'patch']
       },
       {
-        apiGroups: ['agent.datasance.com/v3'],
+        apiGroups: ['agent.iofog.org/v3'],
         resources: ['config'],
         verbs: ['get']
       },
       {
-        apiGroups: ['agent.datasance.com/v3'],
+        apiGroups: ['agent.iofog.org/v3'],
         resources: ['log'],
         verbs: ['post']
       },
       {
-        apiGroups: ['agent.datasance.com/v3'],
+        apiGroups: ['agent.iofog.org/v3'],
         resources: ['control'],
         verbs: ['get']
         // Note: WebSocket 'get' for control is handled separately by agent

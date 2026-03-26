@@ -1,10 +1,26 @@
 {
-  "name": "@datasance/iofogcontroller",
+  "name": "@eclipse-iofog/iofogcontroller",
   "version": "3.7.2",
-  "description": "ioFog Controller project for Datasance PoT @ datasance.com \\nCopyright (c) 2023 Datasance Teknoloji A.S.",
+  "description": "ioFog Controller project for Eclipse ioFog @ iofog.org \\nCopyright (c) 2023 Contributors to the Eclipse ioFog Project",
   "main": "./src/main.js",
-  "author": "Emirhan Durmus",
+  "author": "Eclipse ioFog Project",
   "contributors": [
+    "Kilton Hopkins <kilton@edgeworx.io>",
+    "Saeid Rezaei Baghbidi",
+    "Alexandre de Wergifosse",
+    "Pavel Kazlou",
+    "Egor Krylovich",
+    "Iryna Laryionava",
+    "Maryna Lipnitskaya",
+    "Dmitriy Kudasov",
+    "Dmitry Stolbunov",
+    "Darya Busel",
+    "Alexander Shpak",
+    "Kate Lukashick",
+    "Eugene Pankov",
+    "Maksim Chepelev",
+    "Tetiana Yatsiuk",
+    "Sergey Valevich",
     "Emirhan Durmus  <emirhan.durmus@datasance.com>",
     "Alpaslan Doğan <alpaslan.dogan@datasance.com>"
   ],
@@ -13,7 +29,7 @@
     "node": "^24.0.0"
   },
   "bugs": {
-    "email": "support@datasance.com"
+    "email": "edgemaster@iofog.org"
   },
   "standard": {
     "ignore": [
@@ -22,10 +38,10 @@
       "src/utils/k8s-client.js"
     ]
   },
-  "homepage": "https://www.datasance.com",
+  "homepage": "https://www.iofog.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Datasance/Controller"
+    "url": "https://github.com/eclipse-iofog/Controller"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -63,7 +79,7 @@
     "@aws-sdk/client-secrets-manager": "^3.1015.0",
     "@azure/identity": "^4.13.0",
     "@azure/keyvault-secrets": "^4.10.0",
-    "@datasance/ecn-viewer": "1.4.3",
+    "@eclipse-iofog/ecn-viewer": "3.7.1",
     "@google-cloud/secret-manager": "^6.1.1",
     "@kubernetes/client-node": "^1.4.0",
     "@msgpack/msgpack": "^3.1.2",

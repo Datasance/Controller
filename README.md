@@ -2,12 +2,12 @@
 
 ### Status
 
-![](https://img.shields.io/github/release/datasance/controller.svg?style=flat)
+![](https://img.shields.io/github/release/eclipse-iofog/controller.svg?style=flat)
 
-![](https://img.shields.io/github/repo-size/datasance/controller.svg?style=flat)
-![](https://img.shields.io/github/last-commit/datasance/controller.svg?style=flat)
-![](https://img.shields.io/github/contributors/datasance/controller.svg?style=flat)
-![](https://img.shields.io/github/issues/datasance/controller.svg?style=flat)
+![](https://img.shields.io/github/repo-size/eclipse-iofog/controller.svg?style=flat)
+![](https://img.shields.io/github/last-commit/eclipse-iofog/controller.svg?style=flat)
+![](https://img.shields.io/github/contributors/eclipse-iofog/controller.svg?style=flat)
+![](https://img.shields.io/github/issues/eclipse-iofog/controller.svg?style=flat)
 
 ![Supports amd64 Architecture][amd64-shield]
 ![Supports aarch64 Architecture][arm64-shield]
@@ -19,13 +19,13 @@
 
 ## Install
 
-The entire Datasance PoT platform is best deployed through the unified CLI: `potctl`.
+The entire Eclipse ioFog platform is best deployed through the unified CLI: `iofogctl`.
 
-Go to [Datasance Docs](https://docs.datasance.com) to learn how to deploy the ioFog Control Plane and Agents.
+Go to [Eclipse ioFog Docs](https://docs.eclipse-iofog.com) to learn how to deploy the ioFog Control Plane and Agents.
 
 ## Usage
 ```
 iofog-controller <command> <action> <options>
 ```
 
-For full installation and usage, visit [Datasance Docs](https://docs.datasance.com).
+For full installation and usage, visit [Eclipse ioFog Docs](https://docs.eclipse-iofog.com).

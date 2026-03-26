@@ -1,9 +1,9 @@
 {
-    "realm": "datasance",
+    "realm": "iofog",
     "realm-public-key": "",
     "auth-server-url": "",
     "ssl-required": "",
-    "resource": "pot-controller",
+    "resource": "iofog-controller",
     "bearer-only":true,
     "verify-token-audience": true,
     "credentials": {

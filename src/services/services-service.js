@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -34,7 +34,7 @@ const {
 // const { Op } = require('sequelize')
 
 const K8S_ROUTER_CONFIG_MAP = 'iofog-router'
-const SERVICE_ANNOTATION_TAG = 'service.datasance.com/tag'
+const SERVICE_ANNOTATION_TAG = 'service.iofog.org/tag'
 
 // Map service tags to string array
 // Return plain JS object
@@ -848,10 +848,10 @@ async function _deleteTcpListener (serviceName, transaction) {
 // Common labels for Kubernetes services created by the controller
 function _getK8sServiceLabels () {
   return {
-    'app.kubernetes.io/name': 'pot',
+    'app.kubernetes.io/name': 'iofog',
     'app.kubernetes.io/component': 'controller',
     'app.kubernetes.io/managed-by': 'controller',
-    'datasance.com/component': 'router',
+    'iofog.org/component': 'router',
     'app.kubernetes.io/instance': process.env.CONTROLLER_NAME || config.get('app.name')
   }
 }
@@ -874,10 +874,10 @@ async function _createK8sService (serviceConfig, transaction) {
     spec: {
       type: serviceConfig.k8sType,
       selector: {
-        'datasance.com/component': 'router'
+        'iofog.org/component': 'router'
       },
       ports: [{
-        name: 'pot-service',
+        name: 'iofog-service',
         targetPort: parseInt(serviceConfig.bridgePort),
         port: parseInt(serviceConfig.servicePort),
         protocol: 'TCP'
@@ -923,10 +923,10 @@ async function _updateK8sService (serviceConfig, transaction) {
       spec: {
         type: serviceConfig.k8sType,
         selector: {
-          'datasance.com/component': 'router'
+          'iofog.org/component': 'router'
         },
         ports: [{
-          name: 'pot-service',
+          name: 'iofog-service',
           port: parseInt(serviceConfig.servicePort),
           targetPort: parseInt(serviceConfig.bridgePort),
           protocol: 'TCP'

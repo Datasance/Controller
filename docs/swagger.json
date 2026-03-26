@@ -2,7 +2,7 @@
   "openapi" : "3.0.0",
   "info" : {
     "version" : "1.0.0",
-    "title" : "Datasance PoT Controller"
+    "title" : "Eclipse ioFog Controller"
   },
   "tags" : [ {
     "name" : "Controller",

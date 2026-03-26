@@ -1,7 +1,7 @@
 openapi : "3.0.0"
 info:
   version: 3.7.0
-  title: Datasance PoT Controller
+  title: Eclipse ioFog Controller
 paths:
   /status:
     get:

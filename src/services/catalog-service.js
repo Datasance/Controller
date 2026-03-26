@@ -1,6 +1,6 @@
 /*
  * *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -146,7 +146,7 @@ async function getNatsCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'NATs',
     category: 'SYSTEM',
-    publisher: 'Datasance',
+    publisher: 'Eclipse ioFog',
     registry_id: 1
   }, transaction)
 }
@@ -155,7 +155,7 @@ async function getRouterCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.ROUTER_CATALOG_NAME,
     category: 'SYSTEM',
-    publisher: 'Datasance',
+    publisher: 'Eclipse ioFog',
     registry_id: 1
   }, transaction)
 }
@@ -164,7 +164,7 @@ async function getDebugCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: DBConstants.DEBUG_CATALOG_NAME,
     category: 'SYSTEM',
-    publisher: 'Datasance',
+    publisher: 'Eclipse ioFog',
     registry_id: 1
   }, transaction)
 }
@@ -173,7 +173,7 @@ async function getBluetoothCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'RESTBlue',
     category: 'SYSTEM',
-    publisher: 'Datasance',
+    publisher: 'Eclipse ioFog',
     registry_id: 1
   }, transaction)
 }
@@ -182,7 +182,7 @@ async function getHalCatalogItem (transaction) {
   return CatalogItemManager.findOne({
     name: 'HAL',
     category: 'SYSTEM',
-    publisher: 'Datasance',
+    publisher: 'Eclipse ioFog',
     registry_id: 1
   }, transaction)
 }

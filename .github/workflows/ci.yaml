@@ -47,10 +47,10 @@ jobs:
     - name: Replace values
       shell: bash
       env: 
-          PAT: ${{ secrets.PAT }}
+          PAT: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        sed -i.back "s|PAT|${PAT}|g" .npmrc
-    - run: npm config set @datasance:registry https://npm.pkg.github.com/    
+        sed -i.back "s|PAT|${GITHUB_TOKEN}|g" .npmrc
+    - run: npm config set @eclipse-iofog:registry https://npm.pkg.github.com/    
     - run: npm install --build-from-source --force
     - run: npm run standard
     - run: |
@@ -83,10 +83,10 @@ jobs:
     - name: Replace values
       shell: bash
       env: 
-          PAT: ${{ secrets.PAT }}
+          PAT: ${{ secrets.GITHUB_TOKEN }}
       run: |
         sed -i.back "s|PAT|${PAT}|g" .npmrc
-    - run: npm config set @datasance:registry https://npm.pkg.github.com/ 
+    - run: npm config set @eclipse-iofog:registry https://npm.pkg.github.com/ 
     - run: npm install --build-from-source --force
 
     - name: npm version
@@ -138,7 +138,7 @@ jobs:
       with:
         registry: "ghcr.io"
         username: ${{ github.actor }}
-        password: ${{ secrets.PAT }}
+        password: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Build and Push to ghcr
       uses: docker/build-push-action@v3
@@ -149,8 +149,7 @@ jobs:
         platforms: linux/amd64, linux/arm64 
         push: true
         outputs: type=image,name=target,annotation-index.org.opencontainers.image.description=Controller
-        build-args: GITHUB_TOKEN=${{ secrets.PAT }}
         tags: |
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:latest
-          ghcr.io/datasance/${{ env.IMAGE_NAME }}:main
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.VERSION }}
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:latest
+          ghcr.io/eclipse-iofog/${{ env.IMAGE_NAME }}:main

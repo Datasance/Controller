@@ -1,6 +1,6 @@
 /*
  *  *******************************************************************************
- *  * Copyright (c) 2023 Datasance Teknoloji A.S.
+ *  * Copyright (c) 2023 Contributors to the Eclipse ioFog Project
  *  *
  *  * This program and the accompanying materials are made available under the
  *  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -22,7 +22,7 @@ initialize().then(() => {
   const bodyParser = require('body-parser')
   const cookieParser = require('cookie-parser')
   const express = require('express')
-  const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@datasance/ecn-viewer')
+  const ecnViewer = process.env.ECN_VIEWER_PATH ? require(`${process.env.ECN_VIEWER_PATH}/package/index.js`) : require('@eclipse-iofog/ecn-viewer')
   const fs = require('fs')
   const helmet = require('helmet')
   const cors = require('cors')
@@ -54,7 +54,7 @@ initialize().then(() => {
   // express logs
   // app.use(morgan('combined'));
   app.use(session({
-    secret: 'pot-controller',
+    secret: 'iofog-controller',
     resave: false,
     saveUninitialized: true,
     store: memoryStore
@@ -250,7 +250,7 @@ initialize().then(() => {
       })
     }
     // Set up controller-config.js for ECN Viewer
-    const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@datasance', 'ecn-viewer', 'build', 'controller-config.js')
+    const ecnViewerControllerConfigFilePath = path.join(__dirname, '..', 'node_modules', '@eclipse-iofog', 'ecn-viewer', 'build', 'controller-config.js')
     const ecnViewerControllerConfig = {
       port: apiPort,
       user: {},
