@@ -1709,13 +1709,15 @@ async function deleteMicroserviceEndPoint (microserviceUuid, microserviceData, i
 
 async function deleteNotRunningMicroservices (fog, transaction) {
   const microservices = await MicroserviceManager.findAllWithStatuses({ iofogUuid: fog.uuid }, transaction)
-  microservices
+  const toDelete = microservices
     .filter((microservice) => microservice.delete)
     .filter((microservice) => microservice.microserviceStatus.status === MicroserviceStates.UNKNOWN ||
       microservice.microserviceStatus.status === MicroserviceStates.STOPPING ||
       microservice.microserviceStatus.status === MicroserviceStates.DELETING ||
       microservice.microserviceStatus.status === MicroserviceStates.MARKED_FOR_DELETION)
-    .forEach(async (microservice) => { await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction) })
+  for (const microservice of toDelete) {
+    await deleteMicroserviceWithRoutesAndPortMappings(microservice, transaction)
+  }
 }
 
 async function createPortMappingEndPoint (microserviceUuid, portMappingData, isCLI, transaction) {

@@ -313,25 +313,15 @@ const _updateMicroservices = async function (application, microservices, isCLI, 
   for (const microservice of updatedMicroservices) {
     await MicroserviceService.createMicroserviceEndPoint(microservice, isCLI, transaction)
   }
-  iofogUuids
-    .filter(onlyUnique)
-    .filter((val) => val !== null)
-  for (const iofogUuid of iofogUuids) {
+  for (const iofogUuid of iofogUuids.filter(onlyUnique).filter((val) => val !== null)) {
     await ChangeTrackingService.update(iofogUuid, ChangeTrackingService.events.microserviceFull, transaction)
   }
-  oldMsvcsIofogUuids
-    .filter(onlyUnique)
-    .filter((val) => val !== null)
-    .forEach(async (iofogUuid) => {
-      await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
-    })
-
-  updatedMsvcsUuid
-    .filter(onlyUnique)
-    .filter((val) => val !== null)
-    .forEach(async (iofogUuid) => {
-      await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
-    })
+  for (const iofogUuid of oldMsvcsIofogUuids.filter(onlyUnique).filter((val) => val !== null)) {
+    await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
+  }
+  for (const iofogUuid of updatedMsvcsUuid.filter(onlyUnique).filter((val) => val !== null)) {
+    await MicroserviceService.updateChangeTracking(true, iofogUuid, transaction)
+  }
 }
 
 const getUserApplicationsEndPoint = async function (isCLI, transaction) {
