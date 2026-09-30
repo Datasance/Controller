@@ -97,6 +97,7 @@ async function updateSecretEndpoint (secretName, secretData, transaction) {
   validateSecretData(nextType, secretData.data)
 
   const secret = await SecretManager.updateSecret(secretName, nextType, secretData.data, transaction)
+  await _bumpVolumeMountsUsingSecret(secretName, transaction)
   await _updateChangeTrackingForFogs(secretName, transaction)
   await _updateMicroservicesUsingSecret(secretName, transaction)
   return {
@@ -206,6 +207,26 @@ async function deleteSecretEndpoint (secretName, transaction) {
 
   scheduleVaultDeleteAfterCommit(transaction, secretName, existingSecret.type)
   return {}
+}
+
+// A node only re-materialises a volume mount whose version is greater than the
+// one it holds ("Skipping update - new version 1 not greater than current
+// version 1" in the agent's journal), and nothing bumped that version when the
+// secret behind the mount changed: every linked node kept the old content, so no
+// rotation of keys, credentials or TLS material ever arrived.
+//
+// Bumped on every update rather than only when the data differs: a PATCH is an
+// explicit instruction to set this secret, and the stored copy lives in the
+// vault, so comparing stored with posted is not a hash of the request body.
+async function _bumpVolumeMountsUsingSecret (secretName, transaction) {
+  const volumeMounts = await VolumeMountingManager.findAll({ secretName }, transaction)
+  for (const volumeMount of volumeMounts) {
+    await VolumeMountingManager.update(
+      { name: volumeMount.name },
+      { version: volumeMount.version + 1 },
+      transaction
+    )
+  }
 }
 
 async function _deleteVolumeMountsUsingSecret (secretName, transaction) {
