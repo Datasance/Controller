@@ -54,6 +54,21 @@ function classifyVerifyJwtFailure (error) {
   if (errorName === 'JWSSignatureVerificationFailed' || message.includes('signature verification failed') || message.includes('invalid signature')) {
     return new AgentAuthenticationError(CODES.AGENT_JWT_SIGNATURE_INVALID, 'Agent JWT signature invalid')
   }
+  if (errorName === 'JWTClaimValidationFailed' &&
+      (message.includes('"nbf" claim timestamp check failed') || message.includes('"iat" claim timestamp check failed'))) {
+    // The agent signs every request with nbf = iat = its own clock, and the
+    // controller verifies with a 10 s tolerance, so this means the agent's
+    // clock runs ahead of the controller's. Deliberately reported as a
+    // retryable ServiceUnavailableError, not as a 401: an agent that gets
+    // non-retryable auth failures deprovisions itself after 5 attempts over
+    // 60 s (edgelet internal/fieldagent/status_auth_gate.go), which would
+    // turn a few seconds of clock drift into a node that has to be
+    // bootstrapped again. Retrying is right; only the diagnosis was missing.
+    return new ServiceUnavailableError(
+      CODES.CONTROLLER_AGENT_CLOCK_SKEW,
+      `Agent clock is ahead of the controller: ${message}`
+    )
+  }
   if (isVaultInfrastructureError(error)) {
     return new ServiceUnavailableError(CODES.CONTROLLER_VAULT_UNAVAILABLE, 'Vault temporarily unavailable')
   }
